@@ -3,6 +3,7 @@
 #ifndef _aring_gf_flint_hpp_
 #define _aring_gf_flint_hpp_
 
+#include <M2/gc-include.h>
 #include <flint/fq_zech.h>
 #include <flint/flint.h>
 #include "aring.hpp"

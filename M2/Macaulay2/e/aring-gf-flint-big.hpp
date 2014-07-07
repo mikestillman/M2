@@ -3,6 +3,7 @@
 #ifndef _aring_gf_flint_big_hpp_
 #define _aring_gf_flint_big_hpp_
 
+#include <M2/gc-include.h>
 #include <flint/fq_nmod.h>
 #include <flint/flint.h>
 #include "aring.hpp"

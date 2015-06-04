@@ -59,8 +59,6 @@ all: $(M2_OBJECTS)
 # LIBFILES := $(patsubst M2mem.o,,$(patsubst scclib.o,,$(M2_OBJECTS))) $(patsubst %, %.o, $(M2_DNAMES))
 LIBFILES :=
 # LIBFILES += ../c/scc-core.o 
-# to get scc_core_prepare
-LIBFILES += M2inits.o
 # to get getmem
 LIBFILES += M2mem.o 
 # to get initializeGMP_Cwrapper
@@ -168,16 +166,10 @@ CXXFLAGS += -std=c++0x
 
 python-c.o : | python-exports.h.tmp
 M2lib.o scclib.o : | interp-exports.h.tmp
-scclib.o : expr-exports.h M2mem.h M2inits.h ../dumpdata/map.h debug.h types.h ../c/compat.h ../e/engine.h ../dumpdata/dumpdata.h
+scclib.o : expr-exports.h M2mem.h ../dumpdata/map.h debug.h types.h ../c/compat.h ../e/engine.h ../dumpdata/dumpdata.h
 M2lib.o : types.h ../c/compat.c debug.h M2mem.h ../c/compat.h ../e/engine.h ../dumpdata/dumpdata.h
-gmp_int.o M2lib.o scclib.o gdbm_interface.o gc_cpp.o M2inits.o debug.o : ../../include/M2/config.h
+gmp_int.o M2lib.o scclib.o gdbm_interface.o gc_cpp.o debug.o : ../../include/M2/config.h
 M2.o : ../../include/M2/config.h
-
-all: M2inits1.o
-all: libM2inits2.a
-libM2inits2.a: M2inits2.o
-	:; @AR@ ru $@ $^
-	:; @RANLIB@ $@
 
 clean::; rm -f startup.c
 SSTRING := -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\(.*\)/"\1\\n"/'
@@ -204,7 +196,7 @@ clean-startup.c:; rm -f startup.c
 cat-startup.c:; cat startup.c
 redo-startup:clean-startup.c startup.c cat-startup.c
 
-all: $(M2_LIBDEPS) M2inits.o
+all: $(M2_LIBDEPS)
 tags: @srcdir@/TAGS
 @srcdir@/TAGS: $(M2_SRCFILES); cd @srcdir@ && @ETAGS@ $(M2_SRCFILES)
 clean-bin:; rm -f *.o *-tmp.c *-tmp.cc *.sig.tmp *-exports.h.tmp

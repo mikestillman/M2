@@ -7,7 +7,6 @@
 #include <gdbm.h>
 
 #include "M2mem.h"
-#include "M2inits.h"
 #include "../dumpdata/map.h"
 #include "types.h"
 #include "debug.h"

@@ -87,10 +87,12 @@ uninstall clean ::
 		include/factory.h include/factoryconf.h include/cf_gmp.h include/templates/ftmpl_* include/factory ; \
 	fi
 
-#post-install: $(LIBRARIESDIR)/lib/libcfmem-newdelete-removed
-#$(LIBRARIESDIR)/lib/libcfmem-newdelete-removed : $(LIBRARIESDIR)/lib/libcfmem.a
-#	ar -d "$^" newdelete.o
-#	touch "$@"
+# I'm not sure whether we need this:
+# GFTABLEDIR = @pre_packagesdir@/Core/factory/gftables
+# install: copy-gftables
+# copy-gftables:
+# 	$(MKDIR_P) $(GFTABLEDIR)
+# 	cp -v $(LIBRARIESDIR)/share/factory/gftables/* $(GFTABLEDIR)/.
 
 # Local Variables:
 # compile-command: "make -C $M2BUILDDIR/libraries/factory "

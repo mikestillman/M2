@@ -697,9 +697,9 @@ AC_SUBST(BUILTLIBS,)
 # 	   Formerly we always built mpir, so we can patch the routine
 # 	   mp_set_memory_functions() in it so it does nothing; that prevents
 # 	   libraries such as pari from telling it what memory allocation
-# 	   functions to use.  But we should instead patch pari or work around
-# 	   it, so we can use the gmp library that comes with many linux
-# 	   distributions.
+# 	   functions to use.  On the other hand, pari is careful to put back
+# 	   the old memory allocation functions afterward, so it may not be a
+# 	   problem.
 #    4ti2 needs glpk
 #    gfan needs cddlib
 #    polymake cannot be included in Macaulay2 because its compile/build/install procedure is flawed:
@@ -723,7 +723,7 @@ AC_SUBST(BUILTLIBS,)
 #        it needs lapack
 #    Henry Duong is experimenting with mpack, a multi-precision version of blas+lapack based on mpfr
 #    mpack depends on gmp (which mpir provides) mpfr mpc qd
-#    flint depends on mpir and mpfr
+#    flint depends on gmp (which mpir provides) and mpfr
 AC_SUBST(PROGLIST, "4ti2 gfan normaliz nauty cddplus lrslib gftables")
 AC_SUBST(LIBLIST, " atomic_ops gc gdbm mpir mpfr pari readline ntl flint factory lapack frobby glpk cddlib fplll givaro fflas_ffpack linbox boost mpc qd mpack gtest ")
 

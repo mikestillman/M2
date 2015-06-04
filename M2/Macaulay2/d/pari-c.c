@@ -58,7 +58,11 @@ static void initpari() {
     pari_init_opts( PARISIZE, MAXPRIME, init_flags);
     self_initialized = TRUE;
   }
-  enterM2();  /* pari_init sets the memory allocation routines for gmp, so we have to set them back */
+  /* 
+
+     pari_init sets the memory allocation routines for gmp, so we have to set them back here
+
+     */
 }
 
 static void closepari() {

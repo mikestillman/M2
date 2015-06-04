@@ -12,6 +12,9 @@
 #include "types.h"
 #include "debug.h"
 
+/* to get IM2_initialize() : */
+#include "engine.h"
+
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #else
@@ -526,7 +529,6 @@ int register_fun(int *count, char *filename, int lineno, char *funname) {
 extern void clean_up();
 extern void init_readline_variables();
 extern char *GC_stackbottom;
-extern void arginits(int, const char **);
 extern bool gotArg(const char *arg, const char ** argv);
 
 #ifdef HAVE_DLFCN_H
@@ -581,11 +583,6 @@ void* interpFunc(void* vargs2)
      setInterpThread();
      reverse_run(thread_prepare_list);// -- re-initialize any thread local variables
      init_readline_variables();
-     arginits(argc,(const char **)saveargv);
-
-     //     void M2__prepare();
-     ///     M2__prepare();
-
      M2_envp = M2_tostrings(envc,(char **)saveenvp);
      M2_argv = M2_tostrings(argc,(char **)saveargv);
      M2_args = M2_tostrings(argc == 0 ? 0 : argc - 1, (char **)saveargv + 1);
@@ -617,6 +614,8 @@ int have_arg(char **argv, const char *arg) {
      return FALSE;
      }
 
+char *progname;
+
 int Macaulay2_main(argc,argv)
 int argc; 
 char **argv;
@@ -636,6 +635,10 @@ char **argv;
 
      char **x = our_environ; 
      while (*x) envc++, x++;
+
+     progname = argv[0];
+     GC_INIT();
+     IM2_initialize();
 
      system_cpuTime_init();
      call_shared_library();
@@ -748,14 +751,6 @@ char **argv;
 	       our_environ = environ0;
                }
 	  }
-#endif
-
-#if 0
-  /* stop setting gmp's memory functions */
-     if (__gmp_allocate_func != (void *(*) (size_t))getmem_atomic) {
-          FATAL("possible memory leak, gmp allocator not set up properly");
-	  fprintf(stderr,"--internal warning: possible memory leak, gmp allocator not set up properly, resetting\n");
-     }
 #endif
 
      signal(SIGPIPE,SIG_IGN);

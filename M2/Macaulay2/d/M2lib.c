@@ -750,10 +750,13 @@ char **argv;
 	  }
 #endif
 
+#if 0
+  /* stop setting gmp's memory functions */
      if (__gmp_allocate_func != (void *(*) (size_t))getmem_atomic) {
           FATAL("possible memory leak, gmp allocator not set up properly");
 	  fprintf(stderr,"--internal warning: possible memory leak, gmp allocator not set up properly, resetting\n");
      }
+#endif
 
      signal(SIGPIPE,SIG_IGN);
      have_arg_no_int = have_arg(argv,"--int");

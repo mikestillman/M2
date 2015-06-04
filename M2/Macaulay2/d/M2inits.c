@@ -70,6 +70,8 @@ void enterM2(void) {
     initializeGMP_Cwrapper(); /* this calls factory's initializeGMP() in factory/initgmp.cc, which will call __gmp_set_memory_functions just once */
   }
 #if 0
+  /* stop setting gmp's memory functions */
+#if 0
   /* Instead of calling __gmp_set_memory_functions we set the values ourselves.  That way we can
      patch mpir so the function __gmp_set_memory_functions does nothing, leaving us in control, even though
      pari calls it, for example. */
@@ -85,14 +87,18 @@ void enterM2(void) {
      );
 #endif
   assert(__gmp_allocate_func == (void *(*) (size_t))getmem_atomic); /* check that __gmp_set_memory_functions did what we thought */
+#endif
 }
 
 void check_M2init() {
      /* Here we provide a way to check, periodically, that no code has overridden our setting. */
+#if 0
+  /* stop setting gmp's memory functions */
      if (!(__gmp_allocate_func == (void *(*) (size_t))getmem_atomic)) {
 	  fprintf(stderr,"__gmp_allocate_func reset somehow\n");
 	  abort();
 	  }
+#endif
      }
 
 void M2inits(void) {

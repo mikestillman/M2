@@ -151,7 +151,7 @@ endif
 endif
 STRIP = @STRIP@
 ifeq "$(ENABLE_STRIP)" "yes"
-ifneq "@OS@" "Darwin"
+ifneq "@OS@" "MacOS"
 LDFLAGS  += -s
 LDFLAGS_FOR_BUILD  += -s
 endif

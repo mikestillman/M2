@@ -34,8 +34,7 @@ DIRECTORY := clang
 CC  := /usr/bin/clang
 CXX := /usr/bin/clang++
 # Xcode doesn't include a fortran compiler
-FC  := false
-FC  := gfortran-4.9
+FC  := 
 # CONFIGOPTIONS += --disable-frobby  --disable-gfan
 else
 CC  := gcc-4.9
@@ -74,6 +73,10 @@ ifeq ($(PROFILE),yes)
    DIRECTORY := $(DIRECTORY).profile
 endif
 include Makefile.include
+
+show:
+	: FC = $(FC)
+	printenv FC
 
 # Local Variables:
 # compile-command: "time make -w -O -j4 -f Makefile.mac PRODUCTION=yes DEBUG=no NTL_WIZARD=no "

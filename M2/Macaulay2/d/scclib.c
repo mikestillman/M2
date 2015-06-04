@@ -1205,6 +1205,16 @@ bool gotArg(const char *arg, const char **argv) {
 
 void do_nothing () { }
 
+void scc_core_prepare() {
+     /* this function is called by the *__prepare() function in every *.d or
+	* *.dd file; the call is placed there by scc1, the D to C translator */
+     static int GC_init_called;
+     if (!GC_init_called) {
+	  GC_INIT();
+	  GC_init_called = TRUE;
+	  }
+     }
+
 /*
 // Local Variables:
 // compile-command: "echo \"make: Entering directory \\`$M2BUILDDIR/Macaulay2/d'\" && make -C $M2BUILDDIR/Macaulay2/d "

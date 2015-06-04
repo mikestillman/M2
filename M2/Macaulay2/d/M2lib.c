@@ -636,7 +636,6 @@ char **argv;
      while (*x) envc++, x++;
 
      progname = argv[0];
-     GC_INIT();
      IM2_initialize();
 
      system_cpuTime_init();

@@ -1195,10 +1195,11 @@ static node chkpackage1(node e, scope v, bool sig){
      if (!sig) {
 	  node code = NULL;
 	  code = join(
-	       list(3,
+	       list(4,
 		    list(3,Ccode_S,void_T, String("static struct FUNCTION_CELL this_final, this_thread_prepare")),
 		    list(3,Ccode_S,void_T, String("static int called_yet = 0")),
-		    list(3,Ccode_S,void_T, String("if (called_yet) return; else called_yet = 1"))
+		    list(3,Ccode_S,void_T, String("if (called_yet) return; else called_yet = 1")),
+		    list(3,Ccode_S,void_T, String("scc_core_prepare()"))
 		    ),
 	       join(
 		    reverse(v->before),

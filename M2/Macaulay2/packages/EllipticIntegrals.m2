@@ -335,10 +335,23 @@ scan(10, i -> (
 	  assert( abs((w - w')/w) < 2p20^(-defaultPrecision+1) );
 	  ));
 assert( {.2p200, .3p200} === E.periodCoordinates (.2p200 * E.Period + .3p200 * E.Period') );
+
 scan(-4 .. 4, i -> scan(-4 .. 4, j -> (
 	       assert( distance(E.exp ( .2p200 ), E.exp ( .2p200 + i * E.Period' + j * E.Period )) < 1e-50 );
 	       assert( distance(E.exp ( .2p200+.3p200*ii ), E.exp ( .2p200+.3p200*ii + i * E.Period' + j * E.Period )) < 1e-50 );
 	       )));
+-- We can get this error from the code above:
+--     i15 : scan(-4 .. 4, i -> scan(-4 .. 4, j -> (
+--           	       assert( distance(E.exp ( .2p200 ), E.exp ( .2p200 + i * E.Period' + j * E.Period )) < 1e-50 );
+--           	       assert( distance(E.exp ( .2p200+.3p200*ii ), E.exp ( .2p200+.3p200*ii + i * E.Period' + j * E.Period )) < 1e-50 );
+--           	       )));
+--     GC_debug_free: found previously deallocated (?) object at 0x10fc7da30 in or near object at 0x10fc7da40(<smashed>, appr. sz = 57)
+--     stdio:27:16:(3):[2]: error: assertion failed
+-- Compiling mpfr with thread local variables is incompatible with libgc, because
+--   some libgc pointers are cached in the variables __gmpfr_cache_const_pi, 
+--   __gmpfr_cache_const_log2, __gmpfr_cache_const_euler, __gmpfr_cache_const_catalan,
+--   so we build mpfr ourselves to disable use of thread local variables.
+
 scan(20, i -> (
 	  z := random CC * 20 - (10+10*ii);
 	  assert( E.checkEquation E.exp z  < 1p20e-40 );

@@ -506,7 +506,7 @@ then LDFLAGS="$LDFLAGS -faltivec"
      CXXFLAGS="$CXXFLAGS -faltivec"
 fi
 
-AC_PROG_FC()
+AC_PROG_FC()			dnl check for Fortran compiler presence
 USE_FCLIBS=unspecified
 AC_ARG_ENABLE(fc-lib-ldflags,
     AS_HELP_STRING(--disable-fc-lib-ldflags,[do not use extra libraries for linking with Fortran (the default under Cygwin)]),
@@ -752,7 +752,25 @@ AC_SUBST(BUILTLIBS,)
 #    ntl needs gmp
 #    lapack includes blas, makes both libblas and liblapack
 #    mpfr needs gmp
+# 	   Formerly we always built mpfr because we told mpir (which is
+# 	   impersonating gmp) to use libgc for its memory allocation.  But mpfr
+# 	   puts pointers to gmp numbers in thread local variables, unless
+# 	   specially configured, which libgc can't find, so libgc regards them
+# 	   as garbage and ultimately frees them, causing strange errors.  See
+# 	   libraries/mpfr/Makefile.in for more information.  Another possible
+# 	   problem can arise if mpfr comes preinstalled and dynamically linked
+# 	   to libgmp, but we want to use mpir instead.
+#	   We cannot continue to tell gmp to use GC_malloc while mpfr is using it.
+#	   *** Conclusion: we must let gmp use malloc, not GC_malloc.  So what
+#	   do with objects returned by libraries that use gmp, directly or
+# 	   indirectly?  Deep copy?  Finalization?
 #    mpir is a plug-in replacement for gmp and can provide libgmp and libgmpxx, too
+# 	   Formerly we always built mpir, so we can patch the routine
+# 	   mp_set_memory_functions() in it so it does nothing; that prevents
+# 	   libraries such as pari from telling it what memory allocation
+# 	   functions to use.  But we should instead patch pari or work around
+# 	   it, so we can use the gmp library that comes with many linux
+# 	   distributions.
 #    4ti2 needs glpk
 #    gfan needs cddlib
 #    polymake cannot be included in Macaulay2 because its compile/build/install procedure is flawed:
@@ -794,22 +812,6 @@ done
 dnl make some programs optional:
 BUILD_lrslib=no
 BUILD_cddplus=no
-
-BUILD_mpir=yes
-BUILD_ALWAYS="mpir $BUILD_ALWAYS"
-# We always build mpir so we can patch the routine mp_set_memory_functions() in it so
-# it does nothing; that prevents libraries such as pari from telling it what memory
-# allocation functions to use.  But we should instead patch pari, so we can use the
-# gmp library that comes with many linux distributions.
-
-BUILD_mpfr=yes
-BUILD_ALWAYS="mpfr $BUILD_ALWAYS"
-# We always build mpfr because we tell mpir (which is impersonating gmp) to use libgc for its
-# memory allocation.  But mpfr puts pointers to gmp numbers in thread local variables, unless
-# specially configured, which libgc can't find, so libgc regards them as garbage and ultimately
-# frees them, causing strange errors.  See libraries/mpfr/Makefile for more information.
-# Another possible problem can arise if mpfr comes dynamically linked to libgmp, but we want
-# to use mpir instead.
 
 AC_ARG_ENABLE(gfan, AS_HELP_STRING(--disable-gfan,[do not build gfan program]), GFAN=$enableval)
 if test "$GFAN" = no
@@ -1080,6 +1082,14 @@ then AC_LANG(C)
 		      return !( major > 2 || major == 2 && minor >= 3 ); }]])],
 	     [ AC_MSG_RESULT(yes) ],
 	     [ AC_MSG_RESULT([no, version at least 2.3.0 is required (mpfr will be built from downloaded sources)]); BUILD_mpfr=yes ],
+	     [ AC_MSG_RESULT([cross-compiling, test not possible]) ])
+	  AC_MSG_CHECKING([whether mpfr library uses thread local variables]) # see notes above
+	  AC_RUN_IFELSE([AC_LANG_SOURCE([[
+		  #include <stdio.h>
+		  #include <mpfr.h>
+		  main () { return !mpfr_buildopt_tls_p(); }]])],
+	     [ AC_MSG_RESULT([yes, *** may cause a problem]) ], dnl build mpfr ourselves with tls disabled, as we did before?
+	     [ AC_MSG_RESULT([no, good]) ],
 	     [ AC_MSG_RESULT([cross-compiling, test not possible]) ])
      fi
 fi

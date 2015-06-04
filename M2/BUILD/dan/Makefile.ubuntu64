@@ -49,5 +49,5 @@ pre-install:;	rm -rf /usr/local/encap/Macaulay2-$(PACKAGE_VERSION)
 arch-chk:; grep -q Ubuntu /etc/issue && [ `uname -m` = x86_64 ]
 
 # Local Variables:
-# compile-command: "time make -f Makefile.ubuntu64 NTL_WIZARD=no "
+# compile-command: "time make -f Makefile.ubuntu64 DEBUG=no NTL_WIZARD=no "
 # End:

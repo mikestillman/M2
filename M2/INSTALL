@@ -167,7 +167,7 @@ various modern operating systems:
 	brew tap homebrew/homebrew-x11
 	brew install pkg-config autoconf automake gnu-tar bdw-gc libatomic_ops gdbm gmp pari boost cddlib glpk libtool gcc49
     Now remember to add 
-        CPPFLAGS="-I/usr/local/include -I/usr/local/opt/readline/include" LDFLAGS="-L/usr/local/lib -L/usr/local/opt/readline/lib" CC="gcc-4.9 -m64" CXX="g++-4.9 -m64" --build=x86_64-apple-darwin
+        CPPFLAGS="-I/usr/local/include -I/usr/local/opt/readline/include" LDFLAGS="-L/usr/local/lib -L/usr/local/opt/readline/lib" CC="gcc-4.9" CXX="g++-4.9" FC="gfortran-4.9" --build=x86_64-apple-darwin
       to the "configure" command line below in the section on compiling Macaulay2.
     Note: under Mac OS version 10.10 (Yosemite), the test for whether compiling with
       g++-4.9 and then linking with gcc-4.9 works may fail, in which case adding
@@ -188,6 +188,8 @@ various modern operating systems:
       /sw/bin/automake.  Since homebrew suffices for most purposes, it's
       probably best to just remove fink entirely, with the command
         sudo rm -rf /sw
+    Note: if you'd like to try compiling with "Clang", you can find the latest
+      versions at http://llvm.org/releases/download.html .
 
   Cygwin 1.7 under Microsoft Windows:
     Use setup to install these packages:
@@ -197,8 +199,8 @@ various modern operating systems:
 	libncurses-devel libreadline-devel libstdc++6-devel libtool
 	libxml2-devel make patchutils pkg-config time unzip wget
     You may also want these:
-        ctags emacs-el gdb gvim libxml2-doc openssh psmisc vim xauth xconsole
-        xinit xkill xterm
+        ctags emacs-el gdb gitk gvim libxml2-doc openssh psmisc vim xauth
+        xconsole xinit xkill xterm
     After installing xinit, the program "startxwin" can be used to start X Windows.
 
 ----------------------

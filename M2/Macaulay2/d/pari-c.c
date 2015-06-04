@@ -9,20 +9,21 @@
 #define FALSE 0
 #define TRUE 1
 
-
-#ifdef HAVE_PYTHON
-#if 0
-    /* when linking with python and running sage, sage will tend to initialize
-       the pari library itself, and we don't want to interfere with that */
 #define RETAIN_PARI_STATE FALSE
-#else
-    /* but for now, we must retain the state, because of a bug in pari 2.3.4 that causes pari_close_opts use a
-       garbage pointer to free memory; I've reported the bug */
-#define RETAIN_PARI_STATE TRUE
-#endif
-#else
-#define RETAIN_PARI_STATE TRUE
-#endif
+/* We cannot retain the state of pari between calls to the functions in this file, 
+   because pari uses gmp's function __gmp_set_memory_functions to set the memory allocation
+   functions for gmp to functions of its own design, and we want GC_malloc and friends
+   to be used by us, in between calls to the functions in this file.
+
+   Notes:
+
+   When linking with python and running sage, sage will tend to initialize
+   the pari library itself, too!  That can cause problems.
+
+   There was a bug in pari 2.3.4 that causes pari_close_opts use a
+   garbage pointer to free memory; I've reported the bug.
+   Let's hope that bug is gone in pari 2.7.1.
+ */
 
 #define PARISIZE 1000000
 #define MAXPRIME 0

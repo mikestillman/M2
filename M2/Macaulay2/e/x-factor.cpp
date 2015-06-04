@@ -45,12 +45,6 @@ static enum factoryCoeffMode coeffMode(const PolynomialRing *P) {
      return modeError;
 }
 
-int debugging
-    #ifdef DEBUG
-      = true
-    #endif
-    ;
-
 static void init_seeds() {
      NTL::SetSeed(NTL::ZZ::zero());       // NTL
      factoryseed(0);            // factory (which uses NTL, as we've compiled it)
@@ -111,19 +105,11 @@ void enter_factory::enter() {
                newcharac = oldcharac;
                break;
       }
-      if (debugging) {
-           if (oldRatlState != newRatlState) printf(newRatlState ? "--setting factory rational mode on\n" : "--setting factory rational mode off\n");
-           if (oldcharac != newcharac) printf("--changing factory characteristic from %d to %d\n",oldcharac,newcharac);
-      }
   }
 
 void enter_factory::exit() {
        if (oldRatlState) On(SW_RATIONAL); else Off(SW_RATIONAL);
        setCharacteristic(oldcharac);
-       if (debugging) {
-            if (oldcharac != newcharac) printf("--changing factory characteristic back from %d to %d\n",newcharac,oldcharac);
-            if (oldRatlState != newRatlState) printf(oldRatlState ? "--setting factory rational mode back on\n" : "--setting factory rational mode back off\n");
-       }
   }
 
 static __mpz_struct toInteger(CanonicalForm h) {

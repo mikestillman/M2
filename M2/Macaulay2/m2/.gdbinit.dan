@@ -16,6 +16,7 @@ b ERROR
 b outofmem
 b abort
 b _ntl_abort
+b malloc_error_break
 b GC_err_puts
 set args -q --no-randomize --no-time
 handle SIGPWR nostop noprint

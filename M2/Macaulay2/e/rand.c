@@ -54,19 +54,16 @@ int32_t rawRandomInt(int32_t max)
   return RandomSeed % max;
 }
 
-gmp_ZZ rawRandomInteger(gmp_ZZ maxN)
+void rawRandomInteger(mpz_ptr result, mpz_srcptr maxN)
 /* if height is the null pointer, use the default height */
 {
-  gmp_ZZ result = getmemstructtype(gmp_ZZ);
-  mpz_init(result);
-  if (maxN == 0)
+  if (maxN == NULL)
     mpz_urandomm(result, state, maxHeight);
   else if (1 != mpz_sgn(maxN)) {
     mpz_set_si(result,0);
   }
   else
     mpz_urandomm(result, state, maxN);
-  return result;
 }
 
 gmp_QQ rawRandomQQ(gmp_ZZ height)

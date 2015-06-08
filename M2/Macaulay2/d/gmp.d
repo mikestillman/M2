@@ -90,83 +90,68 @@ export hash(x:ZZ):int := (
 
 getstr(str:charstarOrNull, base:int, x:ZZ) ::= Ccode(charstarOrNull, "mpz_get_str(", str, ",", base, ",", x, ")" );
 
-init(x:ZZ) ::= Ccode( ZZ, "(mpz_init(",  x, "),",x,")" );
-export newZZ():ZZ := init(malloc(ZZ));
+ZZfinalizer(r:ZZ,msg:string):void := Ccode(void,"mpz_clear(",r,")");
+QQfinalizer(r:QQ,msg:string):void := Ccode(void,"mpq_clear(",r,")");
+msg := "dummy finalizer message";
+export newZZ():ZZ := (
+     r := malloc(ZZ);
+     Ccode(void, "mpz_init(",r,")" );
+     Ccode(void, "GC_REGISTER_FINALIZER(",r,",(GC_finalization_proc)",ZZfinalizer,",",msg,",0,0)");
+     r);
+export newQQ():QQ := (
+     r := malloc(QQ);
+     Ccode(void, "mpq_init(",r,")" );
+     Ccode(void, "GC_REGISTER_FINALIZER(",r,",(GC_finalization_proc)",QQfinalizer,",",msg,",0,0)");
+     r);
 
-set(x:ZZ, y:ZZ) ::= Ccode( ZZ, "(mpz_set(",	  x, ",",  y, "),",x,")" );
-
-export copy(i:ZZ):ZZ := set(init(malloc(ZZ)),i);
-
+set(x:ZZ, y:ZZ) ::= Ccode( void, "mpz_set(",	  x, ",",  y, ")" );
+export copy(i:ZZ):ZZ := ( r := newZZ(); set(r,i); r );
 set(x:ZZ, n:int) ::= Ccode( ZZ, "(mpz_set_si(",  x, ",", "(long)", n, "),",x,")" );
 set(x:ZZ, n:ulong) ::= Ccode( ZZ, "(mpz_set_ui(",  x, ",", n, "),",x,")" );
 set(x:ZZ, n:long) ::= Ccode( ZZ, "(mpz_set_si(",  x, ",", n, "),",x,")" );
 
 negsmall := -100;
 possmall := 300;
-smallints := new array(ZZ) len possmall - negsmall + 1 do for i from negsmall to possmall do (
-     x := malloc(ZZ);
-     init(x);
-     set(x,i);
-     provide x
-     );
+smallints := new array(ZZ) len possmall - negsmall + 1 do for i from negsmall to possmall do provide ( r := newZZ(); set(r,i); r );
 
 isSmall(x:ZZ):bool := isInt(x) && (
      i := toInt(x);
      negsmall <= i && i <= possmall);
 
 export toInteger(i:int):ZZ := (
-     if i >= negsmall && i <= possmall then smallints.(i-negsmall)
+     if i >= negsmall && i <= possmall 
+     then smallints.(i-negsmall)
      else (
-	  x := malloc(ZZ);
-	  init(x);
-	  set(x,i);
-	  x));
-
+	  r := newZZ();
+	  set(r,i);
+	  r));
 export toInteger(i:ushort):ZZ := toInteger(int(i));
-
 export toInteger(i:ulong):ZZ := (
      if i <= ulong(possmall)
      then smallints.(int(i)-negsmall)
      else (
-	  x := malloc(ZZ);
-	  init(x);
-	  set(x,i);
-	  x));
+	  r := newZZ();
+	  set(r,i);
+	  r));
 export toInteger(i:long):ZZ := (
      if i >= long(negsmall) && i <= long(possmall)
      then smallints.(int(i)-negsmall)
      else (
-	  x := malloc(ZZ);
-	  init(x);
-	  set(x,i);
-	  x));
+	  r := newZZ();
+	  set(r,i);
+	  r));
+
 neg(x:ZZ, y:ZZ) ::= Ccode( void, "mpz_neg(", x, ",", y, ")" );
-export - (x:ZZ) : ZZ := (
-     y := malloc(ZZ);
-     init(y);
-     neg(y,x);
-     y);
+export - (x:ZZ) : ZZ := ( y := newZZ(); neg(y,x); y);
 abs(x:ZZ, y:ZZ) ::= Ccode( void, "mpz_abs(", x, ",", y, ")" );
 export abs(x:ZZ) : ZZ := (
-     if isNegative0(x) then (
-	  y := malloc(ZZ);
-	  init(y);
-	  abs(y,x);
-	  y)
+     if isNegative0(x) then ( y := newZZ(); abs(y,x); y)
      else x);
 add(x:ZZ, y:ZZ, z:ZZ) ::= Ccode( void, "mpz_add(", x, ",", y, ",", z, ")" );
-export (x:ZZ) + (y:ZZ) : ZZ := (
-     z := malloc(ZZ);
-     init(z);
-     add(z,x,y);
-     z);
+export (x:ZZ) + (y:ZZ) : ZZ := ( z := newZZ(); add(z,x,y); z);
 add(x:ZZ, y:ZZ, z:ulong) ::= Ccode( void, "mpz_add_ui(", x, ",", y, ",", z, ")" );
 sub(x:ZZ, y:ZZ, z:ZZ) ::= Ccode( void, "mpz_sub(", x, ",", y, ",", z, ")" );
-export (x:ZZ) - (y:ZZ) : ZZ := (
-     z := malloc(ZZ);
-     init(z);
-     sub(z,x,y);
-     z);
+export (x:ZZ) - (y:ZZ) : ZZ := ( z := newZZ(); sub(z,x,y); z);
 compare(x:ZZ, y:ZZ) ::= Ccode( int, "mpz_cmp(", x, ",", y, ")" );
 export (x:ZZ) === (y:ZZ) : bool := compare(x,y) == 0;
 export (x:ZZ)  >  (y:ZZ) : bool := compare(x,y) >  0;
@@ -187,110 +172,56 @@ export (x:int) >= (y:ZZ) : bool := y <= x;
 export (x:int) === (y:ZZ) : bool := y === x;
 sub(x:ZZ, y:ZZ, z:ulong) ::= Ccode( void, "mpz_sub_ui(", x, ",", y, ",", z, ")" );
 mul(x:ZZ, y:ZZ, z:ZZ) ::= Ccode( void, "mpz_mul(", x, ",", y, ",", z, ")" );
-export (x:ZZ) * (y:ZZ) : ZZ := (
-     z := malloc(ZZ);
-     init(z);
-     mul(z,x,y);
-     z);
+export (x:ZZ) * (y:ZZ) : ZZ := ( z := newZZ(); mul(z,x,y); z);
 mul(x:ZZ, y:ZZ, z:int) ::= Ccode( void, "mpz_mul_si(", x, ",", y, ",", z, ")" );
 mul(x:ZZ, y:ZZ, z:ulong) ::= Ccode( void, "mpz_mul_ui(", x, ",", y, ",", z, ")" );
 pow(x:ZZ, y:ZZ, n:ulong) ::= Ccode( void, "mpz_pow_ui(", x, ",", y, ",", n, ")" );
-export (x:ZZ) ^ (n:ulong) : ZZ := (
-     y := newZZ();
-     pow(y,x,n);
-     y);
-
-
+export (x:ZZ) ^ (n:ulong) : ZZ := ( y := newZZ(); pow(y,x,n); y);
 cdiv(x:ZZ, y:ZZ, z:ZZ) ::= Ccode( void, "mpz_cdiv_q(", x, ",", y, ",", z, ")" );
 fdiv(x:ZZ, y:ZZ, z:ZZ) ::= Ccode( void, "mpz_fdiv_q(", x, ",", y, ",", z, ")" );
-
 export (x:ZZ) // (y:ZZ) : ZZ := (
-     z := malloc(ZZ);
-     init(z);
+     z := newZZ();
      if isPositive0(y) then fdiv(z,x,y) else cdiv(z,x,y);
      z);
-
 divexact(x:ZZ, y:ZZ):ZZ := (
      if y === 1 then return x;
-     z := malloc(ZZ);
-     init(z);
+     z := newZZ();
      Ccode( void, "mpz_divexact(", z, ",", x, ",", y, ")" );
      z);
-
 fmod(x:ZZ, y:ZZ, z:ZZ) ::= Ccode( void, "mpz_fdiv_r(", x, ",", y, ",", z, ")" );
 cmod(x:ZZ, y:ZZ, z:ZZ) ::= Ccode( void, "mpz_cdiv_r(", x, ",", y, ",", z, ")" );
-
 export (x:ZZ) % (y:ZZ) : ZZ := (
-     z := malloc(ZZ);
-     init(z);
+     z := newZZ();
      if isPositive0(y) then fmod(z,x,y) else cmod(z,x,y);
      z);
-
 fdiv(x:ZZ, y:ZZ, z:ulong) ::= Ccode( void, "mpz_fdiv_q_ui(", x, ",", y, ",", z, ")" );
-
 export (x:ZZ) // (y:ulong) : ZZ := (
-     z := malloc(ZZ);
-     init(z);
+     z := newZZ();
      fdiv(z,x,y);
      z);
-
 export (x:ZZ) // (y:ushort) : ZZ := x // ulong(y);
-
 fmod(y:ZZ, z:ulong) ::= Ccode( ulong, "mpz_fdiv_ui(", y, ",", z, ")" );
-
 export (x:ZZ) % (y:ulong) : ulong := fmod(x,y);
 export (x:ZZ) % (y:ushort) : ushort := ushort(x % ulong(y));
 gcd(x:ZZ, y:ZZ, z:ZZ) ::= Ccode( void, "mpz_gcd(", x, ",", y, ",", z, ")" );
-
-export gcd(x:ZZ,y:ZZ):ZZ := (
-     z := malloc(ZZ);
-     init(z);
-     gcd(z,x,y);
-     z);
-
+export gcd(x:ZZ,y:ZZ):ZZ := ( z := newZZ(); gcd(z,x,y); z);
 mul_2exp(x:ZZ, y:ZZ, z:ulong) ::= Ccode( void, "mpz_mul_2exp(", x, ",", y, ",", z, ")" );
-
-leftshift(x:ZZ,n:ulong):ZZ := (
-     z := malloc(ZZ);
-     init(z);
-     mul_2exp(z,x,n);
-     z);
-
+leftshift(x:ZZ,n:ulong):ZZ := ( z := newZZ(); mul_2exp(z,x,n); z);
 tdiv_q_2exp(x:ZZ, y:ZZ, z:ulong) ::= Ccode( void, "mpz_tdiv_q_2exp(", x, ",", y, ",", z, ")" );
-
-rightshift(x:ZZ,n:ulong):ZZ := (
-     z := malloc(ZZ);
-     init(z);
-     tdiv_q_2exp(z,x,n);
-     z);
-
+rightshift(x:ZZ,n:ulong):ZZ := ( z := newZZ(); tdiv_q_2exp(z,x,n); z);
 export (x:ZZ) << (n:int) : ZZ := (
      if n == 0 then x else if n > 0 then leftshift(x,ulong(n)) else rightshift(x,ulong(-n))
      );
 export (x:ZZ) >> (n:int) : ZZ := (
      if n == 0 then x else if n > 0 then rightshift(x,ulong(n)) else leftshift(x,ulong(-n))
      );     
-
 and(x:ZZ, y:ZZ, z:ZZ) ::= Ccode( void, "mpz_and(", x, ",", y, ",", z, ")" );
-export (x:ZZ) & (y:ZZ) : ZZ := (
-     z := malloc(ZZ);
-     init(z);
-     and(z,x,y);
-     z);
+export (x:ZZ) & (y:ZZ) : ZZ := ( z := newZZ(); and(z,x,y); z);
 
 ior(x:ZZ, y:ZZ, z:ZZ) ::= Ccode( void, "mpz_ior(", x, ",", y, ",", z, ")" );
-export (x:ZZ) | (y:ZZ) : ZZ := (
-     z := malloc(ZZ);
-     init(z);
-     ior(z,x,y);
-     z);
-
+export (x:ZZ) | (y:ZZ) : ZZ := ( z := newZZ(); ior(z,x,y); z);
 xor(x:ZZ, y:ZZ, z:ZZ) ::= Ccode( void, "mpz_xor(", x, ",", y, ",", z, ")" );
-export (x:ZZ) ^^ (y:ZZ) : ZZ := (
-     z := malloc(ZZ);
-     init(z);
-     xor(z,x,y);
-     z);
+export (x:ZZ) ^^ (y:ZZ) : ZZ := ( z := newZZ(); xor(z,x,y); z);
 
 base := 10;
 toCstring(x:ZZ) ::= getstr(charstarOrNull(null()), base, x);
@@ -413,49 +344,40 @@ export hash(x:QQ):int := hash(numeratorRef(x))+1299841*hash(denominatorRef(x));
 isNegative0(x:QQ):bool := -1 == Ccode(int, "mpq_sgn(",x,")");
 export isNegative(x:QQ):bool := isNegative0(x);
 
-init(x:QQ) ::= Ccode( void, "mpq_init(",  x, ")" );
-
-newRational():QQ := (
-     x := malloc(QQ);
-     init(x);
-     x);
-
-export newRational(i:ZZ,j:ZZ):QQ := (
-     x := malloc(QQ);
-     init(x);
+export newQQ(i:ZZ,j:ZZ):QQ := (
+     x := newQQ();
      set(  numeratorRef(x),i);
      set(denominatorRef(x),j);
      Ccode(void, "mpq_canonicalize(",x,")");
      x);
 
-export newRationalCanonical(i:ZZ,j:ZZ):QQ := ( -- assume gcd(i,j)=1, j>0, and j==1 if i==0
-     x := malloc(QQ);
-     init(x);
+export newQQCanonical(i:ZZ,j:ZZ):QQ := ( -- assume gcd(i,j)=1, j>0, and j==1 if i==0
+     x := newQQ();
      set(  numeratorRef(x),i);
      set(denominatorRef(x),j);
      x);
 
 export toRational(n:int):QQ := (
-     x := newRational();
+     x := newQQ();
      Ccode( void, "mpq_set_si(",  x, ",(long)", n, ",(long)1)" );
      x);
 
 export toRational(n:ulong):QQ := (
-     x := newRational();
+     x := newQQ();
      Ccode( void, "mpq_set_ui(",  x, ",(unsigned long)", n, ",(unsigned long)1)" );
      x);
 
 -- integers and rationals
      
 export toRational(x:ZZ):QQ := (
-     z := newRational();
+     z := newQQ();
      Ccode(void, "mpq_set_z(", z, ",", x, ")");
      z);
 
 export floor(x:QQ):ZZ := numeratorRef(x)//denominatorRef(x);
 
 export (x:QQ) + (y:QQ) : QQ := (
-     z := newRational();
+     z := newQQ();
      Ccode( void,
           "mpq_add(",
 	       z, ",", 
@@ -466,7 +388,7 @@ export (x:QQ) + (y:QQ) : QQ := (
      z);
 
 export - (y:QQ) : QQ := (
-     z := newRational();
+     z := newQQ();
      Ccode( void,
 	  "mpq_neg(",
 	       z, ",", 
@@ -478,7 +400,7 @@ export - (y:QQ) : QQ := (
 export abs(x:QQ) : QQ := if isNegative0(x) then -x else x;
 
 export inv(y:QQ) : QQ := (			    -- reciprocal
-     z := newRational();
+     z := newQQ();
      Ccode( void,
 	  "mpq_inv(",
 	       z, ",", 
@@ -488,7 +410,7 @@ export inv(y:QQ) : QQ := (			    -- reciprocal
      z);
 
 export (x:QQ) - (y:QQ) : QQ := (
-     z := newRational();
+     z := newQQ();
      Ccode( void,
           "mpq_sub(",
 	       z, ",", 
@@ -499,7 +421,7 @@ export (x:QQ) - (y:QQ) : QQ := (
      z);
 
 export (x:QQ) * (y:QQ) : QQ := (
-     z := newRational();
+     z := newQQ();
      Ccode( void,
           "mpq_mul(",
 	       z, ",", 
@@ -510,7 +432,7 @@ export (x:QQ) * (y:QQ) : QQ := (
      z);
 
 export (x:QQ) / (y:QQ) : QQ := (
-     z := newRational();
+     z := newQQ();
      Ccode( void,
           "mpq_div(",
 	       z, ",", 

@@ -532,28 +532,27 @@ const RingElement *IM2_RingElement_from_BigReal(const Ring *R, gmp_RR z)
 }
 
 
-gmp_ZZorNull IM2_RingElement_to_Integer(const RingElement *a)
-  /* If the ring of a is ZZ, or ZZ/p, this returns the underlying representation.
-     Otherwise, NULL is returned, and an error is given */
+int IM2_RingElement_to_Integer(mpz_ptr result, const RingElement *a)
+  /* If the ring of a is ZZ, or ZZ/p, this copies the underlying representation into "result".
+     Otherwise, the error is indicated by a nonzero return value. */
 {
   const Ring *R = a->get_ring();
   if (R->is_ZZ())
     {
       void *f = a->get_value().poly_val;
-      return static_cast<gmp_ZZ>(f);
+      mpz_ptr i = static_cast<mpz_ptr>(f);
+      mpz_set(result,i);
+      return 0;
     }
   if (R->isFinitePrimeField())
     {
-      gmp_ZZ result = newitem(__mpz_struct);
-
       std::pair<bool,long> res = R->coerceToLongInteger(a->get_value());
       M2_ASSERT(res.first);
-
       mpz_init_set_si(result, static_cast<int>(res.second));
-      return result;
+      return 0;
     }
   ERROR("Expected ZZ or ZZ/p as base ring");
-  return 0;
+  return 1;
 }
 
 gmp_QQorNull IM2_RingElement_to_rational(const RingElement *a)

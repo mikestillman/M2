@@ -21,7 +21,7 @@ extern "C" {
   int32_t rawRandomInt(int32_t max);
   /* generate a random number in the range 0..max-1 */
 
-  gmp_ZZ rawRandomInteger(gmp_ZZ maxN);
+  void rawRandomInteger(mpz_ptr result, mpz_srcptr maxN);
   /* if height is the null pointer, use the default height */
 
   gmp_QQ rawRandomQQ(gmp_ZZ height);

@@ -130,8 +130,7 @@ namespace M2 {
     
     void random(ElementType& result) const 
     {
-      // TODO: this leaks a gmp_ZZ
-      mpz_set(&result, rawRandomInteger(0));
+      rawRandomInteger(&result,NULL);
     }
     /** @} */
 

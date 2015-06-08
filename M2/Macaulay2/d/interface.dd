@@ -37,14 +37,15 @@ setupfun("testCatch",testCatch);
 -- random numbers
 
 export rawRandomZZ(e:Expr):Expr := (
+     r := newZZ();
      when e
-     is Nothing do toExpr(Ccode(ZZ, "rawRandomInteger(", "NULL)"))
-     is maxN:ZZcell do toExpr(Ccode(ZZ, "rawRandomInteger(", maxN.v, ")"))
+     is Nothing do (Ccode(void, "rawRandomInteger(",r, ",NULL)");toExpr(r))
+     is maxN:ZZcell do (Ccode(void, "rawRandomInteger(",r,",",maxN.v,")");toExpr(r))
      else WrongArgZZ());
 setupfun("rawRandomZZ",rawRandomZZ);
 export rawRandomQQ(e:Expr):Expr := (
      when e
-     is Nothing do toExpr(Ccode(QQ, "rawRandomQQ(", "0)"))
+     is Nothing do toExpr(Ccode(QQ, "rawRandomQQ(", "NULL)"))
      is ht:ZZcell do toExpr(Ccode(QQ, "rawRandomQQ(", ht.v, ")"))
      else WrongArgZZ());
 setupfun("rawRandomQQ",rawRandomQQ);
@@ -1133,8 +1134,12 @@ setupfun("rawMutableMatrixIsDense",rawMutableMatrixIsDense);
 
 export rawToInteger(e:Expr):Expr := (
      when e
-     is x:RawRingElementCell do toExpr( 
-	  Ccode( ZZorNull, "IM2_RingElement_to_Integer(", x.p, ")" ))
+     is x:RawRingElementCell do toExpr(
+	  result := newZZ();
+	  err := Ccode( int, "IM2_RingElement_to_Integer(", result, ",", x.p, ")" );
+	  if err != 0
+	  then engineErrorMessage()
+	  else toExpr(result))
      else WrongArg("a raw ring element")
      );
 setupfun("rawToInteger",rawToInteger);

@@ -1212,7 +1212,6 @@ void scc_core_prepare() {
      if (!GC_init_called) {
 	  GC_INIT();
 	  GC_init_called = TRUE;
-	  __gmp_set_memory_functions ((void *(*) (size_t)) getmem_atomic, (void *(*) (void *, size_t, size_t)) getmoremem_atomic, freememlen);
 	  }
     }
 

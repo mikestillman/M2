@@ -359,9 +359,9 @@ extern "C" {
   const RingElement /* or null */ *IM2_RingElement_from_rational(const Ring *R,
                                                          gmp_QQ r); /* rawFromNumber*/
 
-  gmp_ZZ /* or null */ IM2_RingElement_to_Integer(const RingElement *a); /* drg: connected rawToInteger*/
-    /* If the ring of a is ZZ, or ZZ/p, this returns the underlying representation.
-       Otherwise, NULL is returned, and an error is given */
+  int IM2_RingElement_to_Integer(gmp_ZZ result, const RingElement *a); /* drg: connected rawToInteger*/
+    /* If the ring of a is ZZ, or ZZ/p, this copies the underlying representation into "result".
+       Otherwise, the error is indicated by a nonzero return value. */
 
   gmp_QQ IM2_RingElement_to_rational(const RingElement *a); /* connected: rawToRational */
     /* If the ring of a is ZZ, or ZZ/p, this returns the underlying representation.

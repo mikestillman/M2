@@ -24,7 +24,7 @@ extern "C" {
   void rawRandomInteger(mpz_ptr result, mpz_srcptr maxN);
   /* if height is the null pointer, use the default height */
 
-  gmp_QQ rawRandomQQ(gmp_ZZ height);
+  void rawRandomQQ(mpq_ptr result, mpz_srcptr height);
   /* returns random a/b, where 1 <= b <= height, 1 <= a <= height */
   /* if height is the null pointer, use the default height */
 

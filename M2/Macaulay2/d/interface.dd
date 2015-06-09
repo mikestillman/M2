@@ -44,9 +44,10 @@ export rawRandomZZ(e:Expr):Expr := (
      else WrongArgZZ());
 setupfun("rawRandomZZ",rawRandomZZ);
 export rawRandomQQ(e:Expr):Expr := (
+     r := newQQ();
      when e
-     is Nothing do toExpr(Ccode(QQ, "rawRandomQQ(", "NULL)"))
-     is ht:ZZcell do toExpr(Ccode(QQ, "rawRandomQQ(", ht.v, ")"))
+     is Nothing do (Ccode(void, "rawRandomQQ(",r,",NULL)");toExpr(r))
+     is ht:ZZcell do (Ccode(void, "rawRandomQQ(",r,",",ht.v,")");toExpr(r))
      else WrongArgZZ());
 setupfun("rawRandomQQ",rawRandomQQ);
 export rawRandomRR(e:Expr):Expr := (
@@ -1134,27 +1135,32 @@ setupfun("rawMutableMatrixIsDense",rawMutableMatrixIsDense);
 
 export rawToInteger(e:Expr):Expr := (
      when e
-     is x:RawRingElementCell do toExpr(
+     is x:RawRingElementCell do (
 	  result := newZZ();
-	  err := Ccode( int, "IM2_RingElement_to_Integer(", result, ",", x.p, ")" );
-	  if err != 0
+	  if Ccode( int, "IM2_RingElement_to_Integer(", result, ",", x.p, ")" ) != 0
 	  then engineErrorMessage()
 	  else toExpr(result))
-     else WrongArg("a raw ring element")
-     );
+     else WrongArg("a raw ring element"));
 setupfun("rawToInteger",rawToInteger);
 
 export rawToRational(e:Expr):Expr := (
      when e
-     is x:RawRingElementCell do toExpr( 
-	  Ccode( QQorNull, "IM2_RingElement_to_rational(", x.p, ")" ))
+     is x:RawRingElementCell do (
+	  r := newQQ();
+	  if 0 != Ccode( int, "IM2_RingElement_to_rational(", r, ",", x.p, ")" )
+	  then engineErrorMessage()
+	  else toExpr(r))
      else WrongArg("a raw ring element")
      );
 setupfun("rawToRational",rawToRational);
 
 export rawToRR(e:Expr):Expr := (
      when e
-     is x:RawRingElementCell do toExpr(Ccode(RRorNull, "IM2_RingElement_to_BigReal(",x.p, ")" ))
+     is x:RawRingElementCell do (
+	  r := newRR();
+	  if 0 != Ccode(int, "IM2_RingElement_to_BigReal(",r, ",", x.p, ")" )
+	  then engineErrorMessage()
+	  else toExpr(r))
      else WrongArg("a raw ring element"));
 setupfun("rawToRR",rawToRR);
 
@@ -1597,7 +1603,11 @@ setupfun("rawSchurSnTensorMult",rawSchurSnTensorMult);
 
 export rawSchurDimension(e:Expr):Expr := (
      when e
-     is x:RawRingElementCell do toExpr( Ccode( ZZorNull, "rawSchurDimension(", x.p, ")" ))
+     is x:RawRingElementCell do (
+	  r := newZZ();
+	  if 0 != Ccode( int, "rawSchurDimension(",r, ",", x.p, ")" )
+	  then engineErrorMessage()
+	  else toExpr(r))
      else WrongArg("a raw ring element"));
 setupfun("rawSchurDimension",rawSchurDimension);
 

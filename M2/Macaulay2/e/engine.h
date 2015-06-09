@@ -363,9 +363,9 @@ extern "C" {
     /* If the ring of a is ZZ, or ZZ/p, this copies the underlying representation into "result".
        Otherwise, the error is indicated by a nonzero return value. */
 
-  gmp_QQ IM2_RingElement_to_rational(const RingElement *a); /* connected: rawToRational */
-    /* If the ring of a is ZZ, or ZZ/p, this returns the underlying representation.
-       Otherwise, NULL is returned, and an error is given */
+  int IM2_RingElement_to_rational(mpq_ptr result, const RingElement *a); /* connected: rawToRational */
+    /* If the ring of a is ZZ, or ZZ/p, this puts the underlying representation into "result".
+       Otherwise, a nonzero value is returned, and an ERROR is given */
 
   const RingElement /* or null */ *IM2_RingElement_from_BigReal(const Ring *R,
                                                         gmp_RR d); /* drg: waiting, rawFromNumber*/
@@ -373,9 +373,9 @@ extern "C" {
   const RingElement /* or null */ *IM2_RingElement_from_BigComplex(const Ring *R,
                                                         gmp_CC d); /* drg: waiting, rawFromNumber*/
 
-  gmp_RRorNull IM2_RingElement_to_BigReal(const RingElement *a); /* drg: implemented, connected to rawToRR */
-    /* If the ring of a is RR, this returns the underlying representation of 'a'.
-       Otherwise NULL is returned. */
+  int IM2_RingElement_to_BigReal(mpfr_ptr result, const RingElement *a); /* drg: implemented, connected to rawToRR */
+    /* If the ring of a is RR, this returns the underlying representation of 'a' in 'result'.
+       Otherwise ERROR is raised and a nonzero value is returned. */
 
   gmp_CCorNull IM2_RingElement_to_BigComplex(const RingElement *a); /* drg: implemented, connected to rawToRR */
 
@@ -571,10 +571,10 @@ extern "C" {
                                                     const RingElement *a,
                                                     const RingElement *b); /* drg: connected rawFraction*/
 
-  gmp_ZZ /* or null */ rawSchurDimension(const RingElement *f); /* connected rawSchurDimension */
+  int rawSchurDimension(mpz_ptr result, const RingElement *f); /* connected rawSchurDimension */
   /* f should be a polynomial whose base ring was created using rawSchurRing
-     (otherwise NULL is returned).  If so, the dimension of the corresponding
-     (virtual) GL(n) representation is returned. */
+     (otherwise a nonzero value is returned).  If so, the dimension of the corresponding
+     (virtual) GL(n) representation is placed in "result". */
 
   const RingElement /* or null */ *rawSchurFromPartition(const Ring *R, M2_arrayint part);
   /* if R is a SchurRing2, then return the element corresponding to the given partition */

@@ -555,48 +555,52 @@ int IM2_RingElement_to_Integer(mpz_ptr result, const RingElement *a)
   return 1;
 }
 
-gmp_QQorNull IM2_RingElement_to_rational(const RingElement *a)
+int IM2_RingElement_to_rational(mpq_ptr result, const RingElement *a)
 {
   if (!a->get_ring()->is_QQ())
     {
       ERROR("expected an element of QQ");
-      return 0;
+      return 1;
     }
   void *f = a->get_value().poly_val;
-  return static_cast<gmp_QQ>(f);
+  mpq_set(result,static_cast<gmp_QQ>(f));
+  return 0;
 }
 
-gmp_RRorNull IM2_RingElement_to_BigReal(const RingElement *a)
+int IM2_RingElement_to_BigReal(mpfr_ptr result, const RingElement *a)
 {
   const Ring* R = a->get_ring();
-  gmp_RR result;
   void* b;
   double* c;
   const M2::ConcreteRing<M2::ARingRRR> *R1;
 
   switch (R->ringID()) 
     {
-    case M2::ring_RR:
-      result = getmemstructtype(gmp_RR);
-      mpfr_init2(result, 53);
+    case M2::ring_RR: {
       b = static_cast<void*>(a->get_value().poly_val);
       c = static_cast<double*>(b);
+      mpfr_set_prec(result,53);
       mpfr_set_d(result, *c, GMP_RNDN);
-      return result;
-    case M2::ring_RRR:
-      R1 = dynamic_cast< const M2::ConcreteRing<M2::ARingRRR> * >(a->get_ring());
-      result = getmemstructtype(gmp_RR);
-      mpfr_init2(result, R1->get_precision());
+      return 0;
+    }
+    case M2::ring_RRR: {
       b = a->get_value().poly_val;
-      mpfr_set(result, static_cast<gmp_RR>(b), GMP_RNDN);
-      return result;
-    default:
+      mpfr_ptr x = static_cast<gmp_RR>(b);
+      mpfr_set_prec(result, mpfr_get_prec(x));
+      mpfr_set(result, x, GMP_RNDN);
+      return 0;
+    }
+    default: {
       if (!a->get_ring()->is_RRR())
         {
           ERROR("expected an element of RRR");
-          return 0;
+          return 1;
         }
-      return a->get_value().mpfr_val;
+      mpfr_ptr x = a->get_value().mpfr_val;
+      mpfr_set_prec(result, mpfr_get_prec(x));
+      mpfr_set(result, x, GMP_RNDN);
+      return 0;
+    }
     }
 }
 
@@ -1218,21 +1222,25 @@ const RingElement /* or null */ *IM2_RingElement_fraction(const Ring *R,
      }
 }
 
-gmp_ZZorNull rawSchurDimension(const RingElement *f)
+int rawSchurDimension(mpz_ptr res, const RingElement *f) /* connected rawSchurDimension */
+/* f should be a polynomial whose base ring was created using rawSchurRing
+   (otherwise a nonzero value is returned).  If so, the dimension of the corresponding
+   (virtual) GL(n) representation is placed in "result". */
 {
      try {
           const SchurRing *S = f->get_ring()->cast_to_SchurRing();
           if (S == 0)
             {
               ERROR("expected a polynomial over a Schur ring");
-              return 0;
+              return 1;
             }
           ring_elem result = S->dimension(f->get_value());
-          return result.get_mpz();
+          mpz_set(res,result.get_mpz());
+          return 0;
      }
      catch (exc::engine_error e) {
           ERROR(e.what());
-          return NULL;
+          return 1;
      }
 }
 

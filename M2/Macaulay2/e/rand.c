@@ -66,19 +66,16 @@ void rawRandomInteger(mpz_ptr result, mpz_srcptr maxN)
     mpz_urandomm(result, state, maxN);
 }
 
-gmp_QQ rawRandomQQ(gmp_ZZ height)
+void rawRandomQQ(mpq_ptr result, mpz_srcptr height)
   /* returns random a/b, where 1 <= b <= height, 1 <= a <= height */
 /* if height is the null pointer, use the default height */
 {
-  gmp_QQ result = getmemstructtype(gmp_QQ);
-  mpq_init(result);
   if (height == 0) height = maxHeight;
   mpz_urandomm(mpq_numref(result), state, height);
   mpz_urandomm(mpq_denref(result), state, height);
   mpz_add_ui(mpq_numref(result), mpq_numref(result), 1);
   mpz_add_ui(mpq_denref(result), mpq_denref(result), 1);
   mpq_canonicalize(result);
-  return result;
 }
 
 void rawSetRandomQQ(mpq_ptr result, gmp_ZZ height)

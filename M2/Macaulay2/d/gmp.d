@@ -25,13 +25,11 @@ header "#include \"gmp_aux.h\"";
 
 export ZZstruct := Type "__mpz_struct";
 export ZZ := Pointer "__mpz_struct *";
-export ZZorNull := ZZ or null;
 export ZZcell := {+v:ZZ};
 export ZZpair := {a:ZZ,b:ZZ};
 export ZZpairOrNull := ZZpair or null;
 export QQstruct := Type "__mpq_struct";
 export QQ := Pointer "__mpq_struct *";
-export QQorNull := QQ or null;
 export QQcell := {+v:QQ};
 export RRstruct := Type "__mpfr_struct";
 export RR := Pointer "__mpfr_struct *";
@@ -92,6 +90,7 @@ getstr(str:charstarOrNull, base:int, x:ZZ) ::= Ccode(charstarOrNull, "mpz_get_st
 
 ZZfinalizer(r:ZZ,msg:string):void := Ccode(void,"mpz_clear(",r,")");
 QQfinalizer(r:QQ,msg:string):void := Ccode(void,"mpq_clear(",r,")");
+RRfinalizer(r:RR,msg:string):void := Ccode(void,"mpfr_clear(",r,")");
 msg := "dummy finalizer message";
 export newZZ():ZZ := (
      r := malloc(ZZ);
@@ -103,12 +102,17 @@ export newQQ():QQ := (
      Ccode(void, "mpq_init(",r,")" );
      Ccode(void, "GC_REGISTER_FINALIZER(",r,",(GC_finalization_proc)",QQfinalizer,",",msg,",0,0)");
      r);
+export newRR():RR := (
+     r := malloc(RR);
+     Ccode(void, "mpfr_init(",r,")" );
+     Ccode(void, "GC_REGISTER_FINALIZER(",r,",(GC_finalization_proc)",RRfinalizer,",",msg,",0,0)");
+     r);
 
 set(x:ZZ, y:ZZ) ::= Ccode( void, "mpz_set(",	  x, ",",  y, ")" );
 export copy(i:ZZ):ZZ := ( r := newZZ(); set(r,i); r );
-set(x:ZZ, n:int) ::= Ccode( ZZ, "(mpz_set_si(",  x, ",", "(long)", n, "),",x,")" );
-set(x:ZZ, n:ulong) ::= Ccode( ZZ, "(mpz_set_ui(",  x, ",", n, "),",x,")" );
-set(x:ZZ, n:long) ::= Ccode( ZZ, "(mpz_set_si(",  x, ",", n, "),",x,")" );
+set(x:ZZ, n:int) ::= Ccode( void, "mpz_set_si(",  x, ",", "(long)", n, ")" );
+set(x:ZZ, n:ulong) ::= Ccode( void, "mpz_set_ui(",  x, ",", n, ")" );
+set(x:ZZ, n:long) ::= Ccode( void, "mpz_set_si(",  x, ",", n, ")" );
 
 negsmall := -100;
 possmall := 300;

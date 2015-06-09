@@ -455,7 +455,7 @@ int ARingGFGivaro::compare_elems(const ElementType f, const ElementType g) const
       givaroField.init(result, a);
     }
 
-    void ARingGFGivaro::set_from_mpz(ElementType &result, const mpz_ptr a) const 
+    void ARingGFGivaro::set_from_mpz(ElementType &result, const mpz_srcptr a) const 
     {
         //std::cerr << "set_from_mpz" << std::endl;
         UTT b = static_cast< UTT>(mpz_fdiv_ui(a, mCharac));
@@ -464,7 +464,7 @@ int ARingGFGivaro::compare_elems(const ElementType f, const ElementType g) const
        // std::cerr << "result " << result << std::endl;
     }
 
-    void ARingGFGivaro::set_from_mpq(ElementType &result, const mpq_ptr a) const {
+    void ARingGFGivaro::set_from_mpq(ElementType &result, const mpq_srcptr a) const {
       //  std::cerr << "set_from_mpq" << std::endl;
         ElementType n, d;
         set_from_mpz(n, mpq_numref(a));

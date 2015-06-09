@@ -1449,7 +1449,7 @@ DRing * DRing::create(long p, int nvars0, const_poly *ext0)
   return new DRing(p, nvars0, ext0);
 }
 
-void DRing::set_from_int(poly &result, mpz_ptr r)
+void DRing::set_from_int(poly &result, mpz_srcptr r)
 {
   mpz_t a;
   mpz_init(a);
@@ -1460,7 +1460,7 @@ void DRing::set_from_int(poly &result, mpz_ptr r)
   result = D.from_long(level, c);
 }
 
-bool DRing::set_from_rational(poly &result, mpq_ptr r)
+bool DRing::set_from_rational(poly &result, mpq_srcptr r)
 {
   // returns false if r doesn't lift
   mpz_t a;

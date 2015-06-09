@@ -117,7 +117,7 @@ namespace M2 {
     mFfpackField.init(result, a);
   }
   
-  void ARingZZpFFPACK::set_from_mpz(ElementType &result, const mpz_ptr a) const
+  void ARingZZpFFPACK::set_from_mpz(ElementType &result, const mpz_srcptr a) const
   {
     unsigned long b = static_cast<UTT>(mpz_fdiv_ui(a, mCharac));
     mFfpackField.init(result,  b ); 
@@ -125,7 +125,7 @@ namespace M2 {
   
   /// @Mike: change all uses of set_from_mpq to return bool
   //  or, perhaps, to raise an exception.
-  void ARingZZpFFPACK::set_from_mpq(ElementType &result, const mpq_ptr a) const 
+  void ARingZZpFFPACK::set_from_mpq(ElementType &result, const mpq_srcptr a) const 
   {
     ElementType n, d;
     set_from_mpz(n, mpq_numref(a));

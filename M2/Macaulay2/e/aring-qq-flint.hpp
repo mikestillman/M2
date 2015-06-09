@@ -88,13 +88,13 @@ namespace M2 {
     
     void set_from_long(ElementType& result, long a) const {fmpq_set_si(&result, a, 1);}
     
-    void set_from_mpz(ElementType& result,const mpz_ptr a) const {
+    void set_from_mpz(ElementType& result,const mpz_srcptr a) const {
       // printf("ARingQQFlint::calling set_from_mpz\n");
       fmpz_set_mpz(fmpq_numref(&result), a);
       fmpz_one(fmpq_denref(&result));
     }
     
-    void set_from_mpq(ElementType& result,const mpq_ptr a) const { 
+    void set_from_mpq(ElementType& result,const mpq_srcptr a) const { 
       // printf("ARingQQFlint::calling set_from_mpq\n");
       fmpq_set_mpq(&result, a); 
     }

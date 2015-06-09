@@ -207,12 +207,11 @@ export rawGetSolutionLastTvaluePT(e:Expr):Expr := (
      when e is s:Sequence do
      if length(s) != 2 then WrongNumArgs(2)
      else when s.0 is PT:RawPathTrackerCell do 
-          when s.1 is solN:ZZcell do 
-		toExpr(Ccode(RRorNull, "rawGetSolutionLastTvaluePT(",
-		    PT.p, ",",
-		    toInt(s.1), 		    
-		    ")"
-		    ))
+          when s.1 is solN:ZZcell do (
+	       result := newRR();
+	       if 0 != Ccode(int, "rawGetSolutionLastTvaluePT(", result, ",", PT.p, ",", toInt(s.1), ")" )
+	       then engineErrorMessage()
+	       else toExpr(result))
           else WrongArgZZ(2) 
           else WrongArg(1,"a path tracker")
      else WrongNumArgs(2)
@@ -240,12 +239,11 @@ export rawGetSolutionRcondPT(e:Expr):Expr := (
      when e is s:Sequence do
      if length(s) != 2 then WrongNumArgs(2)
      else when s.0 is PT:RawPathTrackerCell do 
-          when s.1 is solN:ZZcell do 
-		toExpr(Ccode(RRorNull, "rawGetSolutionRcondPT(",
-		    PT.p, ",",
-		    toInt(s.1), 		    
-		    ")"
-		    ))
+          when s.1 is solN:ZZcell do (
+	       result := newRR();
+	       if 0 != Ccode(int, "rawGetSolutionRcondPT(", result, ",", PT.p, ",", toInt(s.1), ")" )
+	       then engineErrorMessage()
+	       else toExpr(result))
           else WrongArgZZ(2) 
           else WrongArg(1,"a path tracker")
      else WrongNumArgs(2)

@@ -97,11 +97,11 @@ namespace M2 {
 
     void set_var(ElementType &result, int v) const { result = 1; }
 
-    void set_from_mpz(ElementType &result, mpz_ptr a) const {
+    void set_from_mpz(ElementType &result, mpz_srcptr a) const {
       result = mpz_fdiv_ui(a, mCharac);
     }
 
-    void set_from_mpq(ElementType &result, mpq_ptr a) const {
+    void set_from_mpq(ElementType &result, mpq_srcptr a) const {
       ElementType n, d;
       set_from_mpz(n, mpq_numref(a));
       set_from_mpz(d, mpq_denref(a));

@@ -377,7 +377,7 @@ extern "C" {
     /* If the ring of a is RR, this returns the underlying representation of 'a' in 'result'.
        Otherwise ERROR is raised and a nonzero value is returned. */
 
-  gmp_CCorNull IM2_RingElement_to_BigComplex(const RingElement *a); /* drg: implemented, connected to rawToRR */
+  int IM2_RingElement_to_BigComplex(gmp_CC result, const RingElement *a); /* drg: implemented, connected to rawToRR */
 
 
   const RingElement /* or null */ *IM2_RingElement_make_var(const Ring *R, int v); /* drg: connected rawRingVar*/
@@ -1961,9 +1961,9 @@ enum gbTraceValues
      If the ring is not over RRR or CCC, then an error message is given, and NULL
      is returned */
 
-  gmp_RRorNull rawMatrixNorm(gmp_RR p, const Matrix *M);
-  gmp_RRorNull rawRingElementNorm(gmp_RR p, const RingElement *f);
-  gmp_RRorNull rawMutableMatrixNorm(gmp_RR p, const MutableMatrix *M);
+  int rawMatrixNorm(mpfr_ptr result, mpfr_ptr p, const Matrix *M);
+  int rawRingElementNorm(mpfr_ptr result, mpfr_ptr p, const RingElement *f);
+  int rawMutableMatrixNorm(mpfr_ptr result, mpfr_ptr p, const MutableMatrix *M);
 
   StraightLineProgram /* or null */ *rawSLP(const Matrix *consts, M2_arrayint program);
   const Matrix /* or null */ *rawEvaluateSLP(StraightLineProgram *SLP, const Matrix *vals);
@@ -1991,8 +1991,8 @@ enum gbTraceValues
   const Matrix /* or null */ *rawGetAllSolutionsPT(PathTracker* PT);
   int rawGetSolutionStatusPT(PathTracker* PT, int solN);
   int rawGetSolutionStepsPT(PathTracker* PT, int solN);
-  gmp_RRorNull rawGetSolutionLastTvaluePT(PathTracker* PT, int solN);
-  gmp_RRorNull rawGetSolutionRcondPT(PathTracker* PT, int solN);
+  int rawGetSolutionLastTvaluePT(mpfr_ptr result, PathTracker* PT, int solN);
+  int rawGetSolutionRcondPT(mpfr_ptr result, PathTracker* PT, int solN);
   const Matrix /* or null */ *rawRefinePT(PathTracker* PT, const Matrix* sols, gmp_RR tolerance, int max_corr_steps_refine);
   const Matrix /* or null */ *rawGbBoolean(const Matrix *m);
   const Matrix /* or null */ *rawBIBasis(const Matrix* m, int toGroebner);

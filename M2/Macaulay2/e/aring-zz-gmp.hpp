@@ -70,12 +70,12 @@ namespace M2 {
     
     void set_from_long(ElementType &result, long a) const {mpz_set_si(&result, a);}
     
-    void set_from_mpz(ElementType &result,const mpz_ptr a) const {
+    void set_from_mpz(ElementType &result,const mpz_srcptr a) const {
       //printf("ARingZZ::calling set_from_mpz\n");
       mpz_set(&result, a);
     }
     
-    void set_from_mpq(ElementType &result, const mpq_ptr a) const {M2_ASSERT(false);}
+    void set_from_mpq(ElementType &result, const mpq_srcptr a) const {M2_ASSERT(false);}
     
     bool set_from_BigReal(ElementType &result, gmp_RR a) const {return false;}
     

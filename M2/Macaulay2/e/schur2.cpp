@@ -291,12 +291,12 @@ ring_elem SchurRing2::from_long(long n) const
   ring_elem a = coefficientRing->from_long(n);
   return from_coeff(a);
 }
-ring_elem SchurRing2::from_int(mpz_ptr n) const
+ring_elem SchurRing2::from_int(mpz_srcptr n) const
 {
   ring_elem a = coefficientRing->from_int(n);
   return from_coeff(a);
 }
-ring_elem SchurRing2::from_rational(mpq_ptr q) const
+ring_elem SchurRing2::from_rational(mpq_srcptr q) const
 {
   ring_elem a = coefficientRing->from_rational(q);
   return from_coeff(a);

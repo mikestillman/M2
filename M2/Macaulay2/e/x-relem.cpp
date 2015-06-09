@@ -606,7 +606,7 @@ int IM2_RingElement_to_BigReal(mpfr_ptr result, const RingElement *a)
     }
 }
 
-gmp_CCorNull IM2_RingElement_to_BigComplex(const RingElement *a)
+int IM2_RingElement_to_BigComplex(gmp_CC res, const RingElement *a)
 {
   const Ring* R = a->get_ring();
   auto RCCC = dynamic_cast<const M2::ConcreteRing<M2::ARingCCC>*>(R);
@@ -617,7 +617,11 @@ gmp_CCorNull IM2_RingElement_to_BigComplex(const RingElement *a)
       RCCC->ring().from_ring_elem(b, a->get_value());
       gmp_CC result = RCCC->ring().toBigComplex(b);
       RCCC->ring().clear(b);
-      return result;
+      mpfr_set_prec(res->re,mpfr_get_prec(result->re));
+      mpfr_set(res->re,result->re,GMP_RNDN);
+      mpfr_set_prec(res->im,mpfr_get_prec(result->im));
+      mpfr_set(res->im,result->im,GMP_RNDN);
+      return 0;
     }
   auto RCC = dynamic_cast<const M2::ConcreteRing<M2::ARingCC>*>(R);
   if (RCC != 0)
@@ -627,10 +631,14 @@ gmp_CCorNull IM2_RingElement_to_BigComplex(const RingElement *a)
       RCC->ring().from_ring_elem(b, a->get_value());
       gmp_CC result = RCC->ring().toBigComplex(b);
       RCC->ring().clear(b);
-      return result;
+      mpfr_set_prec(res->re,mpfr_get_prec(result->re));
+      mpfr_set(res->re,result->re,GMP_RNDN);
+      mpfr_set_prec(res->im,mpfr_get_prec(result->im));
+      mpfr_set(res->im,result->im,GMP_RNDN);
+      return 0;
     }
   ERROR("expected an element of CCC");
-  return 0;
+  return 1;
 }
 
 #if 0

@@ -103,7 +103,7 @@ namespace M2 {
       return result;
     }
 
-    virtual ring_elem from_int(mpz_ptr n) const
+    virtual ring_elem from_int(mpz_srcptr n) const
     {
       if (displayArithmeticCalls) fprintf(stderr, "calling from_int(mpz)\n");
       ring_elem result;
@@ -114,7 +114,7 @@ namespace M2 {
       R->clear(a);
       return result;
     }
-    virtual ring_elem from_rational(mpq_ptr q) const
+    virtual ring_elem from_rational(mpq_srcptr q) const
     {
       if (displayArithmeticCalls) fprintf(stderr, "calling from_rational\n");
       ring_elem result;

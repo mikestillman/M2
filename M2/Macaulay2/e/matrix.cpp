@@ -1870,7 +1870,7 @@ Matrix /* or null */ *Matrix::clean(gmp_RR epsilon) const
   return mat.to_matrix();
 }
 
-gmp_RRorNull Matrix::norm(gmp_RR p) const
+mpfr_ptr /* or NULL */ Matrix::norm(gmp_RR p) const
 {
   const Ring *R = get_ring();
   if (R->get_precision() == 0)

@@ -38,12 +38,12 @@ public:
     normal_form(result);
     return result;
   }
-  virtual ring_elem from_int(mpz_ptr n) const {
+  virtual ring_elem from_int(mpz_srcptr n) const {
     ring_elem result = numerR_->from_int(n);
     normal_form(result);
     return result;
   }
-  virtual ring_elem from_rational(mpq_ptr q) const {
+  virtual ring_elem from_rational(mpq_srcptr q) const {
     ring_elem result = numerR_->from_rational(q);
     normal_form(result);
     return result;

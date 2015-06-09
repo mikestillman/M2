@@ -134,9 +134,9 @@ namespace M2 {
     // v from 0..n_vars()-1, sets result to 0 if v is out of range
     void set_var(elem &result, int v) const { result = var(mStartLevel,v); }
     
-    void set_from_mpz(elem &result, mpz_ptr a) const { }  // TODO: write this
+    void set_from_mpz(elem &result, mpz_srcptr a) const { }  // TODO: write this
     
-    void set_from_mpq(elem &result, mpq_ptr a) const { }  // TODO: write this
+    void set_from_mpq(elem &result, mpq_srcptr a) const { }  // TODO: write this
     
     bool set_from_BigReal(elem &result, gmp_RR a) const { return false; }
 
@@ -282,9 +282,9 @@ namespace M2 {
       result = mRing.from_long(mStartLevel, r);
     }
     
-    void set_from_int(ElementType &result, mpz_ptr r);
+    void set_from_int(ElementType &result, mpz_srcptr r);
     
-    bool set_from_rational(ElementType &result, mpq_ptr r);
+    bool set_from_rational(ElementType &result, mpq_srcptr r);
     
     void set_random(ElementType &result) { result = mRing.random(mStartLevel); }
     

@@ -115,7 +115,7 @@ namespace M2 {
     // mpz ints are used in the front end, so that is why
     // we use those type here.
     void set_from_long(ElementType& result, long a) const {fmpz_set_si(result, a);}
-    void set_from_mpz(ElementType& result,const mpz_ptr a) const {fmpz_set_mpz(result,a);}
+    void set_from_mpz(ElementType& result,const mpz_srcptr a) const {fmpz_set_mpz(result,a);}
 
     // Set from a rational number.
     // What should this function do, if such an element cannot coerced in?
@@ -123,7 +123,7 @@ namespace M2 {
     // e.g: to ZZ: if the denom is non-zero, return false
     //      to ZZ/p: if the denom is divisible by p, then return false
     // 
-    bool set_from_mpq(ElementType& result,const mpq_ptr a) const;
+    bool set_from_mpq(ElementType& result,const mpq_srcptr a) const;
 
     // set from an arbitrary precision gmp real number.
     // LEAVE OUT if not needed

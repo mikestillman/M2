@@ -129,7 +129,7 @@ ring_elem RingZZ::from_long(long n) const
   return ring_elem(result);
 }
 
-ring_elem RingZZ::from_int(mpz_ptr n) const
+ring_elem RingZZ::from_int(mpz_srcptr n) const
 {
   mpz_ptr result = new_elem();
   mpz_set(result, n);
@@ -137,7 +137,7 @@ ring_elem RingZZ::from_int(mpz_ptr n) const
   return ring_elem(result);
 }
 
-ring_elem RingZZ::from_rational(mpq_ptr q) const
+ring_elem RingZZ::from_rational(mpq_srcptr q) const
 {
   return RingZZ::from_int(mpq_numref(q));
 }

@@ -230,7 +230,7 @@ ring_elem GF::from_long(long n) const
   return ring_elem(m);
 }
 
-ring_elem GF::from_int(mpz_ptr n) const
+ring_elem GF::from_int(mpz_srcptr n) const
 {
   mpz_t result;
   mpz_init(result);
@@ -243,7 +243,7 @@ ring_elem GF::from_int(mpz_ptr n) const
   return ring_elem(m);
 }
 
-ring_elem GF::from_rational(mpq_ptr q) const
+ring_elem GF::from_rational(mpq_srcptr q) const
 {
   // a should be an element of ZZ/p
   ring_elem a = _originalR->getCoefficients()->from_rational(q);

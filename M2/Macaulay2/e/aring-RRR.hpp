@@ -115,11 +115,11 @@ namespace M2 {
       mpfr_set_si(&result, 1, GMP_RNDN); 
     }
 
-    void set_from_mpz(ElementType &result, mpz_ptr a) const {
+    void set_from_mpz(ElementType &result, mpz_srcptr a) const {
       mpfr_set_z(&result, a, GMP_RNDN);
     }
 
-    void set_from_mpq(ElementType &result, mpq_ptr a) const {
+    void set_from_mpq(ElementType &result, mpq_srcptr a) const {
       mpfr_set_q(&result, a, GMP_RNDN);
     }
 

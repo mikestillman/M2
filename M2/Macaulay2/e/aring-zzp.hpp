@@ -113,12 +113,12 @@ namespace M2 {
 
     void set_var(elem &result, int v) const { result = 1; }
 
-    void set_from_mpz(elem &result, mpz_ptr a) const {
+    void set_from_mpz(elem &result, mpz_srcptr a) const {
       int b = static_cast<int>(mpz_fdiv_ui(a, p));
       result = log_table[b];
     }
 
-    void set_from_mpq(elem &result, mpq_ptr a) const {
+    void set_from_mpq(elem &result, mpq_srcptr a) const {
       int n, d;
       set_from_mpz(n, mpq_numref(a));
       set_from_mpz(d, mpq_denref(a));

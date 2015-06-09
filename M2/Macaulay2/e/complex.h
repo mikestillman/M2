@@ -18,7 +18,8 @@ extern "C" {
 #endif
 
   typedef const struct gmp_CC_struct * const_gmp_CC;
-  void mpfc_init(gmp_CC result, long precision);
+  void mpfc_init2(gmp_CC result, long precision);
+  void mpfc_init(gmp_CC result);
   void mpfc_clear(gmp_CC result);
   void mpfc_init_set(gmp_CC result, const_gmp_CC a);
   void mpfc_set_si(gmp_CC result, long re);

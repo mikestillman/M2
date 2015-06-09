@@ -257,7 +257,7 @@ ring_elem FractionField::from_long(long n) const
   return FRAC_RINGELEM(f);
 }
 
-ring_elem FractionField::from_int(mpz_ptr n) const
+ring_elem FractionField::from_int(mpz_srcptr n) const
 {
   frac_elem *f = new_frac_elem();
   f->numer = R_->from_int(n);
@@ -265,7 +265,7 @@ ring_elem FractionField::from_int(mpz_ptr n) const
   return FRAC_RINGELEM(f);
 }
 
-ring_elem FractionField::from_rational(mpq_ptr n) const
+ring_elem FractionField::from_rational(mpq_srcptr n) const
 {
   frac_elem *f = new_frac_elem();
   f->numer = R_->from_int(mpq_numref(n));

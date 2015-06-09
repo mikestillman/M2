@@ -1177,7 +1177,11 @@ setupfun("rawToRR",rawToRR);
 
 export rawToCC(e:Expr):Expr := (
      when e
-     is x:RawRingElementCell do toExpr(Ccode(CCorNull, "IM2_RingElement_to_BigComplex(",x.p, ")" ))
+     is x:RawRingElementCell do (
+	  result := newCC();
+	  if 0 != Ccode(int, "IM2_RingElement_to_BigComplex(",result, ",", x.p, ")" ) 
+	  then engineErrorMessage()
+	  else toExpr(result))
      else WrongArg("a raw ring element"));
 setupfun("rawToCC",rawToCC);
 
@@ -1670,14 +1674,21 @@ export rawNorm(e:Expr):Expr := (
      when e is s:Sequence do if length(s) != 2 then WrongNumArgs(2) else
      when s.0 is p:RRcell do (
 	  when s.1 is M:RawMatrixCell do (
-	       toExpr(Ccode(RRorNull, "rawMatrixNorm(", p.v,", ", M.p, ")"))
-	       )
+	       result := newRR();
+	       if 0 != Ccode(int, "rawMatrixNorm(", result, ",", p.v,", ", M.p, ")")
+	       then engineErrorMessage()
+	       else toExpr(result))
 	  is f:RawRingElementCell do (
-	       toExpr(Ccode(RRorNull, "rawRingElementNorm(", p.v,", ", f.p, ")"))
+	       result := newRR();
+	       if 0 != Ccode(int, "rawRingElementNorm(", result, ",", p.v,", ", f.p, ")")
+	       then engineErrorMessage()
+	       else toExpr(result)
 	       )
 	  is M:RawMutableMatrixCell do (
-	       toExpr(Ccode(RRorNull, "rawMutableMatrixNorm(", p.v,", ", M.p, ")"))
-	       )
+	       result := newRR();
+	       if 0 != Ccode(int, "rawMutableMatrixNorm(", result, ",", p.v,", ", M.p, ")")
+	       then engineErrorMessage()
+	       else toExpr(result))
 	  else WrongArg(2,"a raw matrix, raw ring element, or raw mutable matrix")
 	  )
      else WrongArgRR(1)

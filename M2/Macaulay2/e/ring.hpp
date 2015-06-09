@@ -249,9 +249,9 @@ public:
   ring_elem zero() const { return zeroV; }
 
   virtual ring_elem from_long(long n) const = 0;
-  virtual ring_elem from_int(mpz_ptr n) const = 0;
+  virtual ring_elem from_int(mpz_srcptr n) const = 0;
 
-  virtual ring_elem from_rational(mpq_ptr q) const = 0;
+  virtual ring_elem from_rational(mpq_srcptr q) const = 0;
   // The default version calls from_long(0). Change it?
 
   // The default version calls from_long(0) and returns false.

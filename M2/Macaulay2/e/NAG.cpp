@@ -1624,14 +1624,22 @@ int rawGetSolutionStepsPT(PathTracker* PT, int solN)
   return PT->getSolutionSteps(solN);
 }
 
-gmp_RRorNull rawGetSolutionLastTvaluePT(PathTracker* PT, int solN)
+int rawGetSolutionLastTvaluePT(mpfr_ptr result, PathTracker* PT, int solN)
 {
-  return PT->getSolutionLastT(solN);
+  mpfr_ptr res = PT->getSolutionLastT(solN);
+  if (res == NULL) return 1;
+  mpfr_set_prec(result,mpfr_get_prec(res));
+  mpfr_set(result,res,GMP_RNDN);
+  return 0;
 }
 
-gmp_RRorNull rawGetSolutionRcondPT(PathTracker* PT, int solN)
+int rawGetSolutionRcondPT(mpfr_ptr result, PathTracker* PT, int solN)
 {
-  return PT->getSolutionRcond(solN);
+  mpfr_ptr res = PT->getSolutionRcond(solN);
+  if (res == NULL) return 1;
+  mpfr_set_prec(result,mpfr_get_prec(res));
+  mpfr_set(result,res,GMP_RNDN);
+  return 0;
 }
 
 const Matrix /* or null */ *rawRefinePT(PathTracker* PT, const Matrix* sols, gmp_RR tolerance, int max_corr_steps_refine)
@@ -2371,7 +2379,7 @@ int PathTracker::getSolutionSteps(int solN)
 }
 
 
-gmp_RRorNull PathTracker::getSolutionLastT(int solN)
+mpfr_ptr PathTracker::getSolutionLastT(int solN)
 {
   if (solN<0 || solN>=n_sols) return NULL;
   gmp_RR result = getmemstructtype(gmp_RR);
@@ -2380,7 +2388,7 @@ gmp_RRorNull PathTracker::getSolutionLastT(int solN)
   return result;
 }
 
-gmp_RRorNull PathTracker::getSolutionRcond(int solN)
+mpfr_ptr PathTracker::getSolutionRcond(int solN)
 {
   if (solN<0 || solN>=n_sols) return NULL;
   gmp_RR result = getmemstructtype(gmp_RR);

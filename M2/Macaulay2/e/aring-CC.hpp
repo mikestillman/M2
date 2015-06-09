@@ -132,12 +132,12 @@ namespace M2 {
       set_from_long(result, 1);
     }
 
-    void set_from_mpz(ElementType &result, mpz_ptr a) const {
+    void set_from_mpz(ElementType &result, mpz_srcptr a) const {
       result.re = mpz_get_d(a);
       result.im = 0.0;
     }
 
-    void set_from_mpq(ElementType &result, mpq_ptr a) const {
+    void set_from_mpq(ElementType &result, mpq_srcptr a) const {
       result.re = mpq_get_d(a);
       result.im = 0.0;
     }

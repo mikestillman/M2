@@ -37,7 +37,7 @@ extern "C" {
 
   void rawRandomMpfr(mpfr_ptr result, unsigned long precision);
 
-  void rawRandomCC(gmp_CC, unsigned long prec);
+  void rawRandomCC(gmp_CC result, unsigned long prec);
 
 #if defined(__cplusplus)
 }

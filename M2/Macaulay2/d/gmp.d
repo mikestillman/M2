@@ -33,10 +33,8 @@ export QQ := Pointer "__mpq_struct *";
 export QQcell := {+v:QQ};
 export RRstruct := Type "__mpfr_struct";
 export RR := Pointer "__mpfr_struct *";
-export RRorNull := RR or null;
 export RRcell := {+v:RR};
 export CC := { re:RR, im:RR };
-export CCorNull := CC or null;
 export CCcell := {+v:CC};
 dummy(x:RR):string := "";
 export tostringRRpointer := dummy;
@@ -107,6 +105,7 @@ export newRR():RR := (
      Ccode(void, "mpfr_init(",r,")" );
      Ccode(void, "GC_REGISTER_FINALIZER(",r,",(GC_finalization_proc)",RRfinalizer,",",msg,",0,0)");
      r);
+export newCC():CC := CC(newRR(),newRR());
 
 set(x:ZZ, y:ZZ) ::= Ccode( void, "mpz_set(",	  x, ",",  y, ")" );
 export copy(i:ZZ):ZZ := ( r := newZZ(); set(r,i); r );

@@ -223,7 +223,7 @@ public://!!!
   //private:
   gmp_CC_struct value;
 public:
-  void init() { mpfc_init(&value,53); }
+  void init() { mpfc_init2(&value,53); }
   complexAP();
   //complexAP(double);
   complexAP(double,double);
@@ -766,8 +766,8 @@ public:
   Matrix /* or null */* getAllSolutions();
   int getSolutionStatus(int);
   int getSolutionSteps(int);
-  gmp_RRorNull getSolutionLastT(int);
-  gmp_RRorNull getSolutionRcond(int);
+  mpfr_ptr getSolutionLastT(int);
+  mpfr_ptr getSolutionRcond(int);
   int track(const Matrix*);
   Matrix /* or null */* refine(const Matrix *sols, gmp_RR tolerance, int max_corr_steps_refine = 100); // refine solutions such that (error estimate)/norm(solution) < tolerance
 

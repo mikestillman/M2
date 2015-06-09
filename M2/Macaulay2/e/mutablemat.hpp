@@ -748,7 +748,7 @@ public:
 
   // Special routines for approximate fields
   virtual void clean(gmp_RR epsilon);  // modifies 'this'
-  virtual gmp_RRorNull norm() const;
+  virtual mpfr_ptr /* or NULL */ norm() const;
 };
 
 template <typename T>
@@ -1004,7 +1004,7 @@ void MutableMat<T>::clean(gmp_RR epsilon)
 }
 
 template<typename T>
-gmp_RRorNull MutableMat<T>::norm() const
+mpfr_ptr /* or NULL */ MutableMat<T>::norm() const
 {
   if (get_ring()->get_precision() == 0)
     throw exc::engine_error("expected a matrix over RR or CC");

@@ -307,7 +307,7 @@ public:
   // If not, or sizes don't match, NULL is returned.
 
   virtual void clean(gmp_RR epsilon) = 0;  // modifies 'this'
-  virtual gmp_RRorNull norm() const = 0;
+  virtual mpfr_ptr norm() const = 0;
 
 };
 

@@ -299,9 +299,9 @@ public:
     result = D.from_long(level, r);
   }
 
-  void set_from_int(poly &result, mpz_ptr r); // written
+  void set_from_int(poly &result, mpz_srcptr r); // written
 
-  bool set_from_rational(poly &result, mpq_ptr r); // written
+  bool set_from_rational(poly &result, mpq_srcptr r); // written
 
   void set_random(poly &result) { result = D.random(level); }
 

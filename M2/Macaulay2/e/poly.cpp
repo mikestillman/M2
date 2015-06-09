@@ -183,7 +183,7 @@ ring_elem PolyRing::from_long(long n) const
   M_->one(result->monom);
   return result;
 }
-ring_elem PolyRing::from_int(mpz_t n) const
+ring_elem PolyRing::from_int(mpz_srcptr n) const
 {
   ring_elem a = K_->from_int(n);
   if (K_->is_zero(a))
@@ -196,7 +196,7 @@ ring_elem PolyRing::from_int(mpz_t n) const
   return result;
 }
 
-ring_elem PolyRing::from_rational(mpq_ptr q) const
+ring_elem PolyRing::from_rational(mpq_srcptr q) const
 {
   ring_elem a = K_->from_rational(q);
   if (K_->is_zero(a))

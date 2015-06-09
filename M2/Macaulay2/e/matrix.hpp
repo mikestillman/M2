@@ -101,7 +101,7 @@ public:
 
   // matrices over RRR, CCC
   Matrix /* or null */ *clean(gmp_RR epsilon) const;
-  gmp_RRorNull norm(gmp_RR p) const;
+  mpfr_ptr /* or NULL */ norm(gmp_RR p) const;
 
   // Matrix operations
   Matrix /* or null */ *sub_matrix(M2_arrayint r, M2_arrayint c) const;

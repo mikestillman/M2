@@ -111,11 +111,11 @@ namespace M2 {
       result = 1.0;
     }
 
-    void set_from_mpz(ElementType &result, mpz_ptr a) const {
+    void set_from_mpz(ElementType &result, mpz_srcptr a) const {
       result = mpz_get_d(a);
     }
 
-    void set_from_mpq(ElementType &result, const mpq_ptr a) const {
+    void set_from_mpq(ElementType &result, const mpq_srcptr a) const {
       result = mpq_get_d(a);
     }
 

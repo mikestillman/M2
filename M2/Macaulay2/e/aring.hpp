@@ -111,9 +111,9 @@ class DummyRing : public RingInterface
 
         void init(elem &result) const    { result = 0; }
 
-        void set_from_mpz(elem &result,const mpz_ptr a) const {result=0;}
+        void set_from_mpz(elem &result,const mpz_srcptr a) const {result=0;}
 
-        void set_from_mpq(elem &result,const mpq_ptr a) const {result=0;}
+        void set_from_mpq(elem &result,const mpq_srcptr a) const {result=0;}
 
         bool set_from_BigReal(elem &result, gmp_RR a) const { return false; }
 

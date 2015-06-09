@@ -113,12 +113,12 @@ namespace M2 {
       fromSmallIntegerCoefficients(result, poly);
     }
 
-    void set_from_mpz(ElementType& result, mpz_ptr a) const {
+    void set_from_mpz(ElementType& result, mpz_srcptr a) const {
       int b = static_cast<int>(mpz_fdiv_ui(a, characteristic()));
       set_from_long(result, b);
     }
 
-    void set_from_mpq(ElementType& result, mpq_ptr a) const {
+    void set_from_mpq(ElementType& result, mpq_srcptr a) const {
       ElementType n, d;
       init(n);
       init(d);

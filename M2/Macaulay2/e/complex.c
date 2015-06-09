@@ -18,13 +18,22 @@ void mpfc_init_set(gmp_CC result, const_gmp_CC a)
   mpfr_init_set(result->im, a->im, GMP_RNDN);
 }
 
-void mpfc_init(gmp_CC result, long precision)
+void mpfc_init2(gmp_CC result, long precision)
 {
   result->re = getmemstructtype(gmp_RR);
   result->im = getmemstructtype(gmp_RR);
   mpfr_init2(result->re, precision);
   mpfr_init2(result->im, precision);
 }
+
+void mpfc_init(gmp_CC result)
+{
+  result->re = getmemstructtype(gmp_RR);
+  result->im = getmemstructtype(gmp_RR);
+  mpfr_init(result->re);
+  mpfr_init(result->im);
+}
+
 void mpfc_set(gmp_CC result, const_gmp_CC a)
 {
   mpfr_set(result->re, a->re, GMP_RNDN);

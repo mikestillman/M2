@@ -934,7 +934,7 @@ MutableMatrix /* or null */ *rawMutableMatrixClean(gmp_RR epsilon, MutableMatrix
   return M;
 }
 
-static gmp_RRorNull get_norm_start(gmp_RR p, const Ring *R)
+static mpfr_ptr /* or NULL */ get_norm_start(gmp_RR p, const Ring *R)
 {
   if (R->get_precision() == 0)
     {
@@ -953,22 +953,34 @@ static gmp_RRorNull get_norm_start(gmp_RR p, const Ring *R)
   return norm;
 }
 
-gmp_RRorNull rawMatrixNorm(gmp_RR p, const Matrix *M)
+int rawMatrixNorm(mpfr_ptr result, mpfr_ptr p, const Matrix *M)
 {
-  return M->norm(p);
+  mpfr_ptr res = M->norm(p);
+  if (res == NULL) return 1;
+  mpfr_set_prec(result,mpfr_get_prec(res));
+  mpfr_set(result,res,GMP_RNDN);
+  mpfr_clear(res);
+  return 0;
 }
 
-gmp_RRorNull rawRingElementNorm(gmp_RR p, const RingElement *f)
+int rawRingElementNorm(mpfr_ptr result, mpfr_ptr p, const RingElement *f)
 {
   gmp_RR norm = get_norm_start(p, f->get_ring());
-  if (!norm) return 0; // error already given.
+  if (norm == NULL) return 1; // error already given.
   f->get_ring()->increase_maxnorm(norm, f->get_value());
-  return norm;
+  mpfr_set_prec(result,mpfr_get_prec(norm));
+  mpfr_set(result,norm,GMP_RNDN);
+  return 0;
 }
 
-gmp_RRorNull rawMutableMatrixNorm(gmp_RR p, const MutableMatrix *M)
+int rawMutableMatrixNorm(mpfr_ptr result, mpfr_ptr p, const MutableMatrix *M)
 {
-  return M->norm();
+  mpfr_ptr res = M->norm();
+  if (res == NULL) return 1;
+  mpfr_set_prec(result,mpfr_get_prec(res));
+  mpfr_set(result,res,GMP_RNDN);
+  mpfr_clear(res);
+  return 0;
 #if 0
   gmp_RR nm = get_norm_start(p, M->get_ring());
   iterator *i = M->begin();
@@ -983,8 +995,6 @@ gmp_RRorNull rawMutableMatrixNorm(gmp_RR p, const MutableMatrix *M)
     }
   delete i;
   return nm;
-#else
-  return NULL;
 #endif
 }
 

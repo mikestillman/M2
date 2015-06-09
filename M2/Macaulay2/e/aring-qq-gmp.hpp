@@ -83,7 +83,7 @@ namespace M2 {
     
     void set_from_long(ElementType& result, long a) const {mpq_set_si(&result, a, 1);}
     
-    void set_from_mpz(ElementType& result,const mpz_ptr a) const {
+    void set_from_mpz(ElementType& result,const mpz_srcptr a) const {
       mpz_set(mpq_numref(&result), a);
       mpz_set_ui(mpq_denref(&result), 1);
     }
@@ -97,7 +97,7 @@ namespace M2 {
       return false;
     }
 
-    void set_from_mpq(ElementType& result,const mpq_ptr a) const { 
+    void set_from_mpq(ElementType& result,const mpq_srcptr a) const { 
       mpq_set(&result, a); 
     }
     

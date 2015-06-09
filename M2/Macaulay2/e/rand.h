@@ -11,9 +11,9 @@ extern "C" {
 
   void rawRandomInitialize();
 
-  void rawSetRandomSeed(gmp_ZZ newseed);
+  void rawSetRandomSeed(mpz_srcptr newseed);
 
-  void rawSetRandomMax(gmp_ZZ);
+  void rawSetRandomMax(mpz_srcptr);
 
   unsigned long rawRandomULong(unsigned long max);
   /* generate a random number in the range 0..max-1 */
@@ -28,16 +28,16 @@ extern "C" {
   /* returns random a/b, where 1 <= b <= height, 1 <= a <= height */
   /* if height is the null pointer, use the default height */
 
-  void rawSetRandomQQ(mpq_ptr result, gmp_ZZ height);
+  void rawSetRandomQQ(mpq_ptr result, mpz_srcptr height);
   /* sets result = random a/b, where 1 <= b <= height, 1 <= a <= height */
   /* if height is the null pointer, use the default height */
 
-  gmp_RR rawRandomRR(unsigned long prec);
+  void rawRandomRR(mpfr_ptr result, unsigned long prec);
   /* returns a uniformly distributed random real with the given precision, in range [0.0,1.0] */
 
-  void rawRandomMpfr(mpfr_t result, unsigned long precision);
+  void rawRandomMpfr(mpfr_ptr result, unsigned long precision);
 
-  gmp_CC rawRandomCC(unsigned long prec);
+  void rawRandomCC(gmp_CC, unsigned long prec);
 
 #if defined(__cplusplus)
 }

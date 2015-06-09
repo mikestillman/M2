@@ -1295,7 +1295,7 @@ void GBRing::gbvector_apply(const FreeModule *F,
 /////////////////////
 // Content removal //
 /////////////////////
-void GBRing::divide_coeff_exact_to_ZZ(gbvector * f, gmp_ZZ u) const
+void GBRing::divide_coeff_exact_to_ZZ(gbvector * f, mpz_srcptr u) const
 {
   mpz_t a;
   mpz_init(a);
@@ -1307,7 +1307,7 @@ void GBRing::divide_coeff_exact_to_ZZ(gbvector * f, gmp_ZZ u) const
   mpz_clear(a);
 }
 
-void GBRing::lower_content_ZZ(gbvector *f, gmp_ZZ content) const
+void GBRing::lower_content_ZZ(gbvector *f, mpz_ptr content) const
   // content should be a positive number.  Modify this value
   // so that new value of content = gcd(old-content, content(f)).
 {

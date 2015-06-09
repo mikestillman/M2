@@ -127,9 +127,9 @@ protected:
   // returns 0 if exp1, exp2 are not disjoint for skew comm variables
   // returns 1 if exp1 * exp2 = sort(exp1,exp2).
 
-  void divide_coeff_exact_to_ZZ(gbvector * f, gmp_ZZ u) const;
+  void divide_coeff_exact_to_ZZ(gbvector * f, mpz_srcptr u) const;
 
-  void lower_content_ZZ(gbvector *f, gmp_ZZ content) const;
+  void lower_content_ZZ(gbvector *f, mpz_ptr content) const;
 
   void gbvector_remove_content_ZZ(gbvector *f,
                                   gbvector *fsyz,

@@ -354,12 +354,12 @@ extern "C" {
   /**** Ring element routines ***********************/
   /**************************************************/
   const RingElement *IM2_RingElement_from_Integer(const Ring *R,
-                                                  gmp_ZZ d);  /* drg: connected rawFromNumber*/
+                                                  mpz_ptr d);  /* drg: connected rawFromNumber*/
 
   const RingElement /* or null */ *IM2_RingElement_from_rational(const Ring *R,
                                                          gmp_QQ r); /* rawFromNumber*/
 
-  int IM2_RingElement_to_Integer(gmp_ZZ result, const RingElement *a); /* drg: connected rawToInteger*/
+  int IM2_RingElement_to_Integer(mpz_ptr result, const RingElement *a); /* drg: connected rawToInteger*/
     /* If the ring of a is ZZ, or ZZ/p, this copies the underlying representation into "result".
        Otherwise, the error is indicated by a nonzero return value. */
 
@@ -418,11 +418,11 @@ extern "C" {
 
   M2_arrayintOrNull IM2_RingElement_multidegree(const RingElement *a); /* drg: connected rawMultiDegree*/
 
-  gmp_ZZpairOrNull rawWeightRange(M2_arrayint wts, const RingElement *a); /* drg: connected rawWeightRange*/
+  int rawWeightRange(mpz_ptr result_low, mpz_ptr result_high, M2_arrayint wts, const RingElement *a); /* drg: connected rawWeightRange*/
     /* The first component of the degree is used, unless the degree monoid is trivial,
        in which case the degree of each variable is taken to be 1.
        Returns lo,hi degree.  If the ring is not a graded ring or a polynomial ring
-       then (0,0) is returned.
+       then a nonzero number is returned.
     */
 
   const RingElement* /* or null */ rawRingElementAntipode(const RingElement* f);

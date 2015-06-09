@@ -22,7 +22,7 @@ void rawRandomInitialize()
   gmp_randinit_default(state);
 }
 
-void rawSetRandomSeed(gmp_ZZ newseed)
+void rawSetRandomSeed(mpz_srcptr newseed)
 {
   gmp_randseed(state, newseed);
 
@@ -33,7 +33,7 @@ void rawSetRandomSeed(gmp_ZZ newseed)
   RandomSeed = s ^ MASK;
 }
 
-void rawSetRandomMax(gmp_ZZ newHeight)
+void rawSetRandomMax(mpz_srcptr newHeight)
 {
   mpz_set(maxHeight, newHeight);
 }
@@ -78,7 +78,7 @@ void rawRandomQQ(mpq_ptr result, mpz_srcptr height)
   mpq_canonicalize(result);
 }
 
-void rawSetRandomQQ(mpq_ptr result, gmp_ZZ height)
+void rawSetRandomQQ(mpq_ptr result, mpz_srcptr height)
   /* returns random a/b, where 1 <= b <= height, 1 <= a <= height */
 /* if height is the null pointer, use the default height */
 {
@@ -90,29 +90,25 @@ void rawSetRandomQQ(mpq_ptr result, gmp_ZZ height)
   mpq_canonicalize(result);
 }
 
-gmp_RR rawRandomRR(unsigned long precision)
+void rawRandomRR(mpfr_ptr result, unsigned long precision)
   /* returns a uniformly distributed random real with the given precision, in range [0.0,1.0] */
 {
-  gmp_RR result = getmemstructtype(gmp_RR);
-  mpfr_init2(result,precision);
-  mpfr_urandomb(result, state);
-  return result;
-}
-
-void rawRandomMpfr(mpfr_t result, unsigned long precision)
-  /* returns a uniformly distributed random real with the given precision, in range [0.0,1.0] */
-{
-  mpfr_init2(result,precision);
+  mpfr_set_prec(result,precision);
   mpfr_urandomb(result, state);
 }
 
-gmp_CC rawRandomCC(unsigned long precision)
+void rawRandomMpfr(mpfr_ptr result, unsigned long precision)
+  /* returns a uniformly distributed random real with the given precision, in range [0.0,1.0] */
+{
+  mpfr_set_prec(result,precision);
+  mpfr_urandomb(result, state);
+}
+
+void rawRandomCC(gmp_CC result, unsigned long precision)
   /* returns a uniformly distributed random complex in the box [0.0,0.0], [1.0,1.0] */
 {
-  gmp_CC result = getmemstructtype(gmp_CC);
-  result->re = rawRandomRR(precision);
-  result->im = rawRandomRR(precision);
-  return result;
+  rawRandomRR(result->re, precision);
+  rawRandomRR(result->im,precision);
 }
 
 // Local Variables:

@@ -31,6 +31,8 @@
 #include "aring-RRR.hpp"
 #include "aring-CCC.hpp"
 
+#include "engine.h"
+
 // The following needs to be included before any flint files are included.
 #include <M2/gc-include.h>
 #include <flint/fq_nmod.h>
@@ -503,7 +505,7 @@ M2_string IM2_RingElement_to_string(const RingElement *f)
   return o.to_string();
 }
 
-const RingElement *IM2_RingElement_from_Integer(const Ring *R, gmp_ZZ d)
+const RingElement *IM2_RingElement_from_Integer(const Ring *R, mpz_ptr d)
 {
   return RingElement::make_raw(R, R->from_int(d));
 }
@@ -548,7 +550,7 @@ int IM2_RingElement_to_Integer(mpz_ptr result, const RingElement *a)
     {
       std::pair<bool,long> res = R->coerceToLongInteger(a->get_value());
       M2_ASSERT(res.first);
-      mpz_init_set_si(result, static_cast<int>(res.second));
+      mpz_set_si(result, static_cast<int>(res.second));
       return 0;
     }
   ERROR("Expected ZZ or ZZ/p as base ring");
@@ -802,28 +804,24 @@ const RingElement* /* or null */ rawRingElementAntipode(const RingElement* f)
   }
 }
 
-gmp_ZZpairOrNull rawWeightRange(M2_arrayint wts,
-                                       const RingElement *a)
+int rawWeightRange(mpz_ptr result_low, mpz_ptr result_high, M2_arrayint wts, const RingElement *a)
   /* The first component of the degree is used, unless the degree monoid is trivial,
      in which case the degree of each variable is taken to be 1.
      Returns lo,hi degree.  If the ring is not a graded ring or a polynomial ring
-     then (0,0) is returned.
+     then a nonzero number is returned.
   */
 {
      try {
           int lo,hi;
           a->degree_weights(wts,lo,hi);
-          if (error()) return 0;
-          gmp_ZZpair p = new gmp_ZZpair_struct;
-          p->a = newitem(__mpz_struct);
-          p->b = newitem(__mpz_struct);
-          mpz_init_set_si(p->a, static_cast<long>(lo));
-          mpz_init_set_si(p->b, static_cast<long>(hi));
-          return p;
+          if (error()) return 1;
+          mpz_set_si(result_low , static_cast<long>(lo));
+          mpz_set_si(result_high, static_cast<long>(hi));
+          return 0;
      }
      catch (exc::engine_error e) {
           ERROR(e.what());
-          return NULL;
+          return 1;
      }
 }
 

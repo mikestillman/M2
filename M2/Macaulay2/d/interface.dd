@@ -53,13 +53,19 @@ setupfun("rawRandomQQ",rawRandomQQ);
 export rawRandomRR(e:Expr):Expr := (
      when e
      is prec:ZZcell do if !isULong(prec.v) then WrongArgSmallInteger() 
-     else toExpr(Ccode(RR, "rawRandomRR(", toULong(prec.v), ")"))
+     else (
+	  result := newRR();
+	  Ccode(void, "rawRandomRR(", result, ",", toULong(prec.v), ")");
+	  toExpr(result))
      else WrongArgZZ());
 setupfun("rawRandomRR",rawRandomRR);
 export rawRandomCC(e:Expr):Expr := (
      when e
      is prec:ZZcell do if !isULong(prec.v) then WrongArgSmallInteger() 
-     else toExpr(Ccode(CC, "rawRandomCC(", toULong(prec.v), ")"))
+     else (
+	  result := newCC();
+	  Ccode(void, "rawRandomCC(", result, ",", toULong(prec.v), ")");
+	  toExpr(result))
      else WrongArgZZ());
 setupfun("rawRandomCC",rawRandomCC);
 
@@ -1085,7 +1091,12 @@ export rawWeightRange(e:Expr):Expr := (
      if length(s) != 2 then buildErrorPacket("expected 1 or 2 arguments") else
      when s.1 is x:RawRingElementCell do 
      if !isSequenceOfSmallIntegers(s.0) then WrongArg(1,"a sequence of small integers")
-     else toExpr( Ccode( ZZpairOrNull, "rawWeightRange(", getSequenceOfSmallIntegers(s.0),",", x.p, ")" ))
+     else (
+	  low := newZZ();
+	  high := newZZ();
+	  if 0 != Ccode( int, "rawWeightRange(", low, ",", high, ",", getSequenceOfSmallIntegers(s.0),",", x.p, ")" )
+	  then engineErrorMessage()
+	  else Expr(Sequence(toExpr(low),toExpr(high))))
      else WrongArg(2,"a raw ring element")
      else WrongArg("list of weights, and raw ring element"));
 setupfun("rawWeightRange",rawWeightRange);

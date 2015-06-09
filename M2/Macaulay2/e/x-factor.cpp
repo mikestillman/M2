@@ -210,7 +210,7 @@ void showvar(Variable &t) { std::cout << t << std::endl; }
 void showcf(CanonicalForm &t) { std::cout << t << std::endl; }
 void showcfl(CFList &t) { std::cout << t << std::endl; }
 void showcffl(CFFList &t) { std::cout << t << std::endl; }
-void showmpint(gmp_ZZ p) { mpz_out_str (stdout, 10, p); std::cout << std::endl; }
+void showmpint(mpz_srcptr p) { mpz_out_str (stdout, 10, p); std::cout << std::endl; }
 void showmpz(mpz_t p) { mpz_out_str (stdout, 10, p); std::cout << std::endl; }
 #endif
 

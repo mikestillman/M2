@@ -332,8 +332,6 @@ const Matrix * rawMatrixCRA(const Matrix *f,
   mpz_init(vn);
   mpz_init(mn);
   ChineseRemainder::computeMultipliers(m, n, um, vn, mn);
-  mpz_t result_coeff;
-  mpz_init(result_coeff);
   Matrix * result=ChineseRemainder::CRA(f,g,um,vn,mn);
   mpz_clear(um);
   mpz_clear(vn);

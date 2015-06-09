@@ -123,7 +123,7 @@ endif
 @srcdir@/submodules/$1/configure:@srcdir@/submodules/$1/configure.ac @srcdir@/submodules/$1/Makefile.am; cd @srcdir@/submodules/$1 && ./autogen.sh
 endef
 $(foreach s,$(SUBMODULES),$(eval $(call submodule-rules,$s)))
-$(foreach t,all check clean distclean,$(eval $t-in-Macaulay2:$t-in-submodules))
+$(foreach t,all,$(eval $t-in-Macaulay2:$t-in-submodules))
 
 # installation into usr-dist
 all-in-Macaulay2:install-licenses

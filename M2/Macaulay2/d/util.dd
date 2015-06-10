@@ -1,6 +1,12 @@
 --		Copyright 2002,2010 by Daniel R. Grayson
 -- helper routines for checking arguments
 use basic;
+
+header "
+  #include <comp.hpp>
+";
+
+
 export isBoolean(e:Expr):bool := e == True || e == False;
 export toBoolean(e:Expr):bool := e == True;
 
@@ -192,7 +198,11 @@ export toExpr(x:QQ):Expr := Expr(QQcell(x));
 export toExpr(x:RR):Expr := Expr(RRcell(x));
 export toExpr(x:CC):Expr := Expr(CCcell(x));
 export toExpr(x:double):Expr := Expr(RRcell(toRR(x,ulong(53))));
-export toExpr(x:RawComputation):Expr := Expr(RawComputationCell(x));
+RawComputationFinalizer(x:RawComputation,nothing:null):void := Ccode(void,x,"->~Computation()");
+export toExpr(x:RawComputation):Expr := (
+     Ccode(void, "GC_REGISTER_FINALIZER(",x,",(GC_finalization_proc)",RawComputationFinalizer,",0,0,0)");
+     Expr(RawComputationCell(x)));
+export toExpr(x:RawComputationOrNull):Expr := when x is r:RawComputation do toExpr(r) is null do engineErrorMessage();
 export toExpr(x:RawFreeModule):Expr := Expr(RawFreeModuleCell(x));
 export toExpr(x:RawMatrix):Expr := Expr(RawMatrixCell(x));
 export toExpr(x:RawMonoid):Expr := Expr(RawMonoidCell(x));
@@ -230,7 +240,6 @@ export toExpr(x:RawMatrixPairOrNull):Expr := when x is p:RawMatrixPair do seq(Ex
 export toExpr(x:RawMatrixArray):Expr := Expr( list( new Sequence len length(x) do foreach m in x do provide Expr(RawMatrixCell(m)) ) );
 export toExpr(x:RawMatrixArrayOrNull):Expr := when x is r:RawMatrixArray do toExpr(r) is null do engineErrorMessage();
 export toExpr(x:array(string)):Expr := Expr( list( new Sequence len length(x) do foreach s in x do provide Expr(stringCell(s)) ) );
-export toExpr(x:RawComputationOrNull):Expr := when x is r:RawComputation do Expr(RawComputationCell(r)) is null do engineErrorMessage();
 export toExpr(x:RawArrayPairOrNull):Expr := (
      when x
      is r:RawArrayPair do Expr(

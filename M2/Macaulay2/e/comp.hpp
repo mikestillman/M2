@@ -228,8 +228,8 @@ protected:
   // If the stop conditions in stop_ are inappropriate,
   // return false, and use ERROR(...) to provide an error message.
 
-  virtual ~Computation();
 public:
+  virtual ~Computation();
   Computation /* or null */ *
   set_stop_conditions(M2_bool always_stop,
                       M2_arrayint degree_limit,

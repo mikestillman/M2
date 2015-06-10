@@ -5,7 +5,6 @@ class MonomialIdeal;
 class MutableMatrix;
 class GBComputation;
 class ResolutionComputation;
-class EngineComputation;
 class SchreyerOrder;
 
 
@@ -15,5 +14,4 @@ void intern_monideal(MonomialIdeal *G);
 MutableMatrix* internMutableMatrix(MutableMatrix *G);
 void intern_GB(GBComputation *G);
 void intern_res(ResolutionComputation *G);
-void intern_computation(EngineComputation *G);
 void intern_SchreyerOrder(SchreyerOrder *G);

@@ -14,43 +14,6 @@
 #include "text-io.hpp"
 #include "finalize.hpp"
 
-/////////////////////////////////////
-// GBBComputation ///////////////////
-/////////////////////////////////////
-GBBComputation *GBBComputation::choose_gb(const Matrix *m,
-                                          M2_bool collect_syz,
-                                          int n_rows_to_keep,
-                                          M2_arrayint gb_weights,
-                                          M2_bool use_max_degree,
-                                          int max_degree,
-                                          int algorithm,
-                                          int strategy,
-                                          int max_reduction_count)
-{
-  return 0;
-}
-
-void GBBComputation::text_out(buffer &o) const
-{
-  o << "-- a raw Groebner basis computation --";
-}
-
-/////////////////////////////////////
-// GroebnerBasis ////////////////////
-/////////////////////////////////////
-const Matrix /* or null */ *GroebnerBasis::get_parallel_lead_terms(M2_arrayint w)
-{
-  ERROR("Cannot compute parallel lead terms for this kind of Groebner computation");
-  return 0;
-}
-
-void GroebnerBasis::text_out(buffer &o) const
-{
-  o << "-- a raw Groebner Basis --";
-}
-/////////////////////////////////////
-
-
 GBComputation *createF4GB(const Matrix *m,
                           M2_bool collect_syz,
                           int n_rows_to_keep,
@@ -171,66 +134,6 @@ GBComputation *GBComputation::choose_gb(const Matrix *m,
   }
   intern_GB(result);
   return result != NULL ? new GBProxy(result) : NULL;
-
-
-#if 0
-//   if (is_graded)
-//     return GB_comp::create(m,
-//                         collect_syz,
-//                         n_rows_to_keep,
-//                         strategy,
-//                         use_max_degree,
-//                         max_degree);
-//
-//   return 0;
-#endif
-#if 0
-//   if (base_is_ZZ)
-//     {
-//       if (ring_is_base)
-//      {
-//
-//        return HermiteComputation::create(m,
-//                                          collect_syz,
-//                                          collect_change,
-//                                          n_rows_to_keep);
-//        return 0;
-//      }
-//       // Question: should we separate between the graded, nongraded versions?
-//       return GBZZ::create(m,
-//                        collect_syz,
-//                        collect_change,
-//                        n_rows_to_keep);
-//       return 0;
-//     }
-//   else
-//     {
-//       // Base is a field
-//       if (ring_is_base)
-//      {
-//        return GaussElimComputation::create(m,
-//                                            collect_syz,
-//                                            collect_change,
-//                                            n_rows_to_keep);
-//        // This should be fraction free
-//        return 0;
-//      }
-//       // Also allow the user to choose between them.
-//       if (is_graded)
-//      return GB_comp::create(m,
-//                             collect_syz,
-//                             n_rows_to_keep,
-//                             strategy,
-//                             use_max_degree,
-//                             max_degree);
-//       return GB_inhom_comp::create(m,
-//                                 collect_syz,
-//                                 collect_change,
-//                                 n_rows_to_keep,
-//                                 stategy);
-//       return 0;
-//     }
-#endif
 }
 
 Computation /* or null */ *GBComputation::set_hilbert_function(const RingElement *h)

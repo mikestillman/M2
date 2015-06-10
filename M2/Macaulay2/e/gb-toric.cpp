@@ -1028,7 +1028,7 @@ binomialGB_comp * binomialGB_comp::create(const Matrix *m,
   return result;
 }
 
-void binomialGB_comp::remove_gb()
+binomialGB_comp::~binomialGB_comp()
 {
   int i;
   deleteitem(Gmin);
@@ -1045,11 +1045,6 @@ void binomialGB_comp::remove_gb()
   for (i=0; i<mingens_subring.length(); i++)
     mingens_subring[i] = NULL;
   deleteitem(R);
-}
-
-binomialGB_comp::~binomialGB_comp()
-{
-  remove_gb();
 }
 
 //////////////////////////

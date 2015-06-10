@@ -135,6 +135,7 @@ void GB_comp::remove_pair(s_pair *& p)
 
 GB_comp::~GB_comp()
 {
+#warning "write GB_comp::~GB_comp()"
 }
 
 //////////////////////////////////////////////

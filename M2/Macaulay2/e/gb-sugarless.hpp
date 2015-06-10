@@ -101,9 +101,8 @@ public:
                int n_syz,
                M2_arrayint gb_weights,
                int strategy);
-  ~GBinhom_comp();
 
-  virtual void remove_gb() {}
+  ~GBinhom_comp();
 
   // Performing the computation
   int calc(const int *deg, const intarray &stop_conditions);

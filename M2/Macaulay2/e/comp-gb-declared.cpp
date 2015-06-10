@@ -163,6 +163,10 @@ GBComputation *GBDeclared::create(const Matrix *leadterms,
   return new GBDeclared(leadterms,m,gb,change,syz);
 }
 
+GBDeclared::~GBDeclared()
+{
+#warning "write GBDeclared::~GBDeclared()"
+}
 // Local Variables:
 // compile-command: "make -C $M2BUILDDIR/Macaulay2/e "
 // indent-tabs-mode: nil

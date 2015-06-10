@@ -346,7 +346,6 @@ public:
                                  const Matrix *gb,
                                  const Matrix *mchange);
 
-  void remove_gb();
   virtual ~gbA();
 
   virtual int kind() { return 231; } // FIX THIS!!

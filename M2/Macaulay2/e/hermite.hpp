@@ -56,9 +56,8 @@ private:
 public:
   // An honest GB computation
   HermiteComputation(const Matrix *m, int collect_syz, int n_syz);
-  ~HermiteComputation();
 
-  virtual void remove_gb() {}
+  ~HermiteComputation();
 
   virtual void start_computation();
 

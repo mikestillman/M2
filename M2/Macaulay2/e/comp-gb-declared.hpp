@@ -52,9 +52,7 @@ public:
                                const Matrix *syz);
   // Possibly returns NULL, if an error message is reported
 
-  virtual ~GBDeclared() {}
-
-  virtual void remove_gb() {}
+  virtual ~GBDeclared();
 
   virtual GBComputation * cast_to_GBComputation() { return this;}
 

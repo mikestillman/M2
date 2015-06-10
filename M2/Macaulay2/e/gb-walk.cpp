@@ -63,7 +63,7 @@ GBWalker * GBWalker::create(const Matrix *gb_under_order1,
 
 GBWalker::~GBWalker()
 {
-  // TODO MES: TO WRITE
+#warning "write GBWalker::~GBWalker()"
 }
 
 bool GBWalker::stop_conditions_ok()
@@ -126,11 +126,6 @@ bool GBWalker::compute_next_w()
 //////////////////////////////////////////////////////
 // GBComputation and Computation inherited routines //
 //////////////////////////////////////////////////////
-void GBWalker::remove_gb()
-{
-  // MES: TO WRITE
-}
-
 
 void GBWalker::start_computation()
 {
@@ -167,7 +162,6 @@ void GBWalker::start_computation()
         }
       state = STATE_autoreduce;
     case STATE_autoreduce:
-      G->remove_gb();
       delete G;
       G1 = static_cast<MarkedGB *>(GBDeclared::create(gb_inwwG->get_initial(-1), H, H, 0, 0));
       state = STATE_compute_w;

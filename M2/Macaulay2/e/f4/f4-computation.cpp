@@ -79,6 +79,7 @@ F4Computation::F4Computation(
 
 F4Computation::~F4Computation()
 {
+  delete f4;
   delete Mem;
 }
 

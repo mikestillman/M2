@@ -70,7 +70,7 @@ extern "C" void remove_gb(void *p, void *cd)
   AO_t nremoved = AO_fetch_and_add1(&gbs_nremoved);
   if (M2_gbTrace>=3)
     fprintf(stderr, "\n --removing gb %zd at %p\n",nremoved, G);
-  G->remove_gb();
+  G->~GBComputation();
 }
 void intern_GB(GBComputation *G)
 {

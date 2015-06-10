@@ -211,9 +211,7 @@ gbA::spair *gbA::new_gen(int i, gbvector *f, ring_elem denom)
  * GB removal ************
  *************************/
 
-// We might not have to do ANYTHING here, since the garbage collector
-// will free everything up for us...
-void gbA::remove_gb()
+gbA::~gbA()
 {
   // removes all allocated objects
   for (int i=first_gb_element; i<gb.size(); i++)
@@ -241,11 +239,6 @@ void gbA::remove_gb()
   delete gbelem_stash;
   delete lcm_stash;
   // Also remove the SPAirSet...
-}
-
-gbA::~gbA()
-{
-  remove_gb();
 }
 
 /*************************

@@ -150,6 +150,7 @@ void GBinhom_comp::remove_pair(s_pair *& p)
 
 GBinhom_comp::~GBinhom_comp()
 {
+#warning "write GBinhom_comp::~GBinhom_comp()"
 }
 
 void GBinhom_comp::resize(int /*nbits*/)

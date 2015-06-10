@@ -33,9 +33,7 @@ ifeq ($(CLANG),yes)
 DIRECTORY := clang
 CC  := /usr/bin/clang
 CXX := /usr/bin/clang++
-# Xcode doesn't include a fortran compiler
-FC  := 
-# CONFIGOPTIONS += --disable-frobby  --disable-gfan
+FC  :=
 else
 CC  := gcc-4.9
 CXX := g++-4.9

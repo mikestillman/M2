@@ -63,7 +63,6 @@ INTERFACE = \
 	debug \
 	comp \
 	comp-gb \
-	comp-gb-proxy \
 	comp-gb-declared \
 	comp-res \
 	res-a0 \

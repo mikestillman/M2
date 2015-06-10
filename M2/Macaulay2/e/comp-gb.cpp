@@ -10,7 +10,6 @@
 #include "hermite.hpp"
 #include "gb-default.hpp"
 #include "gbweight.hpp"
-#include "comp-gb-proxy.hpp"
 #include "text-io.hpp"
 #include "finalize.hpp"
 
@@ -133,7 +132,7 @@ GBComputation *GBComputation::choose_gb(const Matrix *m,
     break;
   }
   intern_GB(result);
-  return result != NULL ? new GBProxy(result) : NULL;
+  return result;
 }
 
 Computation /* or null */ *GBComputation::set_hilbert_function(const RingElement *h)

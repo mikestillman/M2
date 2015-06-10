@@ -3,7 +3,6 @@
 #include "comp.hpp"
 #include "buffer.hpp"
 #include "exceptions.hpp"
-#include "finalize.hpp"
 
 Computation /* or null */ *
 Computation::set_stop_conditions(M2_bool always_stop,

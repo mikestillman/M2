@@ -21,7 +21,6 @@ class MutableMatrix;
 class RingElement;
 class RingMap;
 class Computation;
-class EngineComputation;
 class StraightLineProgram;
 class PathTracker;
 
@@ -37,7 +36,6 @@ typedef struct Matrix Matrix;
 typedef struct MutableMatrix MutableMatrix;
 typedef struct RingMap RingMap;
 typedef struct Computation Computation;
-typedef struct EngineComputation EngineComputation;
 typedef struct MonomialOrdering MonomialOrdering;
 typedef struct MonomialIdeal MonomialIdeal;
 typedef struct StraightLineProgram StraightLineProgram;
@@ -48,8 +46,6 @@ typedef struct PathTracker PathTracker;
   /* we must do this after including system *.h files above */
 # define const
 #endif
-
-typedef EngineComputation EngineComputationOrNull;
 
 #if defined(__cplusplus)
 extern "C" {

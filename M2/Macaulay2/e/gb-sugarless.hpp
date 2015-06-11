@@ -70,6 +70,8 @@ private:
   void set_up0(const Matrix *m, int csyz, int nsyz, M2_arrayint gb_weights);
   void set_up(const Matrix *m, int csyz, int nsyz, M2_arrayint gb_weights, int strategy);
 
+  void remove_gb_elem(gb_elem*& g);
+
   // S-pair control
   s_pair *new_var_pair(gb_elem *p, const int *lcm);
   s_pair *new_ring_pair(gb_elem *p, const int *lcm);

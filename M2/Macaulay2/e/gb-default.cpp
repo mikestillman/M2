@@ -213,7 +213,13 @@ gbA::spair *gbA::new_gen(int i, gbvector *f, ring_elem denom)
 
 gbA::~gbA()
 {
+  delete weightInfo_;
+
   // removes all allocated objects
+
+  remove_SPairSet();
+
+  // gbvector's before first_gb_element are NOT ours.
   for (int i=first_gb_element; i<gb.size(); i++)
     if (gb[i])
       {
@@ -233,12 +239,12 @@ gbA::~gbA()
       R->gbvector_remove(_syz[i]);
       _syz[i] = nullptr;
     }
+  delete hf_diff;
   delete lookup;
   delete lookupZZ;
   delete spair_stash;
   delete gbelem_stash;
   delete lcm_stash;
-  // Also remove the SPAirSet...
 }
 
 /*************************
@@ -915,13 +921,13 @@ gbA::SPairSet::SPairSet()
 
 void gbA::remove_spair_list(spair *&set)
 {
-  while (!set)
+  while (set != nullptr)
     {
       spair *tmp = set;
       set = set->next;
       spair_delete(tmp);
     }
-  set = 0;
+  set = nullptr;
 }
 
 void gbA::remove_SPairSet()

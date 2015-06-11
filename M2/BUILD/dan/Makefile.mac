@@ -31,11 +31,9 @@ ifeq ($(CLANG),yes)
 #   factor(28752093487520394720397634653456)
 # One of our M2 examples factors the same number, which causes M2 to crash.
 DIRECTORY := clang
-CC  := /usr/bin/clang
-CXX := /usr/bin/clang++
-# Xcode doesn't include a fortran compiler
-FC  := 
-# CONFIGOPTIONS += --disable-frobby  --disable-gfan
+CC  := cc
+CXX := c++
+FC  :=
 else
 CC  := gcc-4.9
 CXX := g++-4.9

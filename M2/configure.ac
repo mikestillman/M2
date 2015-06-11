@@ -7,7 +7,7 @@ dnl    - add an entry to distributions/deb/changelog
 dnl Things to do after incrementing the version number and committing:
 dnl    - make a git branch of the form release-X.Y.Z, if it's for final development of a binary release
 dnl    - make a git tag of the form version-X.Y.Z
-AC_INIT(Macaulay2, 1.7.0.1, Macaulay2@math.uiuc.edu, Macaulay2, http://macaulay2.com/)
+AC_INIT(Macaulay2, 1.8.0.1, Macaulay2@math.uiuc.edu, Macaulay2, http://macaulay2.com/)
 
 dnl The convention for version numbers of Macaulay2 is this:
 dnl   1.3     : a major release, such as occurs every 12 months, stable, made into binary distributions
@@ -1137,7 +1137,7 @@ then AC_LANG(C++)
 	  AC_RUN_IFELSE([AC_LANG_SOURCE([[
 		  #include <stdio.h>
 		  #include <NTL/version.h>
-		  main () {
+		  int main () {
 		      FILE *msg = fdopen(]]AS_MESSAGE_FD[[,"w");
 		      unsigned major, minor, revision;
 		      major = NTL_MAJOR_VERSION;
@@ -1153,7 +1153,7 @@ then AC_LANG(C++)
      then AC_MSG_CHECKING([whether ntl library is compiled with gmp (or mpir), using NTL/config.h])
 	  AC_RUN_IFELSE([AC_LANG_SOURCE([[
 		  #include <NTL/config.h>
-		  main () {
+		  int main () {
 		      return !( 
 			  #ifdef NTL_GMP_LIP
 			  1
@@ -1547,6 +1547,7 @@ AC_MSG_NOTICE([using CPPFLAGS          = $CPPFLAGS])
 AC_MSG_NOTICE([using CFLAGS            = $CFLAGS])
 AC_MSG_NOTICE([using CXX               = $CXX])
 AC_MSG_NOTICE([using CXXFLAGS          = $CXXFLAGS])
+AC_MSG_NOTICE([using FC                = $FC])
 AC_MSG_NOTICE([using LDFLAGS           = $LDFLAGS])
 AC_MSG_NOTICE([using CC_FOR_BUILD      = $CC_FOR_BUILD])
 AC_MSG_NOTICE([using LDFLAGS_FOR_BUILD = $LDFLAGS_FOR_BUILD])

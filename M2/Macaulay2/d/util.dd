@@ -2,11 +2,6 @@
 -- helper routines for checking arguments
 use basic;
 
-header "
-  #include <comp.hpp>
-";
-
-
 export isBoolean(e:Expr):bool := e == True || e == False;
 export toBoolean(e:Expr):bool := e == True;
 
@@ -198,28 +193,62 @@ export toExpr(x:QQ):Expr := Expr(QQcell(x));
 export toExpr(x:RR):Expr := Expr(RRcell(x));
 export toExpr(x:CC):Expr := Expr(CCcell(x));
 export toExpr(x:double):Expr := Expr(RRcell(toRR(x,ulong(53))));
+
+header "
+  #include <comp.hpp>
+  #include <freemod.hpp>
+  #include <matrix.hpp>
+  #include <relem.hpp>
+  #include <ringmap.hpp>
+  #include <mat.hpp>
+";
+
 RawComputationFinalizer(x:RawComputation,nothing:null):void := Ccode(void,x,"->~Computation()");
+RawFreeModuleFinalizer(x:RawFreeModule,nothing:null):void := Ccode(void,x,"->~FreeModule()");
+RawMatrixFinalizer(x:RawMatrix,nothing:null):void := Ccode(void,x,"->~Matrix()");
+RawMonomialIdealFinalizer(x:RawMonomialIdeal,nothing:null):void := Ccode(void,x,"->~MonomialIdeal()");
+RawRingElementFinalizer(x:RawRingElement,nothing:null):void := Ccode(void,x,"->~RingElement()");
+RawRingMapFinalizer(x:RawRingMap,nothing:null):void := Ccode(void,x,"->~RingMap()");
+RawMutableMatrixFinalizer(x:RawMutableMatrix,nothing:null):void := Ccode(void,x,"->~MutableMatrix()");
+
 export toExpr(x:RawComputation):Expr := (
-     Ccode(void, "GC_REGISTER_FINALIZER(",x,",(GC_finalization_proc)",RawComputationFinalizer,",0,0,0)");
+     Ccode(void, "GC_REGISTER_FINALIZER(const_cast<void *>(static_cast<const void *>(",x,")),(GC_finalization_proc)",RawComputationFinalizer,",NULL,0,0)");
      Expr(RawComputationCell(x)));
 export toExpr(x:RawComputationOrNull):Expr := when x is r:RawComputation do toExpr(r) is null do engineErrorMessage();
-export toExpr(x:RawFreeModule):Expr := Expr(RawFreeModuleCell(x));
-export toExpr(x:RawMatrix):Expr := Expr(RawMatrixCell(x));
+export toExpr(x:RawFreeModule):Expr := (
+     Ccode(void, "GC_REGISTER_FINALIZER(const_cast<void *>(static_cast<const void *>(",x,")),(GC_finalization_proc)",RawFreeModuleFinalizer,",NULL,0,0)");
+     Expr(RawFreeModuleCell(x)));
+export toExpr(x:RawFreeModuleOrNull):Expr := when x is r:RawFreeModule do toExpr(r) is null do engineErrorMessage();
+export toExpr(x:RawMatrix):Expr := (
+     Ccode(void, "GC_REGISTER_FINALIZER(const_cast<void *>(static_cast<const void *>(",x,")),(GC_finalization_proc)",RawMatrixFinalizer,",NULL,0,0)");
+     Expr(RawMatrixCell(x)));
+export toExpr(x:RawMatrixOrNull):Expr := when x is r:RawMatrix do toExpr(r) is null do engineErrorMessage();
+export toExpr(x:RawMonomialIdeal):Expr := (
+     Ccode(void, "GC_REGISTER_FINALIZER(const_cast<void *>(static_cast<const void *>(",x,")),(GC_finalization_proc)",RawMonomialIdealFinalizer,",NULL,0,0)");
+     Expr(RawMonomialIdealCell(x)));
+export toExpr(x:RawMonomialIdealOrNull):Expr := when x is r:RawMonomialIdeal do toExpr(r) is null do engineErrorMessage();
+export toExpr(x:RawRingElement):Expr := (
+     Ccode(void, "GC_REGISTER_FINALIZER(const_cast<void *>(static_cast<const void *>(",x,")),(GC_finalization_proc)",RawRingElementFinalizer,",NULL,0,0)");
+     Expr(RawRingElementCell(x)));
+export toExpr(x:RawRingElementOrNull):Expr := when x is r:RawRingElement do toExpr(r) is null do engineErrorMessage();
+export toExpr(x:RawRingMap):Expr := (
+     Ccode(void, "GC_REGISTER_FINALIZER(const_cast<void *>(static_cast<const void *>(",x,")),(GC_finalization_proc)",RawRingMapFinalizer,",NULL,0,0)");
+     Expr(RawRingMapCell(x)));
+export toExpr(x:RawMutableMatrix):Expr := (
+     Ccode(void, "GC_REGISTER_FINALIZER(const_cast<void *>(static_cast<const void *>(",x,")),(GC_finalization_proc)",RawMutableMatrixFinalizer,",NULL,0,0)");
+     Expr(RawMutableMatrixCell(x)));
+export toExpr(x:RawMutableMatrixOrNull):Expr := when x is r:RawMutableMatrix do toExpr(r) is null do engineErrorMessage();
+
 export toExpr(x:RawMonoid):Expr := Expr(RawMonoidCell(x));
 export toExpr(x:RawMonomial):Expr := Expr(RawMonomialCell(x));
-export toExpr(x:RawMonomialIdeal):Expr := Expr(RawMonomialIdealCell(x));
 export toExpr(x:RawMonomialOrdering):Expr := Expr(RawMonomialOrderingCell(x));
-export toExpr(x:RawMutableMatrix):Expr := Expr(RawMutableMatrixCell(x));
 export toExpr(x:RawStraightLineProgram):Expr := Expr(RawStraightLineProgramCell(x));
 export toExpr(x:RawPathTracker):Expr := Expr(RawPathTrackerCell(x));
 export toExpr(x:RawRing):Expr := Expr(RawRingCell(x));
-export toExpr(x:RawRingElement):Expr := Expr(RawRingElementCell(x));
-export toExpr(x:RawRingMap):Expr := Expr(RawRingMapCell(x));
 export toExpr(x:RawRingOrNull):Expr := when x is r:RawRing do Expr(RawRingCell(r)) is null do engineErrorMessage();
 export toExpr(x:RawMonoidOrNull):Expr := when x is r:RawMonoid do Expr(RawMonoidCell(r)) is null do engineErrorMessage();
 export toExpr(x:RawMonomialPairOrNull):Expr := when x is r:RawMonomialPair do Expr(Sequence(Expr(RawMonomialCell(r.a)), Expr(RawMonomialCell(r.b)))) else engineErrorMessage();
 export toExprOrNull(x:RawRingOrNull):Expr := when x is r:RawRing do Expr(RawRingCell(r)) is null do nullE;
-export toExpr(x:RawMonomialIdealOrNull):Expr := when x is r:RawMonomialIdeal do Expr(RawMonomialIdealCell(r)) is null do engineErrorMessage();
 export toExprSeq(x:RawArrayInt):Expr := Expr(new Sequence len length(x) do foreach i in x do provide Expr(ZZcell(toInteger(i))));
 export toExpr(x:RawArrayInt):Expr := Expr(list(new Sequence len length(x) do foreach i in x do provide Expr(ZZcell(toInteger(i)))));
 export toExpr(e:RawArrayIntOrNull):Expr := when e is x:RawArrayInt do toExpr(x) is null do engineErrorMessage();
@@ -230,10 +259,6 @@ export toExpr(x:RawRingElementArray):Expr := new Sequence len length(x) do forea
 export toExpr(x:RawRingElementArrayOrNull):Expr := when x is s:RawRingElementArray do toExpr(s) is null do engineErrorMessage();
 export toExpr(x:RawRingElementPairOrNull):Expr := when x is p:RawRingElementPair do seq(Expr(RawRingElementCell(p.a)),Expr(RawRingElementCell(p.b))) is null do engineErrorMessage();
 export toExpr(x:RawMonomialOrNull):Expr := when x is r:RawMonomial do Expr(RawMonomialCell(r)) is null do engineErrorMessage();
-export toExpr(x:RawRingElementOrNull):Expr := when x is r:RawRingElement do Expr(RawRingElementCell(r)) is null do engineErrorMessage();
-export toExpr(x:RawFreeModuleOrNull):Expr := when x is r:RawFreeModule do Expr(RawFreeModuleCell(r)) is null do engineErrorMessage();
-export toExpr(x:RawMatrixOrNull):Expr := when x is r:RawMatrix do Expr(RawMatrixCell(r)) is null do engineErrorMessage();
-export toExpr(x:RawMutableMatrixOrNull):Expr := when x is r:RawMutableMatrix do Expr(RawMutableMatrixCell(r)) is null do engineErrorMessage();
 export toExpr(x:RawStraightLineProgramOrNull):Expr := when x is r:RawStraightLineProgram do Expr(RawStraightLineProgramCell(r)) is null do engineErrorMessage();
 export toExpr(x:RawPathTrackerOrNull):Expr := when x is r:RawPathTracker do Expr(RawPathTrackerCell(r)) is null do engineErrorMessage();
 export toExpr(x:RawMatrixPairOrNull):Expr := when x is p:RawMatrixPair do seq(Expr(RawMatrixCell(p.a)),Expr(RawMatrixCell(p.b))) is null do engineErrorMessage();

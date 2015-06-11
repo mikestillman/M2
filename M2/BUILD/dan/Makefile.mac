@@ -38,7 +38,7 @@ else
 CC  := gcc-4.9
 CXX := g++-4.9
 FC  := gfortran-4.9
-CONFIGOPTIONS += CPPFLAGS="-I/usr/local/include -I/usr/local/opt/readline/include" LDFLAGS="-L/usr/local/lib -L/usr/local/opt/readline/lib"
+CONFIGOPTIONS += CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib"
 DIRECTORY := mac64
 endif
 

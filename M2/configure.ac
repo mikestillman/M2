@@ -795,31 +795,12 @@ AC_ARG_ENABLE(download, AS_HELP_STRING(--enable-download,enable automatic downlo
 
 # the order of these segments also reflects dependencies
 AC_LANG(C)
-AC_SEARCH_LIBS(tgoto,tinfo ncurses curses,,AC_MSG_ERROR([[libcurses, libncurses, and tinfo not found (containing symbol tgoto)]]))
+AC_SEARCH_LIBS(tgoto,tinfo ncurses curses,,AC_MSG_ERROR([[not found: library containing symbol tgoto; tried libcurses, libncurses, and libtinfo)]]))
 if test $BUILD_readline = no
 then AC_CHECK_HEADER(readline/readline.h,,BUILD_readline=yes)
 fi
 if test $BUILD_readline = no
-then AC_MSG_CHECKING([for library containing common symbol _rl_comment_begin and text symbol rl_set_prompt])
-     FOUND=
-     SAVELIBS=$LIBS
-     for lib in "" "-lreadline" "-lreadline -lhistory"
-     do  test "$lib" && LIBS="$lib $LIBS"
-	 AC_LINK_IFELSE(
-	     [AC_LANG_SOURCE([
-	      [ extern int rl_set_prompt(); extern int _rl_comment_begin; int main () { return rl_set_prompt() + _rl_comment_begin; } ]
-	     ])],
-	     FOUND=yes; break;,
-	     LIBS=$SAVELIBS)
-     done
-     if test "$FOUND"
-     then if test "$lib"
-	 then AC_MSG_RESULT([yes, $lib])
-	 else AC_MSG_RESULT([none required])
-	 fi
-     else AC_MSG_RESULT([no, will build readline])
-	 BUILD_readline=yes
-     fi 
+then AC_SEARCH_LIBS(rl_set_prompt,readline,,BUILD_readline=yes)
 fi
 if test $BUILD_readline = no
 then AC_SEARCH_LIBS(rl_completion_matches,readline,,BUILD_readline=yes)

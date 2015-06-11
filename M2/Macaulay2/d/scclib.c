@@ -409,8 +409,6 @@ static char **M2_completion(const char *text, int start, int end) {
 
 
 void init_readline_variables(void) {
-  extern const char *_rl_comment_begin;
-  _rl_comment_begin = "-- ";
   rl_readline_name = "M2";
   rl_attempted_completion_function = M2_completion;
   rl_basic_word_break_characters = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r";

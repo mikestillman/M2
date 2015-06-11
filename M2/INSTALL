@@ -170,10 +170,10 @@ various modern operating systems:
 	brew tap homebrew/versions
 	brew tap homebrew/science
 	brew tap homebrew/homebrew-x11
-	brew install pkg-config autoconf automake gnu-tar bdw-gc libatomic_ops gdbm gmp pari boost cddlib glpk libtool gcc49 flint
+	brew install pkg-config autoconf automake gnu-tar bdw-gc libatomic_ops gdbm gmp pari boost cddlib glpk libtool gcc49 flint mpfr
 	brew install --with-gmp ntl
     Now remember to add 
-        --enable-build-libraries="pari flint" CPPFLAGS="-I/usr/local/include -I/usr/local/opt/readline/include" LDFLAGS="-L/usr/local/lib -L/usr/local/opt/readline/lib" CC="gcc-4.9" CXX="g++-4.9"  FC=""
+        CC=gcc-4.9 CXX=g++-4.9 FC=
       to the "configure" command line below in the section on compiling Macaulay2.
     Note: under Mac OS version 10.10 (Yosemite), the test for whether compiling with
       g++-4.9 and then linking with gcc-4.9 works may fail, in which case adding
@@ -183,9 +183,6 @@ various modern operating systems:
       ) may help.  Apparently the tools have trouble determining that 10.10 is a
       newer version number than 10.9.  Linking alternatively with libgcc_eh
       seems to break C++ exception handling.
-    Note: homebrew uses /usr/bin/gcc to compile its libraries.  If compiling
-      with clang instead of gcc, then run this first:
-        brew install gmp mpfr
     Note: software installed by "fink", if not kept up to date, can interfere
       with the Macaulay2 build process.  To test, for example, whether the
       correct version of "automake" is available, run the shell command
@@ -194,8 +191,12 @@ various modern operating systems:
       /sw/bin/automake.  Since homebrew suffices for most purposes, it's
       probably best to just remove fink entirely, with the command
         sudo rm -rf /sw
-    Note: if you'd like to try compiling with "Clang", you can find the latest
-      versions at http://llvm.org/releases/download.html .
+    Note: if you'd like to try compiling with "Clang", which we have not
+      totally succeeded with, add
+        CC=cc CXX=c++ FC=
+      to the "configure" command line, instead of using the values mentioned
+      above.  Alternatively, you can find the latest versions of Clang
+      at http://llvm.org/releases/download.html .
 
   Cygwin 1.7 under Microsoft Windows:
     Use setup to install these packages:

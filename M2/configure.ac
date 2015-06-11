@@ -1137,7 +1137,7 @@ then AC_LANG(C++)
 	  AC_RUN_IFELSE([AC_LANG_SOURCE([[
 		  #include <stdio.h>
 		  #include <NTL/version.h>
-		  main () {
+		  int main () {
 		      FILE *msg = fdopen(]]AS_MESSAGE_FD[[,"w");
 		      unsigned major, minor, revision;
 		      major = NTL_MAJOR_VERSION;
@@ -1153,7 +1153,7 @@ then AC_LANG(C++)
      then AC_MSG_CHECKING([whether ntl library is compiled with gmp (or mpir), using NTL/config.h])
 	  AC_RUN_IFELSE([AC_LANG_SOURCE([[
 		  #include <NTL/config.h>
-		  main () {
+		  int main () {
 		      return !( 
 			  #ifdef NTL_GMP_LIP
 			  1

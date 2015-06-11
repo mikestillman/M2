@@ -250,7 +250,7 @@ clean::; rm -f @abs_top_builddir@/M2@EXE@
 distclean: clean; rm -f Makefile
 Makefile: Makefile.in; cd ../..; ./config.status Macaulay2/bin/Makefile
 all relink check: M2
-M2: M2.in; cd ../..; ./config.status Macaulay2/bin/M2
+M2: M2.in ../../config.status; cd ../..; ./config.status Macaulay2/bin/M2
 
 # Local Variables:
 # compile-command: "make -C $M2BUILDDIR/Macaulay2/bin relink "

@@ -171,6 +171,7 @@ various modern operating systems:
 	brew tap homebrew/science
 	brew tap homebrew/homebrew-x11
 	brew install pkg-config autoconf automake gnu-tar bdw-gc libatomic_ops gdbm gmp pari boost cddlib glpk libtool gcc49 flint
+	brew install --with-gmp ntl
     Now remember to add 
         --enable-build-libraries="pari flint" CPPFLAGS="-I/usr/local/include -I/usr/local/opt/readline/include" LDFLAGS="-L/usr/local/lib -L/usr/local/opt/readline/lib" CC="gcc-4.9" CXX="g++-4.9"  FC=""
       to the "configure" command line below in the section on compiling Macaulay2.

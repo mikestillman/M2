@@ -31,8 +31,8 @@ ifeq ($(CLANG),yes)
 #   factor(28752093487520394720397634653456)
 # One of our M2 examples factors the same number, which causes M2 to crash.
 DIRECTORY := clang
-CC  := /usr/bin/clang
-CXX := /usr/bin/clang++
+CC  := cc
+CXX := c++
 FC  :=
 else
 CC  := gcc-4.9
@@ -45,10 +45,6 @@ endif
 DIRECTORY := $(DIRECTORY)-$(BRANCH)
 
 default: all
-
-# we build pari because brew's pari brings in gmp
-# we build flint because of the gmp problem Mike found once
-CONFIGOPTIONS += --enable-build-libraries="pari flint"
 
 ifeq ($(PRODUCTION),yes)
    default: check

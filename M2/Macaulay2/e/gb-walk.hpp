@@ -60,7 +60,6 @@ public:
   virtual ~GBWalker();
 
   // GBComputation and Computation inherited routines //
-  virtual void remove_gb();
 
   virtual void start_computation();
 

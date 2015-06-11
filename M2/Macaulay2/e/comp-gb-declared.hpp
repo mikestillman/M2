@@ -12,10 +12,6 @@
     @brief declared Groebner bases.
 */
 class GBDeclared : public GBComputation
-// This contains a GBComputation, which can be changed.
-// For example, we can start with a computation, and then
-// after it is done, we can jettison it, and consider only
-// the GB object itself.
 {
   ReducedGB *G;
   const Matrix *trimmed_gens;
@@ -52,9 +48,7 @@ public:
                                const Matrix *syz);
   // Possibly returns NULL, if an error message is reported
 
-  virtual ~GBDeclared() {}
-
-  virtual void remove_gb() {}
+  virtual ~GBDeclared();
 
   virtual GBComputation * cast_to_GBComputation() { return this;}
 

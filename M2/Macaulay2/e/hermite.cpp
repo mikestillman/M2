@@ -106,8 +106,6 @@ HermiteComputation::~HermiteComputation()
       GB_list = tmp->next;
       remove_hm_elem(tmp);
     }
-
-
 }
 
 int HermiteComputation::compare_elems(hm_elem *f, hm_elem *g) const

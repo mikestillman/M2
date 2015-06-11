@@ -120,9 +120,8 @@ private:
   bool auto_reduce_step();
 
   GB_comp() {}
-  virtual ~GB_comp();
 
-  virtual void remove_gb() {}
+  virtual ~GB_comp();
 
   // Adding generators
   void add_gens(int lo, int hi, const Matrix *m);

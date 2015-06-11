@@ -136,6 +136,13 @@ GBinhom_comp::GBinhom_comp(const Matrix *m,
   set_up(m, csyz, nsyz, gb_weights, strat);
 }
 
+void GBinhom_comp::remove_gb_elem(gb_elem*& g)
+{
+  GR->gbvector_remove(g->f);
+  GR->gbvector_remove(g->fsyz);
+  deletearray(g->lead_exp);
+  deleteitem(g);
+}
 void GBinhom_comp::remove_pair(s_pair *& p)
 {
   GR->gbvector_remove(p->f);
@@ -150,6 +157,19 @@ void GBinhom_comp::remove_pair(s_pair *& p)
 
 GBinhom_comp::~GBinhom_comp()
 {
+  delete weightInfo_;
+  // If we remove garbage collection here, we need to free these too:
+  // remove spairs
+  // monideals
+
+  while (gbLarge != 0)
+    {
+      auto tmp = gbLarge;
+      gbLarge = tmp->next;
+      tmp->next = nullptr;
+      remove_gb_elem(tmp);
+    }
+  delete minimal_gb;
 }
 
 void GBinhom_comp::resize(int /*nbits*/)
@@ -673,6 +693,7 @@ void GBinhom_comp::gb_insert(gbvector * f, gbvector * fsyz, int minlevel)
         q->next_min = tmp->next_min;
         tmp->next_min = NULL;
         tmp->is_min ^= MINGB_MASK;      // I.e. not in the minimal GB
+        remove_gb_elem(tmp);
         n_gb--;
       }
     else
@@ -747,8 +768,7 @@ int GBinhom_comp::s_pair_step(s_pair *p)
           syz.append(fsyzvec);
           return SPAIR_SYZ;
         }
-      else
-        GR->gbvector_remove(fsyz);
+      GR->gbvector_remove(fsyz);
     }
   return SPAIR_ZERO;
 }

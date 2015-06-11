@@ -40,8 +40,6 @@ public:
 
   virtual ~F4Computation();
 
-  virtual void remove_gb() { delete f4; }
-
   enum ComputationStatusCode computation_is_complete();
 
   virtual bool stop_conditions_ok() { return true; }

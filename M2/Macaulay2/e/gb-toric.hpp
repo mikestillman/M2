@@ -325,8 +325,6 @@ public:
                       M2_bool use_max_degree,
                       int max_degree);
 
-  void remove_gb();
-
   void start_computation();
 
   virtual const Ring * get_ring() const { return 0; } /* doesn't have a ring !!  */

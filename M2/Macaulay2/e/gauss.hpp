@@ -56,9 +56,8 @@ protected:
 public:
   // An honest GB computation
   GaussElimComputation(const Matrix *m, int collect_syz, int n_syz);
-  ~GaussElimComputation();
 
-  virtual void remove_gb() {}
+  ~GaussElimComputation();
 
   virtual void start_computation();
 

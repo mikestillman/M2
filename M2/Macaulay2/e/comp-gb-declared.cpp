@@ -163,6 +163,12 @@ GBComputation *GBDeclared::create(const Matrix *leadterms,
   return new GBDeclared(leadterms,m,gb,change,syz);
 }
 
+GBDeclared::~GBDeclared()
+{
+  delete G;
+  trimmed_gens = 0; // these two items will be garbage collected
+  syz = 0;
+}
 // Local Variables:
 // compile-command: "make -C $M2BUILDDIR/Macaulay2/e "
 // indent-tabs-mode: nil

@@ -4,7 +4,6 @@
 #define _comp_gb_hpp_
 
 #include "comp.hpp"
-class buffer;
 
 // The following are the return values from s_pair_step,
 // These are used in GB_comp, GBinhom_comp
@@ -28,7 +27,6 @@ class GBComputation : public Computation
 // This is the base type for all Groebner basis and syzygy computations
 {
 protected:
-  friend class GBProxy;
   GBComputation() {}
 
   virtual bool stop_conditions_ok() = 0;
@@ -37,8 +35,6 @@ protected:
 
 public:
   virtual ~GBComputation();
-
-  virtual void remove_gb() = 0; // Should free all space associated with GB
 
   virtual GBComputation * cast_to_GBComputation() { return this;}
 

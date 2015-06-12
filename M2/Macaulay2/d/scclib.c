@@ -409,9 +409,11 @@ static char **M2_completion(const char *text, int start, int end) {
 
 
 void init_readline_variables(void) {
-  rl_readline_name = "M2";
+  static char name[] = "M2";	/* not const */
+  rl_readline_name = name;
   rl_attempted_completion_function = M2_completion;
-  rl_basic_word_break_characters = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r";
+  static char brk[] = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r";
+  rl_basic_word_break_characters = brk;
   using_history();
 }
 

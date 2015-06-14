@@ -422,6 +422,8 @@ static int read_via_readline(char *buf,int len,char *prompt) {
   static int plen;		/* number of chars in p */
   static int i;			/* number of chars in p already returned */
   int r;			/* number of chars to return this time */
+  static bool done;
+  if (!done) init_readline_variables(), done=TRUE;
   if (len == 0) return 0;
   if (p == NULL) {
     reading_from_readline = TRUE; /* for the interrupt handler */

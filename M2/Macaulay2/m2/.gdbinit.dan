@@ -6,11 +6,14 @@ set environment LOADDATA_IGNORE_CHECKSUMS yes
 set auto-load safe-path /
 source .gdb-directories
 source .gdb-files
+set args -q --no-randomize --no-time
+handle SIGPWR nostop noprint
+handle SIGXCPU nostop noprint
+b main
+run
 b fatalarrayindex
-# b GC_default_warn_proc
-# can only do this after the program starts:
+b GC_default_warn_proc
 # b __gmp_set_memory_functions
-# b main
 b fatal
 b ERROR
 b outofmem
@@ -18,10 +21,8 @@ b abort
 b _ntl_abort
 b malloc_error_break
 b GC_err_puts
-set args -q --no-randomize --no-time
-handle SIGPWR nostop noprint
-handle SIGXCPU nostop noprint
+b malloc_error_break
 # source .gdb-run-it
 # Local Variables:
-# compile-command: "make -C $M2BUILDDIR/Macaulay2/m2 "
+# compile-command: "make -C $M2BUILDDIR/Macaulay2/m2 .gdbinit "
 # End:

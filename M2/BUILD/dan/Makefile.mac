@@ -20,7 +20,7 @@ PROFILE=no
 unexport PROFILE
 
 # do something more intelligent later:
-BRANCH := master
+BRANCH := $(shell git branch --contains | sed -e s=^..== -e s=/=.=g )
 
 # see the INSTALL file:
 export MACOSX_DEPLOYMENT_TARGET=10.9
@@ -38,9 +38,10 @@ else
 CC  := gcc-4.9
 CXX := g++-4.9
 FC  := gfortran-4.9
-CONFIGOPTIONS += CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib"
 DIRECTORY := mac64
 endif
+
+CONFIGOPTIONS += CPPFLAGS="-I/usr/local/opt/readline/include" LDFLAGS="-L/usr/local/opt/readline/lib"
 
 DIRECTORY := $(DIRECTORY)-$(BRANCH)
 
@@ -73,8 +74,7 @@ endif
 include Makefile.include
 
 show:
-	: FC = $(FC)
-	printenv FC
+	: FC = $(FC) BRANCH = $(BRANCH)
 
 # Local Variables:
 # compile-command: "time make -w -O -j4 -f Makefile.mac PRODUCTION=yes DEBUG=no NTL_WIZARD=no "

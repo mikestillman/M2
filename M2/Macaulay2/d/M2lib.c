@@ -581,7 +581,6 @@ void* interpFunc(void* vargs2)
   int volatile envc = args->envc;
      setInterpThread();
      reverse_run(thread_prepare_list);// -- re-initialize any thread local variables
-     init_readline_variables();
      M2_envp = M2_tostrings(envc,(char **)saveenvp);
      M2_argv = M2_tostrings(argc,(char **)saveargv);
      M2_args = M2_tostrings(argc == 0 ? 0 : argc - 1, (char **)saveargv + 1);

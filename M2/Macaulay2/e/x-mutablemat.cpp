@@ -1000,7 +1000,11 @@ engine_RawRingElementArray convertRingelemsToArray(
       getmemarraytype(engine_RawRingElementArray, len);
   result->len = static_cast<int>(len);
   for (size_t i = 0; i < len; i++)
-    result->array[i] = RingElement::make_raw(R, static_cast<int>(elems[i]));
+    {
+      ring_elem a;
+      a.int_val = elems[i];
+      result->array[i] = RingElement::make_raw(R, a);
+    }
 
   return result;
 }

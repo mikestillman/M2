@@ -1160,7 +1160,7 @@ res2_pair *res2_comp::reduce(res2term *&f,
       if (find_ring_divisor(REDUCE_exp, rg))
         {
           // Subtract off f, leave fsyz alone
-          Nterm *r = rg;
+          Nterm *r = rg.poly_val;
           M->divide(f->monom, r->monom, REDUCE_mon);
           R->ring_subtract_multiple_to(f, f->coeff, REDUCE_mon, f->comp, rg);
           total_reduce_count++;
@@ -1236,7 +1236,7 @@ res2_pair *res2_comp::reduce2(res2term *&f,
       if (find_ring_divisor(REDUCE_exp, rg))
         {
           // Subtract off f, leave fsyz alone
-          Nterm *r = rg;
+          Nterm *r = rg.poly_val;
           M->divide(f->monom, r->monom, REDUCE_mon);
           R->ring_subtract_multiple_to(f, f->coeff, REDUCE_mon, f->comp, rg);
           total_reduce_count++;
@@ -1349,11 +1349,11 @@ res2_pair *res2_comp::reduce3(res2term *&f,
       if (find_ring_divisor(REDUCE_exp, rg))
         {
           // Subtract off f, leave fsyz alone
-          Nterm *r = rg;
+          Nterm *r = rg.poly_val;
           M->divide(lead->monom, r->monom, REDUCE_mon);
           ring_elem c = K->negate(lead->coeff);
           res2term *h =
-              R->ring_mult_by_term(r->next, c, REDUCE_mon, lead->comp);
+            R->ring_mult_by_term(ring_elem(r->next), c, REDUCE_mon, lead->comp);
           R->remove(lead);
           K->remove(c);
           fb.add(h);
@@ -1443,11 +1443,11 @@ res2_pair *res2_comp::reduce4(res2term *&f,
       if (find_ring_divisor(REDUCE_exp, rg))
         {
           // Subtract off f, leave fsyz alone
-          Nterm *r = rg;
+          Nterm *r = rg.poly_val;
           M->divide(lead->monom, r->monom, REDUCE_mon);
           ring_elem c = K->negate(lead->coeff);
           res2term *h =
-              R->ring_mult_by_term(r->next, c, REDUCE_mon, lead->comp);
+            R->ring_mult_by_term(ring_elem(r->next), c, REDUCE_mon, lead->comp);
           R->remove(lead);
           K->remove(c);
           R->add_to(f, h);
@@ -1527,7 +1527,7 @@ res2_pair *res2_comp::reduce_by_level(res2term *&f, res2term *&fsyz)
       if (find_ring_divisor(REDUCE_exp, rg))
         {
           // Subtract off f, leave fsyz alone
-          Nterm *r = rg;
+          Nterm *r = rg.poly_val;
           M->divide(f->monom, r->monom, REDUCE_mon);
           R->ring_subtract_multiple_to(f, f->coeff, REDUCE_mon, f->comp, rg);
           total_reduce_count++;
@@ -1584,11 +1584,11 @@ res2_pair *res2_comp::reduce_heap_by_level(res2term *&f, res2term *&fsyz)
       if (find_ring_divisor(REDUCE_exp, rg))
         {
           // Subtract off f, leave fsyz alone
-          Nterm *r = rg;
+          Nterm *r = rg.poly_val;
           M->divide(lead->monom, r->monom, REDUCE_mon);
           ring_elem c = K->negate(lead->coeff);
           res2term *h =
-              R->ring_mult_by_term(r->next, c, REDUCE_mon, lead->comp);
+            R->ring_mult_by_term(ring_elem(r->next), c, REDUCE_mon, lead->comp);
           R->remove(lead);
           K->remove(c);
           fb.add(h);

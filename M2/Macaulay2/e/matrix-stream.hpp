@@ -100,7 +100,7 @@ void matrixToStream(const Matrix* M, T& stream)
       size_t nterms = 0;
       for (; i.valid(); i.next())
         {
-          Nterm* t = i.entry();
+          Nterm* t = i.entry().poly_val;
           for (Nterm* s = t; s != 0; s = s->next) nterms++;
         }
       stream.appendPolynomialBegin(nterms);
@@ -109,7 +109,7 @@ void matrixToStream(const Matrix* M, T& stream)
       // Now we process each column, sending it to the stream
       for (; i.valid(); i.next())
         {
-          Nterm* t = i.entry();
+          Nterm* t = i.entry().poly_val;
           for (Nterm* s = t; s != 0; s = s->next)
             {
               P->getMonoid()->to_expvector(s->monom, exp);

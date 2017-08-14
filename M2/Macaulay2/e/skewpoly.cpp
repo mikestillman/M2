@@ -41,7 +41,7 @@ ring_elem SkewPolynomialRing::antipode(const ring_elem f) const
 
   exponents EXP = ALLOCATE_EXPONENTS(exp_size);
 
-  for (Nterm *s = f; s != NULL; s = s->next)
+  for (Nterm *s = f.poly_val; s != nullptr; s = s->next)
     {
       M_->to_expvector(s->monom, EXP);
       int deg = skew_.skew_degree(EXP);
@@ -61,7 +61,7 @@ ring_elem SkewPolynomialRing::antipode(const ring_elem f) const
       inresult = inresult->next;
     }
   inresult->next = 0;
-  return head.next;
+  return ring_elem(head.next);
 }
 
 ring_elem SkewPolynomialRing::mult_by_term(const ring_elem f,
@@ -76,7 +76,7 @@ ring_elem SkewPolynomialRing::mult_by_term(const ring_elem f,
   exponents EXP2 = ALLOCATE_EXPONENTS(exp_size);
   M_->to_expvector(m, EXP1);
 
-  for (Nterm *s = f; s != NULL; s = s->next)
+  for (Nterm *s = f.poly_val; s != nullptr; s = s->next)
     {
       M_->to_expvector(s->monom, EXP2);
       int sign = skew_.mult_sign(EXP1, EXP2);
@@ -92,7 +92,7 @@ ring_elem SkewPolynomialRing::mult_by_term(const ring_elem f,
       inresult = inresult->next;
     }
   inresult->next = 0;
-  return head.next;
+  return ring_elem(head.next);
 }
 
 ring_elem SkewPolynomialRing::power(const ring_elem f, mpz_t n) const

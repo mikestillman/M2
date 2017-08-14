@@ -9,28 +9,27 @@
 #include "newdelete.hpp"
 
 struct Nterm;
-
-typedef Nterm *tpoly;
+struct gmp_CC_struct;
 class schur_poly;
 
 union ring_elem
 {
+public:
   int int_val;
   Nterm *poly_val;
   schur_poly *schur_poly_val;
   mpfr_ptr mpfr_val;
-
- private:  // move this line up to the top eventually
   mpz_ptr mpz_val;
+  mpq_ptr mpq_val;
+  struct gmp_CC_struct * cc_val; // this is a gmp_CC
 
  public:
-  ring_elem() : poly_val(0) {}
+  ring_elem() : poly_val(nullptr) {}
   // explicit ring_elem(int a) : int_val(a) {} // really want this version...
-  ring_elem(int a) : int_val(a) {}
-  ring_elem(Nterm *a) : poly_val(a) {}
-  ring_elem(mpz_ptr a) : mpz_val(a) {}
-  operator int() const { return int_val; }
-  operator tpoly() const { return poly_val; }
+  explicit ring_elem(int a) : int_val(a) {}
+  explicit ring_elem(Nterm *a) : poly_val(a) {}
+  explicit ring_elem(mpz_ptr a) : mpz_val(a) {}
+  
   int get_int() const { return int_val; }
   Nterm *get_poly() const { return poly_val; }
   mpz_ptr get_mpz() const { return mpz_val; }

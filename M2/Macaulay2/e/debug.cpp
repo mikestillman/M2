@@ -53,7 +53,7 @@ void dringelem(const Ring *R, const ring_elem f)
 void dNterm(const Ring *R, const Nterm *f)
 {
   buffer o;
-  ring_elem g = const_cast<Nterm *>(f);
+  ring_elem g = ring_elem(const_cast<Nterm*>(f));
   R->elem_text_out(o, g);
   emit(o.str());
 }

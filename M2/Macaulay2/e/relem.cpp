@@ -187,10 +187,10 @@ Monomial *RingElement::lead_monom(int nvars) const
     }
 
   intarray resultvp;
-  Nterm *t = get_value();
+  Nterm *t = get_value().poly_val;
 
   int *exp = newarray_atomic(int, nvars);
-  P->lead_logical_exponents(nvars, t, exp);
+  P->lead_logical_exponents(nvars, ring_elem(t), exp);
   varpower::from_ntuple(nvars, exp, resultvp);
   return Monomial::make(resultvp.raw());
 }
@@ -424,7 +424,7 @@ bool RingElement::getSmallIntegerCoefficients(
   result_coeffs.resize(deg + 1);
   for (int i = 0; i <= deg; i++) result_coeffs[i] = 0;
   int exp[1];
-  for (Nterm *t = get_value(); t != NULL; t = t->next)
+  for (Nterm *t = get_value().poly_val; t != nullptr; t = t->next)
     {
       std::pair<bool, long> res =
           R->getCoefficientRing()->coerceToLongInteger(t->coeff);

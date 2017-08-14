@@ -403,7 +403,11 @@ bool SchurRing2::promote(const Ring *Rf,
 
   if (Rf == globalZZ)
     {
-      from_coeff(Rf->promote(globalZZ, f, result));
+#warning "this next line was wrong, test that new version is correct"
+      //old: from_coeff(Rf->promote(globalZZ, f, result));
+      ring_elem f1;
+      getCoefficientRing()->promote(Rf,f,f1);
+      result = from_coeff(f);
       return true;
     }
   else if (Rf == coefficientRing)

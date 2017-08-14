@@ -37,7 +37,7 @@ vec Ring::make_vec_from_array(int len, Nterm **array) const
     {
       if (array[i] != 0)
         {
-          vec v = make_vec(i, array[i]);
+          vec v = make_vec(i, ring_elem(array[i]));
           v->next = result;
           result = v;
         }
@@ -901,7 +901,7 @@ bool static check_nterm_multiples(const PolyRing *R,
   Nterm *g;
   const Monoid *M = R->getMonoid();
   const Ring *K = R->getCoefficients();
-  for (f = f1, g = g1; f != 0 && g != 0; f = f->next, g = g->next)
+  for (f = f1.poly_val, g = g1.poly_val; f != nullptr && g != nullptr; f = f->next, g = g->next)
     {
       if (M->compare(f->monom, g->monom) != 0) return false;
       ring_elem c1 = K->mult(c, g->coeff);
@@ -909,7 +909,7 @@ bool static check_nterm_multiples(const PolyRing *R,
       int isequal = K->is_equal(c1, d1);
       if (!isequal) return false;
     }
-  if (f == NULL && g == NULL) return true;
+  if (f == nullptr && g == nullptr) return true;
   return false;
 }
 
@@ -926,8 +926,8 @@ bool Ring::vec_is_scalar_multiple(vec f, vec g) const
 #warning "use numerator only"
 #endif
   if (f->comp != g->comp) return false;
-  Nterm *f1 = f->coeff;
-  Nterm *g1 = g->coeff;
+  Nterm *f1 = f->coeff.poly_val;
+  Nterm *g1 = g->coeff.poly_val;
   ring_elem c = f1->coeff;
   ring_elem d = g1->coeff;
   vec p, q;
@@ -948,7 +948,7 @@ vec Ring::vec_remove_monomial_factors(vec f, bool make_squarefree_only) const
 
   int *exp = newarray_atomic(int, PR->n_vars());
 
-  Nterm *t = f->coeff;
+  Nterm *t = f->coeff.poly_val;
   PR->getMonoid()->to_expvector(t->monom, exp);  // Get the process started
 
   for (vec a = f; a != NULL; a = a->next) monomial_divisor(a->coeff, exp);

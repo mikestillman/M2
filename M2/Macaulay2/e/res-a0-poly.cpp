@@ -124,7 +124,7 @@ res2term *res2_poly::ring_mult_by_term(const ring_elem f,
 {
   res2term head;
   res2term *result = &head;
-  for (const Nterm *tm = f; tm != NULL; tm = tm->next)
+  for (const Nterm *tm = f.poly_val; tm != nullptr; tm = tm->next)
     {
       result->next = new_term();
       result = result->next;
@@ -138,7 +138,7 @@ res2term *res2_poly::ring_mult_by_term(const ring_elem f,
 
 void res2_poly::make_monic(res2term *&f) const
 {
-  if (f == NULL) return;
+  if (f == nullptr) return;
   ring_elem c_inv = K->invert(f->coeff);
 
   for (res2term *tm = f; tm != NULL; tm = tm->next)
@@ -298,8 +298,8 @@ res2term *res2_poly::from_vector(const array<res2_pair *> &base,
   res2term head;
   res2term *result = &head;
 
-  for (vecterm *w = v; w != NULL; w = w->next)
-    for (Nterm *t = w->coeff; t != 0; t = t->next)
+  for (vecterm *w = v; w != nullptr; w = w->next)
+    for (Nterm *t = w->coeff.poly_val; t != nullptr; t = t->next)
       {
         result->next = new_term();
         result = result->next;

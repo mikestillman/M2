@@ -172,7 +172,7 @@ static int popular_var(const MonomialIdeal &I,
   for (k = 0; k < nvars; k++) hits[k] = 0;
   for (k = 0; k < nvars; k++) minnonzero[k] = MAX_EXP;
 
-  non_pure_power = NULL;
+  non_pure_power = nullptr;
 
   for (Index<MonomialIdeal> i = I.first(); i.valid(); i++)
     {
@@ -239,7 +239,7 @@ static int find_pivot(const MonomialIdeal &I,
   // non pure power.
   if (npure >= I.length() - 1)
     {
-      assert(vp != NULL);
+      assert(vp != nullptr);
       varpower::copy(vp, m);
       return 0;
     }
@@ -271,9 +271,9 @@ static void iquotient_and_sum(MonomialIdeal &I,
           int d = varpower::simple_degree(b->monom().raw());
           if (d >= bins.length())
             for (int j = bins.length(); j <= d; j++)
-              // bins.append((queue<Bag *> *)NULL);
-              bins.append(NULL);
-          if (bins[d] == NULL)  //(queue<Bag *> *)NULL)
+              // bins.append((queue<Bag *> *)nullptr);
+              bins.append(nullptr);
+          if (bins[d] == nullptr)  //(queue<Bag *> *)nullptr)
             bins[d] = new queue<Bag *>;
           bins[d]->insert(b);
         }
@@ -284,7 +284,7 @@ static void iquotient_and_sum(MonomialIdeal &I,
   // divisibility, and after that, insert_minimal of the ones that survive?
   Bag *b;
   for (int j = 0; j < bins.length(); j++)
-    if (bins[j] != NULL)
+    if (bins[j] != nullptr)
       {
         while (bins[j]->remove(b)) quot->insert(b);
         delete bins[j];
@@ -305,15 +305,15 @@ void hilb_comp::next_monideal()
 void hilb_comp::reset()
 {
   depth = 0;
-  if (current == NULL)
+  if (current == nullptr)
     {
       current = new hilb_step;
-      current->up = current->down = NULL;
+      current->up = current->down = nullptr;
       current->h0 = R->from_long(0);
       current->h1 = R->from_long(0);
     }
   else
-    while (current->up != NULL) current = current->up;
+    while (current->up != nullptr) current = current->up;
 
   R->remove(current->h0);  // This line should not be needed...
   R->remove(current->h1);
@@ -329,7 +329,7 @@ hilb_comp::hilb_comp(const PolynomialRing *RR, const Matrix *m)
       input_mat(m),
       this_comp(0),
       n_components(m->n_rows()),
-      current(NULL),
+      current(nullptr),
       part_table(S->n_vars(), mi_stash)
 {
   assert(D == R->getMonoid());
@@ -357,7 +357,7 @@ hilb_comp::hilb_comp(const PolynomialRing *RR, const MonomialIdeal *I)
       input_mat(0),
       this_comp(0),
       n_components(1),
-      current(NULL),
+      current(nullptr),
       part_table(S->n_vars(), mi_stash)
 {
   assert(D == R->getMonoid());
@@ -381,7 +381,7 @@ hilb_comp::hilb_comp(const PolynomialRing *RR, const MonomialIdeal *I)
 hilb_comp::~hilb_comp()
 {
   // free 'current' (which is most of the stuff here...)
-  while (current != NULL)
+  while (current != nullptr)
     {
       hilb_step *p = current;
       current = current->down;
@@ -450,7 +450,7 @@ int hilb_comp::step()
       current->h0 = R->from_long(0);
       current->h1 = R->from_long(0);
       current->monids.shrink(0);
-      if (current->up == NULL)
+      if (current->up == nullptr)
         {
           if (input_mat)
             {
@@ -482,11 +482,11 @@ void hilb_comp::recurse(MonomialIdeal *&I, const int *pivot_vp)
   depth++;
   if (depth > maxdepth) maxdepth = depth;
   nrecurse++;
-  if (current->down == NULL)
+  if (current->down == nullptr)
     {
       current->down = new hilb_step;  // MES: is this ok?
       current->down->up = current;
-      current->down->down = NULL;
+      current->down->down = nullptr;
     }
   current = current->down;
   current->h0 = R->from_long(0);
@@ -582,7 +582,7 @@ void hilb_comp::do_ideal(MonomialIdeal *I)
 
 int hilb_comp::is_done() const
 {
-  return (current != NULL && current->up == NULL);
+  return (current != nullptr && current->up == nullptr);
 }
 
 RingElement *hilb_comp::value()
@@ -608,7 +608,7 @@ void hilb_comp::stats() const
 
   hilb_step *p = current;
   int d = depth;
-  while (p != NULL)
+  while (p != nullptr)
     {
       o << "----- depth " << d << " -------------" << newline;
       o << "  " << p->monids.length() << " monomial ideals total" << newline;
@@ -646,7 +646,7 @@ void hilb_comp::stats() const
 RingElement *hilb_comp::hilbertNumerator(const Matrix *M)
 /* This routine computes the numerator of the Hilbert series
    for coker leadterms(M), using the degrees of the rows of M.
-   NULL is returned if the ring is not appropriate for
+   nullptr is returned if the ring is not appropriate for
    computing Hilbert series, or the computation was interrupted. */
 {
   const PolynomialRing *P = M->get_ring()->get_degree_ring();
@@ -669,7 +669,7 @@ RingElement *hilb_comp::hilbertNumerator(const FreeModule *F)
 
 RingElement /* or null */ *hilb_comp::hilbertNumerator(const MonomialIdeal *I)
 /* This routine computes the numerator of the Hilbert series
-   for coker I.   NULL is returned if the ring is not appropriate for
+   for coker I.   nullptr is returned if the ring is not appropriate for
    computing Hilbert series, or the computation was interrupted. */
 {
   const PolynomialRing *P = I->get_ring()->get_degree_ring();
@@ -692,7 +692,7 @@ int hilb_comp::coeff_of(const RingElement *h, int deg)
 
   int *exp = newarray_atomic(int, P->n_vars());
   int result = 0;
-  for (Nterm *f = h->get_value(); f != NULL; f = f->next)
+  for (Nterm *f = h->get_value().poly_val; f != nullptr; f = f->next)
     {
       P->getMonoid()->to_expvector(f->monom, exp);
       if (exp[0] < deg)

@@ -99,7 +99,7 @@ void PolyRingQuotient::text_out(buffer &o) const
   for (int i = 0; i < n_quotients(); i++)
     {
       o << "    ";
-      elem_text_out(o, quotient_element(i));
+      elem_text_out(o, ring_elem(quotient_element(i)));
       o << newline;
     }
 }
@@ -153,8 +153,9 @@ ring_elem PolyRingQuotient::invert(const ring_elem f) const
 {
   if (nvars_ == 1 && n_quotients() == 1 && K_->is_field())
     {
-      ring_elem g = quotient_element(0);
+      ring_elem g = ring_elem(quotient_element(0));
 
+#warning "audit the use of RingElement here, make sure all pointers only get freed once"
       RingElement *f1 = RingElement::make_raw(getAmbientRing(), f);
       RingElement *g1 = RingElement::make_raw(getAmbientRing(), g);
       const RingElement *u1;

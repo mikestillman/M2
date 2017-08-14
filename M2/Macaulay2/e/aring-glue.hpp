@@ -1300,7 +1300,7 @@ inline std::pair<bool, long> ConcreteRing<ARingZZ>::coerceToLongInteger(
 inline const RingElement *findMinimalPolynomial(const PolynomialRing &originalR)
 {
   const PolynomialRing *R = originalR.getAmbientRing();
-  ring_elem f = R->copy(originalR.quotient_element(0));
+  ring_elem f = R->copy(ring_elem(originalR.quotient_element(0)));
   return RingElement::make_raw(R, f);
 }
 

@@ -561,7 +561,7 @@ class SumCollector : public our_new_delete
   virtual ring_elem getValue() = 0;
 };
 
-#define ZERO_RINGELEM (ring_elem(static_cast<Nterm *>(0)))
+#define ZERO_RINGELEM (ring_elem(static_cast<Nterm *>(nullptr)))
 
 #include "ZZ.hpp"
 extern RingZZ *globalZZ;

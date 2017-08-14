@@ -57,7 +57,7 @@ RingMap::RingMap(const Matrix *m) : R(m->get_ring())
 #ifdef DEVELOPMENT
 #warning "also handle fraction rings"
 #endif
-          Nterm *t = f;
+          Nterm *t = f.poly_val;
           if (t->next == NULL)
             {
               // This is a single term

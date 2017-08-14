@@ -72,7 +72,7 @@ QRingInfo_field::QRingInfo_field(const PolyRing *ambientR,
         {
           // The element is part of a minimal GB
           int index = n_quotients();
-          gbvector *g = R->translate_gbvector_from_ringelem(f);
+          gbvector *g = R->translate_gbvector_from_ringelem(ring_elem(f));
           appendQuotientElement(f, g);
           vp.shrink(0);
           R->getMonoid()->to_varpower(f->monom, vp);
@@ -109,11 +109,11 @@ void QRingInfo_field_basic::reduce_lead_term_basic_field(Nterm *&f,
       if (R->getSkewInfo().mult_sign(EXP1, EXP2) < 0)
         R->getCoefficients()->negate_to(c);
     }
-  ring_elem g1 = const_cast<Nterm *>(g);
+  ring_elem g1 = ring_elem(const_cast<Nterm *>(g));
   g1 = R->mult_by_term(g1, c, MONOM1);
-  ring_elem f1 = f;
+  ring_elem f1 = ring_elem(f);
   R->internal_add_to(f1, g1);
-  f = f1;
+  f = f1.poly_val;
 }
 
 void QRingInfo_field_basic::normal_form(ring_elem &f) const
@@ -125,7 +125,7 @@ void QRingInfo_field_basic::normal_form(ring_elem &f) const
   const Monoid *M = R->getMonoid();
   Nterm head;
   Nterm *result = &head;
-  Nterm *t = f;
+  Nterm *t = f.poly_val;
   while (t != NULL)
     {
       M->to_expvector(t->monom, EXP1);
@@ -145,7 +145,7 @@ void QRingInfo_field_basic::normal_form(ring_elem &f) const
         }
     }
   result->next = NULL;
-  f = head.next;
+  f = ring_elem(head.next);
 }
 
 void QRingInfo_field_basic::gbvector_normal_form(const FreeModule *F,
@@ -202,11 +202,11 @@ void QRingInfo_field_QQ::reduce_lead_term_QQ(Nterm *&f, const Nterm *g) const
       if (R->getSkewInfo().mult_sign(EXP1, EXP2) < 0)
         globalQQ->QQ::negate_to(c);
     }
-  ring_elem g1 = const_cast<Nterm *>(g);
+  ring_elem g1 = ring_elem(const_cast<Nterm *>(g));
   g1 = R->mult_by_term(g1, c, MONOM1);
-  ring_elem f1 = f;
+  ring_elem f1 = ring_elem(f);
   R->internal_add_to(f1, g1);
-  f = f1;
+  f = f1.poly_val;
 }
 
 void QRingInfo_field_QQ::normal_form(ring_elem &f) const
@@ -218,7 +218,7 @@ void QRingInfo_field_QQ::normal_form(ring_elem &f) const
   const Monoid *M = R->getMonoid();
   Nterm head;
   Nterm *result = &head;
-  Nterm *t = f;
+  Nterm *t = f.poly_val;
   while (t != NULL)
     {
       M->to_expvector(t->monom, EXP1);
@@ -238,7 +238,7 @@ void QRingInfo_field_QQ::normal_form(ring_elem &f) const
         }
     }
   result->next = NULL;
-  f = head.next;
+  f = ring_elem(head.next);
 }
 
 void QRingInfo_field_QQ::gbvector_normal_form(const FreeModule *F,
@@ -333,7 +333,7 @@ QRingInfo_ZZ::QRingInfo_ZZ(const PolyRing *ambientR,
           // Also, this grabs exp.
           int index = n_quotients();
           ringtableZZ->insert(f->coeff.get_mpz(), exp, 1, index);
-          gbvector *g = R->translate_gbvector_from_ringelem(f);
+          gbvector *g = R->translate_gbvector_from_ringelem(ring_elem(f));
           appendQuotientElement(f, g);
           exp = newarray_atomic(int, R->n_vars());
 
@@ -373,11 +373,11 @@ bool QRingInfo_ZZ::reduce_lead_term_ZZ(Nterm *&f, const Nterm *g) const
     }
 
   // now mult g to cancel
-  ring_elem g1 = const_cast<Nterm *>(g);
+  ring_elem g1 = ring_elem(const_cast<Nterm *>(g));
   g1 = R->mult_by_term(g1, v, MONOM1);
-  ring_elem f1 = f;
+  ring_elem f1 = ring_elem(f);
   R->internal_add_to(f1, g1);
-  f = f1;
+  f = f1.poly_val;
   return result;
 }
 
@@ -390,7 +390,7 @@ void QRingInfo_ZZ::normal_form(ring_elem &f) const
   const Monoid *M = R->getMonoid();
   Nterm head;
   Nterm *result = &head;
-  Nterm *t = f;
+  Nterm *t = f.poly_val;
   while (t != NULL)
     {
       M->to_expvector(t->monom, EXP1);
@@ -408,7 +408,7 @@ void QRingInfo_ZZ::normal_form(ring_elem &f) const
       result = result->next;
     }
   result->next = NULL;
-  f = head.next;
+  f = ring_elem(head.next);
 }
 
 void QRingInfo_ZZ::gbvector_normal_form(const FreeModule *F, gbvector *&f) const

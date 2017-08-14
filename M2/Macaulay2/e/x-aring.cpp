@@ -230,7 +230,7 @@ const Ring /* or null */ *rawARingGaloisFieldFromQuotient(const RingElement *a)
 
   try
     {
-      RingElement F(R, R->quotient_element(0));
+      RingElement F(R, ring_elem(R->quotient_element(0)));
       M2_arrayint modPoly = F.getSmallIntegerCoefficients();
       if (modPoly == 0)
         {

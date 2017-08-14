@@ -33,9 +33,7 @@ ring_elem ResGausserZZp::to_ring_elem(const Ring* K,
                                       size_t loc) const
 {
   auto& elems = coefficientVector(coeffs);
-  ring_elem result;
-  result.int_val = K->from_long(coeff_to_int(elems[loc]));
-  return result;
+  return K->from_long(coeff_to_int(elems[loc]));
 }
 
 void ResGausserZZp::from_ring_elem(CoefficientVector& result,
@@ -264,7 +262,7 @@ vec ResF4toM2Interface::to_M2_vec(const ResPolyRing& R,
       M->from_expvector(exp, m1);
       ring_elem a =
           R.resGausser().to_ring_elem(origR->getCoefficientRing(), f.coeffs, i);
-      Nterm* g = origR->make_flat_term(a, m1);
+      Nterm* g = origR->make_flat_term(a, m1).poly_val;
       g->next = 0;
       if (last[comp] == 0)
         {
@@ -282,10 +280,10 @@ vec ResF4toM2Interface::to_M2_vec(const ResPolyRing& R,
     {
       if (comps[i] != 0)
         {
-          vec v = origR->make_vec(i, comps[i]);
+          vec v = origR->make_vec(i, ring_elem(comps[i]));
           origR->add_vec_to(result, v);
-          comps[i] = 0;
-          last[i] = 0;
+          comps[i] = nullptr;
+          last[i] = nullptr;
         }
     }
 
@@ -407,7 +405,7 @@ MutableMatrix* ResF4toM2Interface::to_M2_MutableMatrix(SchreyerFrame& C,
             exp[a] = static_cast<int>(lexp[a]);
           M->from_expvector(exp, m1);
           ring_elem a = C.gausser().to_ring_elem(K, f.coeffs, i);
-          Nterm* g = RP->make_flat_term(a, m1);
+          Nterm* g = RP->make_flat_term(a, m1).poly_val;
           if (g == nullptr) continue;
           g->next = 0;
           if (last[comp] == 0)
@@ -422,7 +420,7 @@ MutableMatrix* ResF4toM2Interface::to_M2_MutableMatrix(SchreyerFrame& C,
             }
         }
       // Now we have run through the entire vector, so put it into result
-      for (int r = 0; r < nrows; r++) result->set_entry(r, j, comps[r]);
+      for (int r = 0; r < nrows; r++) result->set_entry(r, j, ring_elem(comps[r]));
     }
 
   delete[] exp;

@@ -221,7 +221,7 @@ Nterm *SchurRing::skew_schur(int *lambda, int *p)
   _SMfilled.fill(lambda, p);
   _SMresult = NULL;
   SM();
-  ring_elem result = _SMresult;
+  Nterm* result = _SMresult;
   _SMresult = NULL;
   return result;
 }
@@ -256,7 +256,7 @@ ring_elem SchurRing::mult_monomials(const int *m, const int *n)
   lambda[top + i] = 0;
 
   // Call the SM() algorithm
-  return skew_schur(lambda, p);
+  return ring_elem(skew_schur(lambda, p));
 }
 
 ring_elem SchurRing::mult_by_term(const ring_elem f,
@@ -265,18 +265,18 @@ ring_elem SchurRing::mult_by_term(const ring_elem f,
 {
   // return c*m*f
   ring_elem result = ZERO_RINGELEM;
-  for (Nterm *t = f; t != NULL; t = t->next)
+  for (Nterm *t = f.poly_val; t != nullptr; t = t->next)
     {
       ring_elem a = K_->mult(c, t->coeff);
       ring_elem g = const_cast<SchurRing *>(this)->mult_monomials(t->monom, m);
-      for (Nterm *s = g; s != NULL; s = s->next)
+      for (Nterm *s = g.poly_val; s != nullptr; s = s->next)
         {
           ring_elem b = K_->mult(a, s->coeff);
           s->coeff = b;
         }
-      Nterm *gt = g;
+      Nterm *gt = g.poly_val;
       sort(gt);
-      g = gt;
+      g.poly_val = gt;
       add_to(result, g);
     }
   return result;
@@ -331,7 +331,7 @@ ring_elem SchurRing::dimension(const ring_elem f) const
   ring_elem result = K_->from_long(0);
   mpz_t dim;
   mpz_init(dim);
-  for (Nterm *t = f; t != NULL; t = t->next)
+  for (Nterm *t = f.poly_val; t != nullptr; t = t->next)
     {
       to_partition(t->monom, EXP);
       dimension(EXP, dim);
@@ -361,7 +361,7 @@ void SchurRing::elem_text_out(buffer &o,
     }
 
   p_one = false;
-  for (Nterm *t = f; t != NULL; t = t->next)
+  for (Nterm *t = f.poly_val; t != nullptr; t = t->next)
     {
       int isone = M_->is_one(t->monom);
       p_parens = !isone;

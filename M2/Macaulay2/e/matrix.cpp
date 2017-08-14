@@ -885,7 +885,7 @@ M2_arrayintOrNull Matrix::support() const
   for (int j = 0; j < n_cols(); j++)
     for (vec v = elem(j); v != 0; v = v->next)
       {
-        for (const Nterm *f = v->coeff; f != 0; f = f->next)
+        for (const Nterm *f = v->coeff.poly_val; f != nullptr; f = f->next)
           {
             R->getMonoid()->to_expvector(f->monom, exp2);
             for (int k = 0; k < n; k++)
@@ -1538,7 +1538,7 @@ Matrix /* or null */ *Matrix::monomials(M2_arrayint vars) const
       vec v = elem(c);
       for (; v != 0; v = v->next)
         {
-          for (Nterm *t = v->coeff; t != 0; t = t->next)
+          for (Nterm *t = v->coeff.poly_val; t != nullptr; t = t->next)
             {
               int *exp1 = newarray_atomic(int, vars->len + 1);
               M->to_expvector(t->monom, exp);
@@ -1618,7 +1618,7 @@ static vec coeffs_of_vec(exponent_table *E,
   vec result = 0;
   for (vec g = f; g != 0; g = g->next)
     {
-      for (Nterm *h = g->coeff; h != 0; h = h->next)
+      for (Nterm *h = g->coeff.poly_val; h != nullptr; h = h->next)
         {
           M->to_expvector(h->monom, exp);
           get_part_of_expvector(vars, exp, g->comp, scratch_exp);

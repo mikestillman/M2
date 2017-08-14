@@ -415,7 +415,7 @@ ring_elem WeylAlgebra::mult_by_term(const ring_elem f,
   do
     {
       ring_elem d = multinomial(c, top_derivative, current_derivative);
-      Nterm *h = weyl_diff(d, expf, current_derivative, f);
+      Nterm *h = weyl_diff(d, expf, current_derivative, f.poly_val);
       K_->remove(d);
       result.add(h);
     }
@@ -424,7 +424,7 @@ ring_elem WeylAlgebra::mult_by_term(const ring_elem f,
   deletearray(expf);
   deletearray(top_derivative);
   deletearray(current_derivative);
-  return result.value();
+  return ring_elem(result.value());
 }
 
 //////////////////////////////////

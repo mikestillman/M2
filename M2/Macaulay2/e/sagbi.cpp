@@ -9,7 +9,7 @@ ring_elem sagbi::subduct(const PolyRing *R,
                          const RingMap *phi,
                          GBComputation *J)
 {
-  Nterm *f = a;
+  Nterm *f = a.poly_val;
   Nterm head;
   Nterm *result = &head;
   MatrixConstructor mat(R->make_FreeModule(1), 1);
@@ -20,7 +20,7 @@ ring_elem sagbi::subduct(const PolyRing *R,
       f = f->next;
       g->next = NULL;
 
-      mat.set_entry(0, 0, g);
+      mat.set_entry(0, 0, ring_elem(g));
       Matrix *m = mat.to_matrix();
       const Matrix *n = J->matrix_remainder(m);
       ring_elem g1 = n->elem(0, 0);
@@ -33,9 +33,9 @@ ring_elem sagbi::subduct(const PolyRing *R,
           g->next = f;
           f = g;
           ring_elem phi_g1 = R->eval(phi, g1, 0);
-          ring_elem fr = f;
+          ring_elem fr = ring_elem(f);
           R->internal_subtract_to(fr, phi_g1);
-          f = fr;
+          f = fr.poly_val;
         }
       else
         {
@@ -45,7 +45,7 @@ ring_elem sagbi::subduct(const PolyRing *R,
     }
 
   result->next = NULL;
-  return head.next;
+  return ring_elem(head.next);
 }
 
 Matrix *sagbi::subduct(const Matrix *m, const RingMap *phi, GBComputation *J)

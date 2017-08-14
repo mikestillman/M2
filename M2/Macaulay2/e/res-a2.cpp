@@ -105,7 +105,7 @@ void gbres_comp::setup(const Matrix *m, int length, int origsyz, int strategy)
             mon = one;
           else
             {
-              Nterm *t = (*m)[i]->coeff;
+              Nterm *t = (*m)[i]->coeff.poly_val;
               mon = t->monom;
             }
           Fsyz->append_schreyer(m->cols()->degree(i), mon, i);

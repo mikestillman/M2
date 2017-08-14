@@ -116,7 +116,7 @@ vec F4toM2Interface::to_M2_vec(const Gausser *KK,
       w = w + MI->monomial_size(w);
       for (int a = 0; a < M->n_vars(); a++) exp[a] = static_cast<int>(lexp[a]);
       M->from_expvector(exp, m1);
-      Nterm *g = R->make_flat_term(relem_array[i], m1);
+      Nterm *g = R->make_flat_term(relem_array[i], m1).poly_val;
       g->next = 0;
       if (last[comp] == 0)
         {
@@ -134,7 +134,7 @@ vec F4toM2Interface::to_M2_vec(const Gausser *KK,
     {
       if (comps[i] != 0)
         {
-          vec v = R->make_vec(i, comps[i]);
+          vec v = R->make_vec(i, ring_elem(comps[i]));
           R->add_vec_to(result, v);
           comps[i] = 0;
           last[i] = 0;

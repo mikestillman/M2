@@ -23,8 +23,9 @@ GaloisFieldTable::GaloisFieldTable(const PolynomialRing &R,
   assert(mOriginalRing.n_quotients() == 1);
 
   mGenerator = RingElement::make_raw(&R, R.copy(prim));
-  ring_elem f = mOriginalRing.quotient_element(0);
-  Nterm *t = f;
+  //  ring_elem f = ring_elem(mOriginalRing.quotient_element(0));
+  //  Nterm *t = f.poly_val;
+  Nterm* t = mOriginalRing.quotient_element(0);
   mDimension = mOriginalRing.getMonoid()->primary_degree(t->monom);
   mOrder = mCharac;
   for (int i = 1; i < mDimension; i++) mOrder *= mCharac;

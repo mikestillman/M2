@@ -1066,10 +1066,10 @@ void convolve(const PolyRing *R,
       for (int j = i - 1; j >= 1; --j)
         {
           ring_elem hr;
-          Nterm *g = input_relems[j];
+          Nterm *g = input_relems[j].poly_val;
           if (g != 0)
             {
-              hr.poly_val =
+              hr =
                   R->mult_by_term(output_relems[i - j], g->coeff, g->monom);
               R->internal_add_to(result, hr);
             }

@@ -10,12 +10,6 @@
 #include "aring-zz-gmp.hpp"
 #include <utility>
 
-#if 0
-// #include "gmp.h"
-// #define MPZ_VAL(f) (mpz_ptr ((f).poly_val))
-// #define MPZ_RINGELEM(a) ((ring_elem) ((Nterm *) (a)))
-#endif
-
 unsigned int computeHashValue_mpz(mpz_ptr a)
 {
   return static_cast<unsigned int>(mpz_get_si(a));
@@ -74,7 +68,7 @@ std::pair<bool, long> RingZZ::coerceToLongInteger(ring_elem a) const
                                mpz_get_si(a.get_mpz()));
 }
 
-ring_elem RingZZ::random() const { return rawRandomInteger(0); }
+ring_elem RingZZ::random() const { return ring_elem(rawRandomInteger(0)); }
 void RingZZ::elem_text_out(buffer &o,
                            const ring_elem ap,
                            bool p_one,

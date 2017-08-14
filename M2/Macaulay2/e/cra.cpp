@@ -53,8 +53,8 @@ ring_elem ChineseRemainder::CRA(const PolyRing *R,
   mpz_t mn_half;
   mpz_init(result_coeff);
   mpz_init(mn_half);
-  Nterm *f = ff;
-  Nterm *g = gg;
+  Nterm *f = ff.poly_val;
+  Nterm *g = gg.poly_val;
   Nterm head;
   Nterm *result = &head;
 
@@ -146,7 +146,7 @@ ring_elem ChineseRemainder::CRA(const PolyRing *R,
 
   mpz_clear(result_coeff);
   result->next = 0;
-  return head.next;
+  return ring_elem(head.next);
 }
 
 ring_elem ChineseRemainder::CRA(const PolyRing *R,
@@ -188,8 +188,8 @@ vec ChineseRemainder::CRA(const PolyRing *R,
             {
               result->next = R->new_vec();
               result = result->next;
-              result->next = 0;
-              result->coeff = CRA(R, f->coeff, 0, um, vn, mn);
+              result->next = nullptr;
+              result->coeff = CRA(R, f->coeff, R->zero(), um, vn, mn);
               result->comp = f->comp;
             }
           break;
@@ -201,8 +201,8 @@ vec ChineseRemainder::CRA(const PolyRing *R,
             {
               result->next = R->new_vec();
               result = result->next;
-              result->next = 0;
-              result->coeff = CRA(R, 0, g->coeff, um, vn, mn);
+              result->next = nullptr;
+              result->coeff = CRA(R, R->zero(), g->coeff, um, vn, mn);
               result->comp = g->comp;
             }
           break;
@@ -211,8 +211,8 @@ vec ChineseRemainder::CRA(const PolyRing *R,
         {
           result->next = R->new_vec();
           result = result->next;
-          result->next = 0;
-          result->coeff = CRA(R, 0, g->coeff, um, vn, mn);
+          result->next = nullptr;
+          result->coeff = CRA(R, R->zero(), g->coeff, um, vn, mn);
           result->comp = g->comp;
           g = g->next;
         }
@@ -220,8 +220,8 @@ vec ChineseRemainder::CRA(const PolyRing *R,
         {
           result->next = R->new_vec();
           result = result->next;
-          result->next = 0;
-          result->coeff = CRA(R, f->coeff, 0, um, vn, mn);
+          result->next = nullptr;
+          result->coeff = CRA(R, f->coeff, R->zero(), um, vn, mn);
           result->comp = f->comp;
           f = f->next;
         }
@@ -229,14 +229,14 @@ vec ChineseRemainder::CRA(const PolyRing *R,
         {
           result->next = R->new_vec();
           result = result->next;
-          result->next = 0;
+          result->next = nullptr;
           result->coeff = CRA(R, f->coeff, g->coeff, um, vn, mn);
           result->comp = f->comp;
           f = f->next;
           g = g->next;
         }
     }
-  result->next = 0;
+  result->next = nullptr;
   return head.next;
 }
 
@@ -439,7 +439,7 @@ ring_elem ChineseRemainder::ratConversion(const ring_elem ff,
 {
   mpq_t result_coeff;
   mpq_init(result_coeff);
-  Nterm *f = ff;
+  Nterm *f = ff.poly_val;
   Nterm head;
   Nterm *result = &head;
 
@@ -450,7 +450,7 @@ ring_elem ChineseRemainder::ratConversion(const ring_elem ff,
     {
       result->next = RQ->new_term();
       result = result->next;
-      result->next = 0;
+      result->next = nullptr;
       M->copy(f->monom, result->monom);
       ratConversion(f->coeff.get_mpz(), m, result_coeff);
       bool ok1 = K->from_rational(result_coeff, result->coeff);
@@ -461,7 +461,7 @@ ring_elem ChineseRemainder::ratConversion(const ring_elem ff,
 
   mpq_clear(result_coeff);
   result->next = 0;
-  return head.next;
+  return ring_elem(head.next);
 }
 
 vec ChineseRemainder::ratConversion(vec f, mpz_t m, const PolyRing *RQ)

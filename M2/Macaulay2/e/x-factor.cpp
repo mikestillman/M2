@@ -424,7 +424,7 @@ static CanonicalForm convertToFactory(const RingElement &g, bool inExtension)
   struct enter_factory foo(P);
   if (foo.mode == modeError) return 0;
   CanonicalForm f = 0;
-  for (Nterm *t = g.get_value(); t != NULL; t = t->next)
+  for (Nterm *t = g.get_value().poly_val; t != nullptr; t = t->next)
     {
       int coef = 0;
       vp.shrink(0);

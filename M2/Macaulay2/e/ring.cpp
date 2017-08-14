@@ -242,7 +242,7 @@ bool Ring::from_complex_double(double re, double im, ring_elem &result) const
 ring_elem Ring::random() const
 {
   ERROR("random scalar elements for this ring are not implemented");
-  return 0;
+  return ring_elem(static_cast<Nterm*>(nullptr));
 }
 
 ring_elem Ring::preferred_associate(ring_elem f) const

@@ -650,7 +650,7 @@ bool ARingGFGivaro::promote(const Ring *Rf,
 #ifdef DEBUG_GF
   std::cerr << "genRep " << genRep << std::endl;
 #endif
-  for (Nterm *t = f; t != NULL; t = t->next)
+  for (Nterm *t = f.poly_val; t != nullptr; t = t->next)
     {
       elem a, b;
 
@@ -702,8 +702,9 @@ void ARingGFGivaro::eval(const RingMap *map,
                          int first_var,
                          ring_elem &result) const
 {
-  ring_elem a(reinterpret_cast<Nterm *>(f));
-  result = map->get_ring()->power(map->elem(first_var), a);
+#warning "this next line looks wrong"  
+  //  ring_elem a(reinterpret_cast<Nterm *>(f));
+  result = map->get_ring()->power(map->elem(first_var), f);
 }
 };
 

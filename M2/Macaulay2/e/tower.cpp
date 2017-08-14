@@ -446,7 +446,7 @@ ring_elem Tower::translate(const PolynomialRing *R, ring_elem fR) const
   int nvars = R->n_vars();
   poly result = 0;
   exponents exp = new int[nvars];
-  for (Nterm *t = fR; t != 0; t = t->next)
+  for (Nterm *t = fR.poly_val; t != 0; t = t->next)
     {
       M->to_expvector(t->monom, exp);
 

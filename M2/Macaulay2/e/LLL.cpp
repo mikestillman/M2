@@ -115,8 +115,8 @@ void LLLoperations::REDI(int k,
   ring_elem Dl, mkl, q;
   if (!lambda->get_entry(ell, k, mkl)) return;
   lambda->get_entry(ell, ell, Dl);
-  mpz_ptr a = mkl.get_mpz();
-  mpz_ptr b = Dl.get_mpz();  // b = D#ell
+  mpz_ptr a = mkl.mpz_val;
+  mpz_ptr b = Dl.mpz_val;  // b = D#ell
   mpz_t c, d;
   mpz_init(c);
   mpz_init(d);
@@ -126,7 +126,7 @@ void LLLoperations::REDI(int k,
   mpz_mul_2exp(d, b, 1);  // d = 2*D#ell
   mpz_fdiv_q(c, c, d);    // c = (almost) final q
   mpz_neg(c, c);
-  q = c;
+  q.mpz_val = c;
 
   // A->addColumnMultiple(ell,q,k);
   // lambda->addColumnMultiple(ell,q,k);

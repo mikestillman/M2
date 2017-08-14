@@ -14,7 +14,7 @@ ARingGFFlint::ARingGFFlint(const PolynomialRing& R, const ring_elem a)
 {
   ring_elem b = R.copy(a);
   mPrimitiveElement = RingElement::make_raw(&R, b);
-  ring_elem minpoly = mOriginalRing.quotient_element(0);
+  ring_elem minpoly = ring_elem(mOriginalRing.quotient_element(0));
 
   std::vector<long> poly;
   RingElement F(&R, minpoly);

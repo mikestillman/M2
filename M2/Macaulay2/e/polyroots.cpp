@@ -39,7 +39,7 @@ engine_RawRingElementArrayOrNull rawRoots(const RingElement *p,
     }
   const Ring *K = P->getCoefficients();
   int degree = 0;
-  for (Nterm *t = p->get_value(); t != NULL; t = t->next)
+  for (Nterm *t = p->get_value().poly_val; t != nullptr; t = t->next)
     {
       degree = max(degree, abs(*(t->monom)));
     }
@@ -96,14 +96,14 @@ engine_RawRingElementArrayOrNull rawRoots(const RingElement *p,
       {
         case M2::ring_ZZ:
         ZZ_GMP:
-          for (Nterm *t = p->get_value(); t != NULL; t = t->next)
+          for (Nterm *t = p->get_value().poly_val; t != nullptr; t = t->next)
             {
               gel(q, 2 + abs(*(t->monom))) = mpz_get_GEN(
                   reinterpret_cast<const mpz_ptr>(t->coeff.poly_val));
             }
           break;
         case M2::ring_QQ:
-          for (Nterm *t = p->get_value(); t != NULL; t = t->next)
+          for (Nterm *t = p->get_value().poly_val; t != nullptr; t = t->next)
             {
               gel(q, 2 + abs(*(t->monom))) = mpq_get_GEN(
                   reinterpret_cast<const mpq_ptr>(t->coeff.poly_val));
@@ -118,7 +118,7 @@ engine_RawRingElementArrayOrNull rawRoots(const RingElement *p,
           }
           pari_TRY
           {
-            for (Nterm *t = p->get_value(); t != NULL; t = t->next)
+            for (Nterm *t = p->get_value().poly_val; t != nullptr; t = t->next)
               {
                 gel(q, 2 + abs(*(t->monom))) =
                     dbltor(*reinterpret_cast<double *>(t->coeff.poly_val));
@@ -134,7 +134,7 @@ engine_RawRingElementArrayOrNull rawRoots(const RingElement *p,
           }
           pari_TRY
           {
-            for (Nterm *t = p->get_value(); t != NULL; t = t->next)
+            for (Nterm *t = p->get_value().poly_val; t != nullptr; t = t->next)
               {
                 GEN z = cgetg(3, t_COMPLEX);
                 gel(z, 1) =
@@ -146,14 +146,14 @@ engine_RawRingElementArrayOrNull rawRoots(const RingElement *p,
           }
           pari_ENDCATCH break;
         case M2::ring_RRR:
-          for (Nterm *t = p->get_value(); t != NULL; t = t->next)
+          for (Nterm *t = p->get_value().poly_val; t != nullptr; t = t->next)
             {
               gel(q, 2 + abs(*(t->monom))) = mpfr_get_GEN(
                   reinterpret_cast<const mpfr_ptr>(t->coeff.poly_val));
             }
           break;
         case M2::ring_CCC:
-          for (Nterm *t = p->get_value(); t != NULL; t = t->next)
+          for (Nterm *t = p->get_value().poly_val; t != nullptr; t = t->next)
             {
               gel(q, 2 + abs(*(t->monom))) = mpc_get_GEN(
                   reinterpret_cast<const mpc_ptr>(t->coeff.poly_val));

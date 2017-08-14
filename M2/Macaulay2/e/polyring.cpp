@@ -16,7 +16,7 @@ void PolynomialRing::setQuotientInfo(QRingInfo *qinfo0)
 
   for (int i = 0; i < n_quotients(); i++)
     {
-      if (!numerR->is_homogeneous(quotient_element(i)))
+      if (!numerR->is_homogeneous(ring_elem(quotient_element(i))))
         {
           setIsGraded(false);
           break;
@@ -165,8 +165,8 @@ PolynomialRing *PolynomialRing::create_quotient(const PolynomialRing *R,
   for (int i = 0; i < B->n_quotients(); i++)
     {
       ring_elem f;
-      R->promote(B->getNumeratorRing(), B->quotient_element(i), f);
-      elems.push_back(f);
+      R->promote(B->getNumeratorRing(), ring_elem(B->quotient_element(i)), f);
+      elems.push_back(f.poly_val);
     }
   return create_quotient(R, elems);
 }
@@ -178,7 +178,7 @@ Matrix *PolynomialRing::getPresentation() const
   MatrixConstructor mat(R->make_FreeModule(1), 0);
   for (int i = 0; i < n_quotients(); i++)
     // NEED: to make this into a fraction, if R has fractions.
-    mat.append(R->make_vec(0, quotient_element(i)));
+    mat.append(R->make_vec(0, ring_elem(quotient_element(i))));
   return mat.to_matrix();
 }
 
@@ -189,8 +189,8 @@ class SumCollectorPolyHeap : public SumCollector
  public:
   SumCollectorPolyHeap(const PolynomialRing *R0) : H(R0) {}
   ~SumCollectorPolyHeap() {}
-  virtual void add(ring_elem f) { H.add(f); }
-  virtual ring_elem getValue() { return H.value(); }
+  virtual void add(ring_elem f) { H.add(f.poly_val); }
+  virtual ring_elem getValue() { return ring_elem(H.value()); }
 };
 
 SumCollector *PolynomialRing::make_SumCollector() const

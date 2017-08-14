@@ -168,7 +168,7 @@ namespace BIBasis
 
             Polynom<MonomType>* currentPolynom = new Polynom<MonomType>();
 
-            for (Nterm* currentTerm = polynomVector->coeff; currentTerm; currentTerm = currentTerm->next)
+            for (Nterm* currentTerm = polynomVector->coeff.poly_val; currentTerm; currentTerm = currentTerm->next)
             {
                 exponents monomVector = newarray_atomic(int, independ);
                 monoid->to_expvector(currentTerm->monom, monomVector);

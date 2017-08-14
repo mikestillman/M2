@@ -763,7 +763,7 @@ res_pair *res_comp::reduce(resterm *&f, resterm *&fsyz, resterm *&pivot)
       if (find_ring_divisor(REDUCE_exp, rg))
         {
           // Subtract off f, leave fsyz alone
-          Nterm *r = rg;
+          Nterm *r = rg.poly_val;
           M->divide(f->monom, r->monom, REDUCE_mon);
           R->ring_subtract_multiple_to(f, f->coeff, REDUCE_mon, f->comp, rg);
         }
@@ -813,7 +813,7 @@ res_pair *res_comp::reduce_level_one(resterm *&f,
       if (find_ring_divisor(REDUCE_exp, rg))
         {
           // Subtract off f, leave fsyz alone
-          Nterm *r = rg;
+          Nterm *r = rg.poly_val;
           M->divide(f->monom, r->monom, REDUCE_mon);
           R->ring_subtract_multiple_to(f, f->coeff, REDUCE_mon, f->comp, rg);
         }
@@ -857,7 +857,7 @@ void res_comp::reduce_gen(resterm *&f) const
       if (find_ring_divisor(REDUCE_exp, rg))
         {
           // Subtract off f, leave fsyz alone
-          Nterm *r = rg;
+          Nterm *r = rg.poly_val;
           M->divide(f->monom, r->monom, REDUCE_mon);
           R->ring_subtract_multiple_to(f, f->coeff, REDUCE_mon, f->comp, rg);
         }

@@ -11,6 +11,7 @@ INTERFACE2 = \
 	newdelete \
 
 INTERFACE = \
+	mathic-monlookup \
 	mutablecomplex \
 	localring \
 	f4/res-varpower-monomial \
@@ -85,7 +86,7 @@ INTERFACE = \
 	LLL \
 	fractionfreeLU \
 	ntl-interface \
-        fplll-interface \
+	fplll-interface \
 	mat \
 	dmat \
 	coeffrings \

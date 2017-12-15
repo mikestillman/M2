@@ -72,6 +72,7 @@ void testNegate(const T& R, int ntrials)
   R.init(b);
   for (int i = 0; i < ntrials; i++)
     {
+      std::cout << "trial " << i << std::endl;
       gen.nextElement(a);
       R.negate(b, a);
       R.add(b, a, b);

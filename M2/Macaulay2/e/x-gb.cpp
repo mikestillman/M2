@@ -1187,6 +1187,9 @@ const Matrix *rawMGB(
   }
 }
 
+#include "mathicgb/stdinc.h"
+#include "mathicgb/MathicIO.hpp"
+
 // Local Variables:
 // compile-command: "make -C $M2BUILDDIR/Macaulay2/e "
 // indent-tabs-mode: nil

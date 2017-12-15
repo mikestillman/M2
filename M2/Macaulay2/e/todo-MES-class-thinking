@@ -1,0 +1,57 @@
+// Classes which interface to the front end.
+// These all are finalized?
+
+// These are all accessed as pointers, and are all finalized
+// have hash codes for use in the front end.
+// Probably also accessed as shared pointers?  At least, if one of these can point to another one.
+// 
+
+class FinalizedObject; 
+class MutableObject;
+class ImmutableObject;
+class RingObject;
+class MatrixObject;
+class RingElementObject;
+class FreeModuleObject;
+class MonomialIdealObject;
+class MutableMatrixObject;
+
+// Also:
+class GBObject;
+class ResObject;
+class ComputationObject; // do we really need these?
+class RingMapObject;
+
+
+//Want:
+RingElement(R,a) --> creates this object on the fly, should be a ref to a ring, 
+  Polynomial:
+  array of coeffs
+  array of monomial ints (includes component info perhaps)
+    monomial ints are in sparse notation.
+  monomials are sorted in descending order wrt a monomial order.
+  or, maybe, they are templatized...
+
+
+MonomialOrder
+Polynomial
+  Monomial: range
+  MonomialSpace: list of ints (or something) that is a sequence of monomials.
+    need a way to range through them.
+
+  Each ring type:
+  should be able to handle operations on a std::vector, or any range, of values.
+  at least on a contiguous series of elements of this type.
+
+  Monomial operations: take place on monomials in place
+  where to put result: in a space where this is enough space for it.
+
+  Ideal:
+  list of polynomials (vector), ring
+
+  FreeModule
+  Matrix
+  MutableMatrix
+  RingMap
+
+  

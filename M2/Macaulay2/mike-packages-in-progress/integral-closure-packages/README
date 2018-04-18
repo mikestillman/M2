@@ -1,0 +1,5 @@
+These packages were moved from the svn repo M2-dev/mike/integral-closure-packages on 18 April 2018
+    to the M2 repo 2018-mike-packages
+and placed into a new directory M2/Macaulay2/mike-packages-in-progess
+The plan is to clean up these packages, possibly removing some of these files/packages, and add them to M2.    
+    

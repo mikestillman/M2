@@ -328,8 +328,6 @@ Description
     
     Other normal forms will hopefully be included eventually, including
     rational canonical form, weak Popov form, Frobenius form, and others.
-    
-  Example
 Caveat
 SeeAlso
 ///
@@ -645,7 +643,14 @@ diagH = for i from 0 to min(numRows H, numColumns H)-1 list H_(i,i)
 scan(1..#diagH-1, i -> assert(diagH_i % diagH_(i-1) == 0))
 ///
 
-end
+end--
+
+restart
+uninstallPackage "MatrixNormalForms"
+restart
+needsPackage "MatrixNormalForms"
+restart
+check "MatrixNormalForms"
 
 Node
    Key

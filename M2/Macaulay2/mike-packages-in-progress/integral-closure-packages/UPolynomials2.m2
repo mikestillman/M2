@@ -399,9 +399,10 @@ net UPoly := (F) -> net relem F
 beginDocumentation()
 
 
-end
+end--
 
 restart
+check "UPolynomials2" -- no tests yet.
 debug loadPackage "UPolynomials2"
 
 A = QQ[x,y,z]

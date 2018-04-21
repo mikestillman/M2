@@ -8,6 +8,7 @@ newPackage(
                   Email => "mike@math.cornell.edu", 
                   HomePage => "http://www.math.cornell.edu/~mike"}},
         Headline => "gcds and factorization of univariate polynomials",
+        PackageExports => {"AdjoinRoots"},
         DebuggingMode => true
         )
 
@@ -30,8 +31,7 @@ export {
      "factorization",
      "setUFD",
      "makeTower",
-     "deg",
-     "adjoinRoot"
+     "deg"
      }
 
 myIsDivisibleBy = (f,g) -> (ring f).myIsDivisibleBy(f,g)
@@ -596,8 +596,8 @@ factorization RingElement := (F) -> (
 -- this likely will change interface, and ----
 -- leave this file! --------------------------
 ----------------------------------------------
-adjoinRoot = method()
-adjoinRoot RingElement := (f) -> (
+adjoinRootOld = method()
+adjoinRootOld RingElement := (f) -> (
      K1top := null;
      K1 := null;
      R := ring f;
@@ -636,6 +636,22 @@ adjoinRoot RingElement := (f) -> (
 	  )
      ))
 
+minimalPolynomial = method(Options => {symbol Ring=>null})
+minimalPolynomial RingElement := opts -> (F) -> (
+    K := ring F;
+    R := if opts.Ring === null then K[getSymbol "t"] else opts.Ring;
+    B := basis K;
+    deg := numColumns B;
+    A := ambient K;
+    B = lift(B,A);
+    g := 1_A; 
+    pows := matrix {for i from 0 to deg list (g1 := g; g = F*g; g1)};
+    ts := matrix {for i from 0 to deg list R_0^i};
+    C := lift(last coefficients(lift(pows,A), Monomials=>B), coefficientRing K);
+    Fs := flatten entries(ts * syz C);
+    if #Fs > 1 then << "warning: element does not generate field";
+    Fs
+    )
 
 beginDocumentation()
 
@@ -647,17 +663,16 @@ Node
     univariate polynomial operations implemented at top level in Macaulay2
   Description
     Text
-    Example
   Caveat
   SeeAlso
 Node
   Key
-    adjoinRoot
-    (adjoinRoot,RingElement)
+    adjoinRootOld
+    (adjoinRootOld,RingElement)
   Headline
     adjoin an algebraic element to a field
   Usage
-    a = adjoinRoot f
+    a = adjoinRootOld f
   Inputs
     f:RingElement
       An element of a ring A[t] (t can be any name), where A is a field
@@ -862,7 +877,39 @@ assert(#L == 4)
 assert(product(L, (r,f) -> f^r) == F)
 ///
 
-end
+end--
+
+restart
+uninstallPackage "UPolynomials"
+restart
+needsPackage "UPolynomials"
+installPackage "UPolynomials"
+check "UPolynomials"
+
+debug Core
+R = QQ[x,a]
+rawFactor(raw(x^2-2), raw(a^2-2))
+A = QQ[a]/(a^2-2)
+R = A[x]
+factor(x^2-2, a^2-2)
+
+R = QQ[t]
+a = adjoinRoot(t^2-2)
+A = ring a
+
+restart
+needsPackage "AdjoinRoots"
+R = QQ[t]
+a = adjoinRoot(t^2-2)
+A = ring a
+At = A[t]
+b = adjoinRoot(t^3-t-1)
+ideal coefficientRing ring oo
+B = ring b
+R = B[x]
+factor(x^2-2)
+
+
 
 ------------------------------------------------------------
 -- Below this needs to be rewritten as useful tests
@@ -1046,3 +1093,149 @@ factorization G
 myFactor G
 myFactor F
 myFactor (13*G) -- BUG!!  misses the 13...!
+
+-----------------------------------------------------------
+-- April 2018 ---------------------------------------------
+-----------------------------------------------------------
+-- want: given a tower extension, find principal extension which is isomorphic.
+-- routines needed:
+--   minimalPolynomial f  -- f is in a field.
+--   factor over a single extension
+--   factor over a tower
+restart
+debug needsPackage "UPolynomials"
+A = QQ[b,a]
+I = ideal(b^2+1945/6084,676*a^2+9)
+F = I_1
+G = I_0
+use ring I
+Fb = sub(I_1, a => b)
+Gb = I_0
+resultant(G, a-F, b)
+B = A/I
+basis(B)
+B
+minimalPolynomial(a+b)
+-- want now: QQ[t]/g(t) --> B = QQ[a,b]/(f1(a),f2(b))
+-- and isomorphism
+resultant(t-(a+b), I_0, b)
+
+R = QQ[x,y,z, MonomialOrder=>Eliminate 2]
+use ring I
+Gxy = sub(I_0, {b => y, a => x})
+Fx = sub(I_1, {b => y, a => x})
+J = ideal(Gxy,Fx,z-(x+y))
+gens gb J    
+Hz = (selectInSubring(1,gens gb J))_(0,0)
+x % J
+y % J
+
+L1' = QQ[x,y]
+L1 = L1'/(sub(Gxy,L1'), sub(Fx,L1'))
+L2' = QQ[z]
+L2 = L2'/(sub(Hz,L2'))
+
+use ring J
+phi = map(L2, L1, {sub(x%J,L2), sub(y%J,L2)})
+use L1
+use L2
+phi x
+phi y
+phi^-1(phi(x))
+phi^-1(phi(y))
+phi^-1(z)
+
+debug Core
+factorInTower = (F) -> (
+    --(R,toNew,fromNew) = flattenTower F;
+    G := F;
+    rawFactor(raw G, raw f)
+    )
+
+-- make a quotient ring L = k[a]/f(a)
+-- poly ring in one variable over that, R = L[x]
+-- given a polynomial g(x,a):
+--   factor it
+--   determine if it is irreducible
+-- if g(x,a) is irreducible, create a new ring L2 = k[b,a,Lex]/(f(a), g(b,a))
+--   and an isomorphic ring L2' = k[z]/h(z), with maps back and forth.
+-- given a ring map (or pair of ring maps) phi : L --> L' (and back)
+--   and a ring L[M].
+--   create pair of ring maps L[M] --> L'[M]
+
+-- minimalPolynomial of an element in L
+-- factor multi-variate polynomial over L
+-- flatten L into a simple extension.
+
+A = QQ[a]/(a^2-3)
+B = A[x]
+factor(x^2-3)
+
+A = QQ[x,a]
+debug Core
+rawFactor(raw(x^2-3), raw(a^2-3))
+A = QQ[a][x]
+
+A = QQ[a]/(a^2-3)
+B = A[b]/(b^2-b-a)
+ideal B
+B1 = ambient first flattenRing B
+I1 = ideal first flattenRing B
+rawFactor(raw(I1_1),raw(I1_0)) -- b^2-b-a is irreducible
+
+A = QQ[x,y,a, MonomialOrder=>Lex]
+debug Core
+rawFactor(raw(x^2-3*y^2), raw(a^2-3))
+
+
+debug Core
+-- call if 
+coefficientField = method()
+coefficientField Ring := (R) -> (
+    K := coefficientRing R;
+    if isField K then (
+        if instance(K,PolynomialRing)
+          then 
+        )
+    
+    )
+useFactor2 = (RM) -> (
+    K := coefficientRing RM;
+    if isField K and instance(K, PolynomialRing) then (
+        A := coefficientRing K; -- this should be the quotient ring
+        numgens A == 1 and (coefficientRing A === QQ or 
+        );
+    I := ideal K;
+    if numgens K == 1 and 
+    )
+factor RM := opts -> f -> (
+    c := 1_R; 
+    if (options RM).Inverses then (
+        minexps:=min\transpose apply(toList (rawPairs(raw RM.basering,raw f))#1,m->exponents(RM.numallvars,m));
+        f=f*RM_(-minexps); -- get rid of monomial in factor if f Laurent polynomial
+        c=RM_minexps;
+        );
+    (facs,exps) := rawFactor raw f;	-- example value: ((11, x+1, x-1, 2x+3), (1, 1, 1, 1)); constant term is first, if there is one
+    leadCoeff := x->( -- iterated leadCoefficient
+        R:=ring x;
+        if class R === PolynomialRing then leadCoeff leadCoefficient x else
+        if class R === QuotientRing or class R === GaloisField then leadCoeff lift(x,ambient R) else
+        x);
+    facs = apply(#facs, i -> (
+            p:=new RM from facs#i;
+            if leadCoeff p >= 0 then p else (if odd(exps#i) then c=-c; -p)
+            ));
+    if liftable(facs#0,RM.basering) then (
+        -- factory returns the possible constant factor in front
+        assert(exps#0 == 1);
+        c = c*(facs#0);
+        facs = drop(facs,1);
+        exps = drop(exps,1);
+        );
+    if #facs != 0 then (facs,exps) = toSequence transpose sort transpose {toList facs, toList exps};
+    if c != 1 then (
+        -- we put the possible constant (and monomial for Laurent polynomials) at the end
+        facs = append(facs,c);
+        exps = append(exps,1);
+        );
+    new Product from apply(facs,exps,(p,n) -> new Power from {p,n}));

@@ -8,6 +8,7 @@ newPackage(
                   Email => "mike@math.cornell.edu", 
                   HomePage => "http://www.math.cornell.edu/~mike"}},
     	Headline => "Computing Puiseux expansions of plane curves",
+        PackageImports => {"UPolynomials"},
     	DebuggingMode => true,
         AuxiliaryFiles => true
     	)
@@ -19,8 +20,6 @@ newPackage(
 --     factorization,
 --     test'puiseux,
 --      NewtonEdge
-
-needsPackage "UPolynomials"
 
 export {
      "center",
@@ -917,7 +916,7 @@ puiseux(F,30) -- gives an error.  We should catch this error higher up
 
 TEST ///
 debug Puiseux
-loadPackage "UPolynomials"
+needsPackage "UPolynomials"
 R = QQ[x,y]
 -- the degree of F in y is 8.
 F = x^8+14*x^7*y+84*x^6*y^2+282*x^5*y^3+576*x^4*y^4+720*x^3*y^5+518*x^2*y^6+184*x*y^7+25*y^8+8*x^7+102*x^6*y+546*x^5*y^2+1590*x^4*y^3+2706*x^3*y^4+2646*x^2*y^5+1326*x*y^6+244*y^7+28*x^6+318*x^5*y+1476*x^4*y^2+3582*x^3*y^3+4770*x^2*y^4+3252*x*y^5+854*y^6+56*x^5+550*x^4*y+2124*x^3*y^2+4030*x^2*y^3+3740*x*y^4+1338*y^5+70*x^4+570*x^3*y+1716*x^2*y^2+2264*x*y^3+1101*y^4+56*x^3+354*x^2*y+738*x*y^2+508*y^3+28*x^2+122*x*y+132*y^2+8*x+18*y+1
@@ -964,8 +963,18 @@ F = y^5+2*x*y^2+2*x*y^3+x^2*y-4*x^3*y+2*x^5
 
 *}
 
-end
+end--
 
+restart
+installPackage "AdjoinRoots"
+installPackage "UPolynomials"
+uninstallPackage "Puiseux"
+restart
+needsPackage "Puiseux"
+needsPackage "UPolynomials"
+check("Puiseux", UserMode=>true)
+restart
+installPackage "Puiseux"
 
 TEST ///
 restart

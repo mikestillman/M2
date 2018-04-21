@@ -258,7 +258,7 @@ factorizeCZ RawRingElement := (f) -> (
 
 ------------------------------------------
 -- Maybe keep tower rings ONLY low level
-{*
+-*
 debug Core
 makeTowerRing = method()
 makeTowerRing PolynomialRing := (R) -> (
@@ -268,7 +268,7 @@ makeTowerRing PolynomialRing := (R) -> (
     -- if the coefficient ring has variables, use them too!  Even if they are 'toField'ed
     T := rawTowerRing(char p, toSequence R.generatorSymbols)
     )
-*}
+*-
 ------------------------------------------
 beginDocumentation()
 
@@ -449,30 +449,44 @@ TEST ///
 ///
 
 TEST ///
+  -- this test really doesn't work
+-*
+  restart
   needsPackage "TowerRings"
+*-
   R = towerRing(ZZ/17, (a,b,c))
   index a
   index b
   index c
   S = R/(b^3-b-1)  -- this should eitehr give an error or work!
-  S = R/(a^3-a-1) -- this one worked.
+  S = R/(a^3-a-1) -- this one worked. FAILS
   use R
   S = R/(ideal(a^3-a-1, b^3-a)) -- this one worked.
   raw S
   use R
-  S = R/(a^3-a-1, b^3-a) -- this one doesn't work
+  S = R/(a^3-a-1, b^3-a) -- this one doesn't work WORKS NOW
   use R
   S = R/(ideal(b^3-a,a^3-a-1)) -- should either reorder, or should give an error.
   raw S
 
   use R
-  S = R/(a^3-a-1, b^3-a) -- this one doesn't work
+  S = R/(a^3-a-1, b^3-a) -- OK
   inducedMap(S,R)-- not defined
   phi = map(S,R,{a,b,c})
   use R
   phi a^3 -- crashes
 ///
-end
+
+end--
+
+restart
+uninstallPackage "TowerRings"
+restart
+needsPackage "TowerRings"
+check "TowerRings" -- 1 error occurs
+restart
+installPackage "TowerRings" -- no doc nodes.
+
 
 TEST ///
   -- evaluation  FAILS

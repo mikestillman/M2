@@ -14,6 +14,12 @@ export {
     "switchCenter" -- this is an easier "helper" function
     }
 protect PrimitiveInfo
+protect TowerData
+protect toNew
+protect fromNew
+protect toPrimitive
+protect fromPrimitive
+protect inclusion
 
 setPrimitiveInfo = method()
 setPrimitiveInfo Ring := (R) -> (
@@ -90,6 +96,8 @@ makePrimitive(Ring,RingElement) := (A,a) -> (
 --     base = QQ
 --     base = toField'd extension of QQ
 --   get to work with tower rings too?
+
+--current verion
 adjoinRoot = method(Options => {Variable=>null})
 adjoinRoot RingElement := opts -> (f) -> (
     -- returns a root of the irreducible univariate polynomial f, 
@@ -121,7 +129,7 @@ adjoinRoot RingElement := opts -> (f) -> (
                     toField A2;
             A3_0
             )
-      else (
+        else (
             kk = coefficientRing kk;  -- we expect that kk is a 'toField'ed field
             I := ideal kk; -- this should be in a "triangular form"
             kk1 := coefficientRing kk;
@@ -138,6 +146,165 @@ adjoinRoot RingElement := opts -> (f) -> (
             )
         )
     )
+
+
+-- new version
+adjoinRootToTower = method(Options => {Variable=>null})
+adjoinRootToTower RingElement := opts -> (f) -> (
+    -- f is a polynomial in a ring A[x].
+    --   where A is a prime field kk, or of the form B/triangularIdeal
+    --   where B = kk[a_(r-1), a_(r-2), ..., a_0, MonomialOrder=>Lex].
+    -- result:
+    --   The element a_r in a ring of the form A' = B'/triangularIdeal'
+    --   where kk[a_r, ..., a_0, MonomialOrdder=>Lex]
+    --   such that A[x]/f is isomorphic to B'/triangularIdeal'.
+    -- Also resulting, and stashed in A.TowerData#f is: (inc,toNew,fromNew,toPrimitive,fromPrimitive)
+    --   where inc: A --> A' is the inclusion map, or should it be B --> B'?
+    --   and also the isomorphism toNew: A[x]/f --> A'
+    --                          fromNew: A' --> A[x]/f
+    -- It is possible, if f is linear in x, that a field extension will not be constructed.
+    -- In this case inc, toNew, fromNew will be the identity ring maps.
+    -- returns a root of the irreducible univariate polynomial f, 
+    -- possibly after an extension of fields
+    -- NOTES:
+    --   a. don't use toField here.
+    --   b. for GF, we need to make these maps.  How to do that?
+    --   c. also keep the corresponding primitive extension, and maps to/from that.
+    R := ring f;
+    supp := support f;
+    if numgens R =!= 1 then error "expected a univariate polynomial";
+    x := supp#0;
+    if degree(x,f) == 1 then (
+        << "adjoinRootToTower: case 1" << endl;
+        a := coefficient(x, f);
+        b := coefficient(1_R, f);
+        if a == 1 then -b else -b//a
+        )
+    else (
+        -- Here we need to add a root to kk.
+        kk := coefficientRing R;
+        if opts.Variable =!= null and not instance(opts.Variable, Symbol) then
+            error "Variable given is not a symbol";
+        if not isPolynomialRing kk then (
+            -- In this case, kk is QQ, or a finite prime field.
+            -- (what about GF?)
+            << "adjoinRootToTower: case 2" << endl;
+            v := if opts.Variable === null then getSymbol "a"
+            else opts.Variable;
+            A1 := kk (monoid[v]);
+            A2 := A1/(sub(f, x=> A1_0));
+            A3 := if isFinitePrimeField kk then
+                    GF(A2)
+                  else
+                    toField A2;
+            Old := (ring f)/f;
+            New := A3;
+            Prim := A3;
+            tonew := map(New, Old, {New_0});
+            fromnew := map(Old, New, {Old_0});
+            New#TowerData = new HashTable from {
+                inclusion => map(New, kk),
+                toNew => tonew,
+                fromNew => fromnew,
+                toPrimitive => tonew,
+                fromPrimitive => fromnew
+                };
+            A3_0
+            )
+        else (
+            << "adjoinRootToTower: case 3" << endl;
+            kk = coefficientRing kk;  -- we expect that kk is a 'toField'ed field
+            I := ideal kk; -- this should be in a "triangular form"
+            kk1 := coefficientRing kk;
+            if instance(kk1, PolynomialRing) then error "expected the original ring in the form toField(kk[vars]/I), where kk is a prime field";
+            n := numgens kk;
+            v = if opts.Variable === null then vars n else opts.Variable;
+            A1 = kk1 (monoid[v, generators kk, MonomialOrder=>Lex]);
+            to1 := map(A1, ring I, drop(gens A1, 1)); -- map on inner variables
+            to2 := map(A1, R, gens A1);
+            J := ideal to2 f + to1 I;
+            A2 = A1/J;
+            A3 = toField(A2);
+            Old = (ring f)/f;
+            New = A3;
+            Prim = null;
+            oldvars := promote(vars kk, Old);
+            newvars := promote(vars coefficientRing New, New);
+            tonew = map(New, Old, newvars);
+            fromnew = map(Old, New, matrix{{Old_0}}|oldvars);
+            New#TowerData = new HashTable from {
+                inclusion => map(New, coefficientRing R, drop(flatten entries newvars, 1)),
+                toNew => tonew,
+                fromNew => fromnew,
+                toPrimitive => null, -- need to fill this in
+                fromPrimitive => null
+                };
+            A3_0
+            )
+        )
+    )
+
+TEST ///
+  restart
+  debug needsPackage "AdjoinRoots"
+  T0 = QQ
+  R1 = T0[x]
+  a1 = adjoinRootToTower(x^2-2)
+  T1 = ring a1
+
+  TD = T1#TowerData
+  coefficientRing T1 -- fails in char p
+  ambient coefficientRing T1 
+  
+  R2 = T1[x]
+  F = x^3-T1_0*x-1
+  a2 = adjoinRootToTower F  
+  T2 = ring a2
+
+  use R2
+  F = x^3-T1_0*x-1
+  a2 = adjoinRootToTower F  
+  T2 = ring a2
+
+  R3 = T2[x]
+  F = x^2-T2_0-T2_1
+  a3 = adjoinRootToTower F  
+  T3 = ring a3
+
+  ambient RingMap := (F) -> (
+      S := source F;
+      T := target F;
+      map(ambient coefficientRing T, ambient coefficientRing T, lift(F.matrix, ambient coefficientRing T))
+      )
+  ambient TD#toNew
+  ambient coefficientRing ring a1   -- WARNING: this is a difference currently between char 0 and p ??
+  
+  A1 = ambient coefficientRing B1
+  
+  R2 = B1[x]
+  F = x^3-B1_0*x-1
+  
+  a2 = adjoinRootToTower F
+  B2 = ring a2
+  TD = B2#TowerData
+  assert (TD#toNew TD#fromNew B2_0 == B2_0)
+
+  use R2
+  a2' = adjoinRootToTower (a*x-(a+1))
+
+  
+///
+
+TEST ///
+  restart
+  debug needsPackage "AdjoinRoots"
+  A0 = ZZ/101  
+  A1 = A0[x]
+  factor(x^3-x-4)
+  a1 = adjoinRootToTower(x^3-x-4)
+  TD = A0#(TowerData,x^3-x-4)
+  ambient ambient ring a1  -- WARNING: this is a difference currently between char 0 and p!
+///
 
 switchCenter = method()
 switchCenter(Ring, RingElement) := (origR,gx) -> (

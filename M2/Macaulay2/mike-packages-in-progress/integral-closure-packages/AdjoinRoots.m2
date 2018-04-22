@@ -13,48 +13,13 @@ export {
     "adjoinRoot",
     "switchCenter" -- this is an easier "helper" function
     }
-protect PrimitiveInfo
+
 protect TowerData
 protect toNew
 protect fromNew
 protect toPrimitive
 protect fromPrimitive
 protect inclusion
-
-setPrimitiveInfo = method()
-setPrimitiveInfo Ring := (R) -> (
-    if R === QQ or isFinitePrimeField R then 
-      R.PrimitiveInfo = {map(R,R), map(R,R)}
-    else
-      error "cannot set primitive info with such limited information";
-    )
-setPrimitiveInfo(Ring,RingElement) := (A,a) -> (
-    -- sets the primitive info for B = ring a;
-    B := ring a;
-    C := ambient B; -- or ambient coefficientRing B? Should be of the form QQ[ar, ... a0]
-    (toA1, fromA1) := A.PrimitiveInfo; -- maps A --> A1, A1 --> A, where A1 = QQ[z]/F(z).
-    )
-
-makePrimitive = method()
-makePrimitive(Ring,RingElement) := (A,a) -> (
-    -- f is in a ring A[x]
-    -- B = A[x]/f.
-    -- we want an isomorphism toPrimitive: B --> S = QQ[z]/G(z).
-    -- A is a tower ring
-    -- B = amb/G is the flattened primitive ring element corresponding to A: 
-    -- create a new polynomial ring S = QQ[var]/G'
-    -- and ring maps toPrimitive: A --> S, and fromPrimitive: S --> A (inverse map);.
-    -- and a list, s.t. for each generator of A, has image of that element in S. (don't really need this?)
-    -- given such a tower ring A, once this function has run, we get this data from: 
-    --  getPrimitiveInfo A, which returns (toPrimitive, fromPrimitive)
-    -- 
-    -- a = adjoinRoot g, where g is in A[x].
-    -- first case: 
-    --   A = QQ[a]/f(a).
-    --   B = ring a = QQ[b,a]/(fa, gab)
-    -- we look to see if b generates this ring. If so, we use that.
-    --   if not, we need to take something like b+a (or some other sum).
-    )
 
 -- above this is my new code (21 April 2018) trying to allow factorizations over tower rings.
 -- What do we need to determine the primitive extension of A = A0[b]/g(b)?
@@ -167,7 +132,7 @@ adjoinRootToTower RingElement := opts -> (f) -> (
     -- returns a root of the irreducible univariate polynomial f, 
     -- possibly after an extension of fields
     -- NOTES:
-    --   a. don't use toField here.
+    --   a. don't use toField here. DONE
     --   b. for GF, we need to make these maps.  How to do that?
     --   c. also keep the corresponding primitive extension, and maps to/from that.
     R := ring f;
@@ -178,42 +143,37 @@ adjoinRootToTower RingElement := opts -> (f) -> (
         << "adjoinRootToTower: case 1" << endl;
         a := coefficient(x, f);
         b := coefficient(1_R, f);
-        if a == 1 then -b else -b//a
+        if a == 1 then -b else -b//a  -- this // should be fine in this field: TEST IT THOUGH!
         )
     else (
         -- Here we need to add a root to kk.
         kk := coefficientRing R;
         if opts.Variable =!= null and not instance(opts.Variable, Symbol) then
             error "Variable given is not a symbol";
-        if not isPolynomialRing kk then (
+        if kk === QQ or isFinitePrimeField kk then (
             -- In this case, kk is QQ, or a finite prime field.
             -- (what about GF?)
             << "adjoinRootToTower: case 2" << endl;
             v := if opts.Variable === null then getSymbol "a"
             else opts.Variable;
             A1 := kk (monoid[v]);
-            A2 := A1/(sub(f, x=> A1_0));
-            A3 := if isFinitePrimeField kk then
-                    GF(A2)
-                  else
-                    toField A2;
+            New := A1/(sub(f, x=> A1_0));
             Old := (ring f)/f;
-            New := A3;
-            Prim := A3;
+            Prim := New;
             tonew := map(New, Old, {New_0});
             fromnew := map(Old, New, {Old_0});
             New#TowerData = new HashTable from {
                 inclusion => map(New, kk),
                 toNew => tonew,
                 fromNew => fromnew,
-                toPrimitive => tonew,
-                fromPrimitive => fromnew
+                toPrimitive => map(New,New),
+                fromPrimitive => map(New,New)
                 };
-            A3_0
+            New_0
             )
         else (
             << "adjoinRootToTower: case 3" << endl;
-            kk = coefficientRing kk;  -- we expect that kk is a 'toField'ed field
+            --kk = coefficientRing kk;  -- we expect that kk is a 'toField'ed field
             I := ideal kk; -- this should be in a "triangular form"
             kk1 := coefficientRing kk;
             if instance(kk1, PolynomialRing) then error "expected the original ring in the form toField(kk[vars]/I), where kk is a prime field";
@@ -223,25 +183,85 @@ adjoinRootToTower RingElement := opts -> (f) -> (
             to1 := map(A1, ring I, drop(gens A1, 1)); -- map on inner variables
             to2 := map(A1, R, gens A1);
             J := ideal to2 f + to1 I;
-            A2 = A1/J;
-            A3 = toField(A2);
+            New = A1/J;
             Old = (ring f)/f;
-            New = A3;
-            Prim = null;
             oldvars := promote(vars kk, Old);
-            newvars := promote(vars coefficientRing New, New);
+            newvars := vars New;
             tonew = map(New, Old, newvars);
             fromnew = map(Old, New, matrix{{Old_0}}|oldvars);
+            (toPrim, fromPrim) := makePrimitive New;
             New#TowerData = new HashTable from {
                 inclusion => map(New, coefficientRing R, drop(flatten entries newvars, 1)),
                 toNew => tonew,
                 fromNew => fromnew,
-                toPrimitive => null, -- need to fill this in
-                fromPrimitive => null
+                toPrimitive => toPrim,
+                fromPrimitive => fromPrim
                 };
-            A3_0
+            New_0
             )
         )
+    )
+
+makePrimitive = method()
+makePrimitive Ring := (R) -> (
+    -- need: a poly ring with variables given by the tower ring, and another new one.
+    --  and an ideal in there (tower ideal). (Or, maybe in just the last Primitive variable, and the new var).
+    -- then find the elimination ideal (that will define the primitive ring), and the images of each of the
+    -- variables in (that will determine the ringmap toPrimitive).  fromPrimitive just needs to know where 
+    -- the primitive generator z goes.
+    kk := coefficientRing R;
+    ambientPrim := kk(monoid [getSymbol "z"]);
+    primGraph := ambientPrim (monoid [gens R, Join=>false]);
+    phi := map(primGraph, ambient R, vars primGraph);
+    J := phi (ideal R) + ideal(primGraph_0 - ambientPrim_0);
+    elapsedTime gens gb J;
+    F := selectInSubring(1, gens gb J);
+    F = lift(F_(0,0), ambientPrim);
+    Prim := (ring F)/F;
+    toPrim := map(Prim, R, lift((vars primGraph) % J, ambientPrim));
+    fromPrim := map(R, Prim, {R_0});
+    (toPrim, fromPrim)
+    )
+
+primitiveRing = method()
+primitiveRing Ring := (R) -> (
+    if R === QQ then return QQ;
+    if not R#?TowerData then error "required a tower extension";
+    TD := R#TowerData;
+    target TD#toPrimitive
+    )
+
+getCoefficientTower = method()
+getCoefficientTower Ring := (R) -> (
+    if R === QQ or isFinitePrimeField R or not R#?TowerData then error "required a tower extension";
+    TD := R#TowerData;
+    source TD#inclusion
+    )
+
+debug Core
+factorOverTower = method()
+factorOverTower RingElement := (F) -> (
+    R := ring F;
+    if not isPolynomialRing R then error "expected an element in a polynomial ring";
+    K := coefficientRing R;
+    if not K#?TowerData then error "expected polynomial over a tower extension";
+    -- translate F to ambientPrim[x], factor it there, w.r.t Prim equation.
+    -- then map it back to R.
+    TD := K#TowerData;
+    toPrim := TD#toPrimitive;
+    fromPrim := TD#fromPrimitive;
+    Prim := primitiveRing K;
+    RPrim := Prim (monoid ring F);
+    toRPrim := map(RPrim,R,vars RPrim | toPrim.matrix);
+    fromRPrim := map(R,RPrim,vars R | fromPrim.matrix);
+    F1 := toRPrim F;
+    rawfacs := rawFactor(raw F1, raw (ideal Prim)_0);
+    assert(rawfacs_1_0 == 1); -- this is the coefficient
+    facs := for f in rawfacs_0 list fromRPrim(new RPrim from f);
+    exps := toList drop(rawfacs_1,1);
+    coeff := lift(fromRPrim(new RPrim from facs_0), Prim);
+    --(coeff, for i from 1 to #facs-1 list (facs#i, rawfacs#1#i))
+    (coeff, drop(facs,1), exps)
     )
 
 TEST ///
@@ -252,46 +272,51 @@ TEST ///
   a1 = adjoinRootToTower(x^2-2)
   T1 = ring a1
 
+  primitiveRing T1
   TD = T1#TowerData
-  coefficientRing T1 -- fails in char p
-  ambient coefficientRing T1 
-  
+  TD#toPrimitive
+  coefficientRing T1 -- fails in char p ?? yes
+  getCoefficientTower T1  
+
+  --R2 = T1[x,y]
+  -- F = x^2-2*y^2
   R2 = T1[x]
   F = x^3-T1_0*x-1
+ -- F = x^2-2
+ factor F
+  factorOverTower F
   a2 = adjoinRootToTower F  
   T2 = ring a2
 
-  use R2
-  F = x^3-T1_0*x-1
-  a2 = adjoinRootToTower F  
-  T2 = ring a2
+  primitiveRing T2
+  ideal getCoefficientTower T2
+  T2#TowerData#toPrimitive
 
   R3 = T2[x]
   F = x^2-T2_0-T2_1
+  factorOverTower F
   a3 = adjoinRootToTower F  
   T3 = ring a3
 
-  ambient RingMap := (F) -> (
-      S := source F;
-      T := target F;
-      map(ambient coefficientRing T, ambient coefficientRing T, lift(F.matrix, ambient coefficientRing T))
-      )
-  ambient TD#toNew
-  ambient coefficientRing ring a1   -- WARNING: this is a difference currently between char 0 and p ??
+  R4 = T3[x]
+  factorOverTower(a*(x^4-a*x^2-x-1)*(x^2-2))
   
-  A1 = ambient coefficientRing B1
-  
-  R2 = B1[x]
-  F = x^3-B1_0*x-1
-  
-  a2 = adjoinRootToTower F
-  B2 = ring a2
-  TD = B2#TowerData
-  assert (TD#toNew TD#fromNew B2_0 == B2_0)
+
+  primitiveRing T3
+  use R2
+  F = T1_0*x-1
+  a2 = adjoinRootToTower F  
+  T2 = ring a2
 
   use R2
   a2' = adjoinRootToTower (a*x-(a+1))
 
+  ambient RingMap := (F) -> (
+      S := source F;
+      T := target F;
+      map(ambient T, ambient T, lift(F.matrix, ambient T))
+      )
+  ambient TD#toNew
   
 ///
 
@@ -383,35 +408,6 @@ TEST ///
   F1 = toA inc F
   factor discriminant(F1,(ring F1)_0)
 ///
-
-isTriangular = method()
-isTriangular List := (L) -> true
-
-debug Core
--*
-makeTower = method()
-makeTower List := (L) -> (
-    -- L should be triangular, starting with the lowest variable
-    -- every element of L should be in the same ring
-    R := ring L#0;
-    if not all(L, f -> ring f === R) then error "expected all elements to be in the same ring";
-    K := coefficientRing R;
-    --if K =!= QQ and not isPrimeField K then error "expected a polynomial ring over a prime field";
-    if not instance(R,PolynomialRing) then error "expected a polynomial ring";
-    if numgens R != #L then error ("expected exactly "|#L|" generators in the ring");
-    if not isTriangular L then error "expected a triangular set";
-    L0 := K;
-    x := local x;
-    for i from 0 to #L-1 do (
-        A := L0[x];
-        phi := map(A, R, join(toList((numgens R-i-1):0), {x}, for i from 0 to i-1 list L0_(numgens R-i-1)));
-        G := phi L#i;
-        L1 := adjoinRoot(G, Variable=>R#generatorSymbols#(numgens R-i-1));
-        L0 = L1;
-        );
-    L0
-    )
-*-
 
 beginDocumentation()
 
@@ -543,6 +539,24 @@ TEST ///
 ///
 
 TEST ///
+  -- adjoining a root over QQ
+  -- once we have a 'toField', frac should return itself and / should just work.
+  R = QQ[t]
+  F = t^2-3
+  b = adjoinRootToTower(F, Variable=>symbol b)
+  kk = ring b
+  assert(ring b === frac ring b)
+  c = 1/b
+  assert(c * b == 1)
+  assert(ring c === ring b)
+  assert(1//b == c)
+  assert(1 % b == 0) -- all remainders like this in a field will be 0
+  R = kk[x,y,z]
+  G = (x+y+z)^2-3
+  factorOverTower G
+///
+
+TEST ///
   -- adjoining a root of a linear polynomial over QQ
   R = QQ[t]
   F = 3*t-7
@@ -560,7 +574,7 @@ TEST ///
   R = ZZ/23[t]
   F = t^2-5
   isPrime F
-  b = adjoinRoot(F, Variable=>symbol b) -- creates a Galois Field, but a BigFlint GF.  Is that OK?
+  b = adjoinRootToTower(F, Variable=>symbol b) -- creates a Galois Field, but a BigFlint GF.  Is that OK?
   kk = ring b
   assert(ring b === frac ring b)
   c = 1/b
@@ -572,6 +586,7 @@ TEST ///
   R = kk[x,y,z]
   G = (x^(23^2) - x)
   factor G -- factors into linears
+  factorOverTower G
 ///
 
 TEST ///

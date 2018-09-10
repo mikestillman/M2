@@ -30,9 +30,81 @@ class GBComputation;
 #include "ring.hpp"
 #include "qring.hpp"
 
+/*
+ * Ring            ring_elem  vec    RingElement(Ring,ring_elem)
+ * 
+ * Ring has ElementType.  ConcreteRingElement<Ring>(Ring, ElementType):RingElement.  virtual class: RingElement
+ *  ring elements (wishful thinking?)
+ *    single element
+ *    dense array of elements
+ * currently:
+ *    single ring_elem
+ *    vec: linked list of (ring_elem,int) (vectors) (ring.hpp, ring-vecs.cpp)
+ *    Matrix:
+ *    MutableMatrix
+ *     MutableMat<DMat<R>>  (Ring, DMat<R>), or (R, SMat<R>)
+ *     MutableMat<SMat<R>>
+ *    DMat<R>
+ *    SMat<R>
+ * Ring hierarchy: just info about the rings themselves, not ring arithmetic.
+ * matching hierarchy of RingArithmetic
+ * 
+ * in Ring:
+ *   ZZ: no information
+ *   ZZ/p: p, possibly some table data, maybe primitive element?
+ *   GF(p^n): same.  Also need the polynomial.
+ *   QQ
+ *   RR (doubles)
+ *   CC (doubles)
+ *   RR_n: (mpfr, need precision)
+ *   CC_n: (mpfr's too, need precision).
+ * 
+ * Ring
+ *   each of the above
+ *   FractionRing
+ *   QuotientRing
+ *   PID
+ *     ZZ
+ *     Field
+ *       FractionField
+ *       FiniteField
+ *         GF(p^n, given polynomial)
+ *         FinitePrimeField
+ *           ZZ/p
+ *       ApproximateField
+ *   LocalRing
+
+ * One proposal for ring elements:
+ * Ring
+ *   ElementType (raw data for one element, without ring information)
+ *   RingElement (Ring, ElementType)
+ *   RingElementArray (Ring, vector of ElementType's)
+ *    struct {
+         const Ring& mRing;
+         std::vector<Ring::ElementType> mElements;
+ *    }
+ *   RingElementMatrix (Ring, numrows, numcols, pointer/vector of all entries (ElementTypes))
+ *   
+ * 
+ */
 /**
  * \ingroup polynomialrings
  */
+#if 0
+class PolynomialRing : public Ring
+{
+  // A polynomial ring
+};
+
+class PolynomialRingLinkedList : public PolynomialRing
+{
+};
+
+class PolynomialRingLinkedList : public PolynomialRing
+{
+};
+#endif
+
 class PolynomialRing : public Ring
 {
   bool is_graded_;

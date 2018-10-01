@@ -185,7 +185,6 @@ SeeAlso
 
 ///
 Key
-   length
   (length, Module)
 Headline
   Computes the length of modules over local rings

@@ -74,16 +74,32 @@ class GBComputation;
  *       ApproximateField
  *   LocalRing
 
+ * RawRing: *ConcreteRing + virtual function call
+ * RawRingElement: RawRing + *RingElement
+ * RawRingElement: RawRing + Ring::ElementType
+
+ * Latest:
+
  * One proposal for ring elements:
- * Ring
+ * ConcreteRing
  *   ElementType (raw data for one element, without ring information)
- *   RingElement (Ring, ElementType)
- *   RingElementArray (Ring, vector of ElementType's)
+ *   Examples:
+ *   ARing(ZZ/p)
+
+
+ * Possibly separate?
+ *   PolyRing(Ring) (is a ConcreteRing)
+ *   PolyRing(  Ring<  PolyRing(Ring<ConcreteRing>)  >  ) (edge case)
+
+ * Ring<ConcreteRing>
+ *   RingElement (Ring<ConcreteRing>, ConcreteRing::ElementType)
+ *   RingElementArray (Ring<ConcreteRing>, vector of ElementType's)
  *    struct {
          const Ring& mRing;
          std::vector<Ring::ElementType> mElements;
  *    }
- *   RingElementMatrix (Ring, numrows, numcols, pointer/vector of all entries (ElementTypes))
+ *   1. RingElementMatrix<dmat/smat> (Ring, numrows, numcols, pointer/vector of all entries (ElementTypes))
+ *   2. RingElementMatrix<Ring> (numrows, numcols, pointer/vector of all entries (ElementTypes))
  *   
  * 
  */

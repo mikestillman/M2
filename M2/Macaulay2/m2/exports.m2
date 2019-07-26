@@ -412,6 +412,7 @@ export {
 	"Vector",
 	"VectorExpression",
 	"Verbose",
+    "Verbosity",
 	"Verify",
 	"Version",
 	"VerticalList",

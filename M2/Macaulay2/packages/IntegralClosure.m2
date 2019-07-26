@@ -21,7 +21,6 @@ debug PrimaryDecomposition
 export{
      "integralClosure", 
      "integralClosures", 
-     "Verbosity",
      "Keep",
      "conductor", 
      "icFractions", 
@@ -1821,20 +1820,6 @@ document {
 --     Caveat => "NOTE: How do I make M2 put icFracP on the list of all functions that use Limit?"
 }
 
-doc ///
-  Key
-    Verbosity
-  Headline
-    optional argument describing how verbose the output should be
-  Description
-   Text
-     Specifying the optional argument {\tt Verbosity => n}, where $n$ is an integer
-     tells the routine how much output should be given.  A value of 0 means be silent.
-     The larger the value $n$, the more output one might see.
-  SeeAlso
-    integralClosure
-    icFracP
-///
 
 document {
      Key => [icFracP,Verbosity],

@@ -35,14 +35,14 @@ load "./core/globalMethods.m2"
    load "./core/cone/constructors.m2"
    load "./core/cone/properties.m2"
    load "./core/cone/methods.m2"
-   -- Polyhedron (relies on cone)
-   load "./core/polyhedron/constructors.m2"
-   load "./core/polyhedron/properties.m2"
-   load "./core/polyhedron/methods.m2"
    -- Fan
    load "./core/fan/constructors.m2"
-   load "./core/fan/methods.m2"
+   load "./core/polyhedron/constructors.m2"
+   load "./core/fan/methods.m2"			       -- relies on Polyhedron
    load "./core/fan/properties.m2"
+   -- Polyhedron (relies on cone)
+   load "./core/polyhedron/properties.m2"
+   load "./core/polyhedron/methods.m2"	   -- relies on Fan
    -- PolyhedralComplex (relies on Fan)
    load "./core/polyhedralComplex/constructors.m2"
    load "./core/polyhedralComplex/properties.m2"
@@ -109,9 +109,12 @@ load "./interfaces/normaliz.m2"
 -- Documentation
 --
 beginDocumentation()
-load "./deprecated_documentation.m2"
-load "./documentation.m2"
-load "./new_documentation.m2"
+load "./documentation/intro.m2"
+load "./documentation/working_with_polyhedra.m2"
+load "./documentation/working_with_cones.m2"
+load "./documentation/deprecated_documentation.m2"
+load "./documentation/old_documentation.m2"
+load "./documentation/documentation.m2"
 
 end
 

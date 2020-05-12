@@ -7,6 +7,7 @@
 CC  =
 CXX =
 FC  =
+AR  = 
 
 # configure script options:
 OPTIONS =
@@ -43,10 +44,6 @@ ifeq ($(DEBUG),yes)
 CONFIGOPTIONS += --enable-debug --enable-memdebug --disable-optimize
 DIRECTORY := $(DIRECTORY).debug
 else
-ifneq ($(MACOSX),yes)
-# under Mac OS X, stripping the M2 binary seems to cause the program to crash on some examples, repeatedly
-CONFIGOPTIONS += --enable-strip
-endif
 ifeq ($(DEBIAN),yes)
 CONFIGOPTIONS += --enable-deb
 else
@@ -82,9 +79,9 @@ $(foreach O, $(OPTLIBS),			\
 include Makefile.include
 
 test :
-	: $(FC) $(CC) $(CXX)
+	: $(FC) $(CC) $(CXX) $(AR)
 
 # Local Variables:
 # mode: makefile-gmake
-# compile-command: "time make SIGN=no DEBUG=no "
+# compile-command: "time gmake SIGN=no DEBUG=no "
 # End:

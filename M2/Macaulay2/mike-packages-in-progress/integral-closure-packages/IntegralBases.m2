@@ -51,7 +51,7 @@ export {
 --   Initialize W, a list of same size as V.
 --     W_i is a list of the truncated t-coeffs of V_i
 --   loop1:
---     compute truncations of y*V_-1, append to V, W.
+--     compute truncations of y*V_-1, append to V, W
 --     concatenate W to make a matrix (over kk), find syzygy
 --     if no syzygies, loop1
 --     if there is a syzygy:
@@ -374,33 +374,32 @@ Headline
   computing integral bases of plane curves
 Description
   Text
-  Example
 Caveat
 SeeAlso
 ///
 
-
-TEST ///
--- test code and assertions here
--- may have as many TEST sections as needed
+///
+  Key
+  Headline
+  Inputs
+  Outputs
+  Consequences
+  Description
+    Text
+    Example
+  Caveat
+  SeeAlso
 ///
 
-end
-doc ///
-Key
-Headline
-Inputs
-Outputs
-Consequences
-Description
-  Text
-  Example
-Caveat
-SeeAlso
-///
+end--
+
 
 restart
+uninstallPackage "IntegralBases"
+restart
 loadPackage "IntegralBases"
+installPackage "IntegralBases" -- no doc yet
+check "IntegralBases" -- no tests!
 
 TEST ///
   R = QQ[x,y]

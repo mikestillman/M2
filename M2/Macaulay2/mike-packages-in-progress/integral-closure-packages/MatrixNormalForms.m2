@@ -651,6 +651,7 @@ restart
 needsPackage "MatrixNormalForms"
 restart
 check "MatrixNormalForms"
+installPackage "MatrixNormalForms"
 
 Node
    Key

@@ -488,14 +488,14 @@ makePuiseuxExample = (R, n, L, K, coeffs) ->(
      (entries gens I)#0#0
      )
 
-{*
+-*
 << "TODO:
   1. factorization should work over extension fields
   2. towers of extension fields needs to be set up.
   3. makePuiseuxExample: speed it up, document it
   4. DONE Puiseux should handle slope 0 too
 "
-*}
+*-
 
 beginDocumentation()
 
@@ -936,7 +936,7 @@ sub(G1, {x => 0, y=>y-1})
 
 
 -- Some example polynomials to consider
-{*
+-*
 
 --F = y^4-y^2+x^3+x^4
 F = x^3*y^2 + x*y^4 + x^2*y^4 + y^7 + x^12*y + x^15
@@ -961,7 +961,7 @@ F = poly"y40+y13x+x4y5+x3(x+1)2"
 --boehm3
 F = y^5+2*x*y^2+2*x*y^3+x^2*y-4*x^3*y+2*x^5
 
-*}
+*-
 
 end--
 

@@ -86,11 +86,6 @@ combineBases(PartialBasis, PartialBasis) := (B1, B2) -> (
 
 debug Core
 --needsPackage "TowerRings"
-factorize = method()
-factorize RingElement := (F) -> (
-     facs := factor F;
-     facs//toList/toList/reverse
-     )
 
 -- The internal functions here expect that the polynomial ring is
 -- S = kk[y,x,MonomialOrder=>{1,1}], or kk[y,x,MonomialOrder=>Lex] 
@@ -516,7 +511,7 @@ checkInputPoly = (F) -> (
      if #dlocs =!= 1 or exps#(dlocs#0)#1 > 0 then error ("expected a polynomial monic in "|toString R_0);
      )
 
-{*
+-*
 *************************************************************
 ---------------------
 -- new localBasis function
@@ -634,7 +629,7 @@ localBasis = (F,gx,y,opts) -> (
         );
     )
 *************************************************************
-*}
+*-
 
 analyzeFiber = (G,multDisc,toT,fromT,printlevel) -> (
      -- input: G(y,x) in the ring R, about x=0
@@ -754,19 +749,19 @@ TEST ///
   localBases(F, PrintLevel=>2)
   
   debug LocalBasis
-  (toR1, fromR1) = switchCenter(R, last last factorize discriminant(F,y))
+  (toR1, fromR1) = switchCenterReplaceWithOneFromAdjoinRoots(R, last last factorize discriminant(F,y))
   F1 = toR1 F;
   startSystem(F1, (ring F1)_1, (ring F1)_0, new OptionTable from {Multiplicity=>6, PrintLevel=>2})
   
   for fs in factorize discriminant(F,y) list (
-      (toR1, fromR1) = switchCenter(R, fs#1);
+      (toR1, fromR1) = switchCenterReplaceWithOneFromAdjoinRoots(R, fs#1);
       F1 = toR1 F;
       startSystem(F1, (ring F1)_1, (ring F1)_0, new OptionTable from {Multiplicity=>fs#0, PrintLevel=>2})
       )
   
 ///
 
-switchCenter = (origR,gx) -> (
+switchCenterReplaceWithOneFromAdjoinRoots = (origR,gx) -> (
     -- adjoin a root 'a' to kk if needed to get a new ring R1 = B (monoid R), and
     -- then return toNewRing : origR --> R, x -> x+a, y -> y
     --        and  toOld : R --> R  which sends x -> x-a, y -> y.
@@ -823,12 +818,12 @@ TEST ///
 elapsedTime  discs = select(factorize discriminant(F,y), f -> # support(f#1) == 1);  -- remove constant terms
 
   for fs in {discs#3} list (
-      (toR1, fromR1) = switchCenter(R, fs#1);
+      (toR1, fromR1) = switchCenterReplaceWithOneFromAdjoinRoots(R, fs#1);
       F1 = toR1 F;
       startSystem(F1, (ring F1)_1, (ring F1)_0, new OptionTable from {Multiplicity=>fs#0, PrintLevel=>2})
       )
 
-  (toR1, fromR1) = switchCenter(R, (discs#1)#1);
+  (toR1, fromR1) = switchCenterReplaceWithOneFromAdjoinRoots(R, (discs#1)#1);
   F1 = toR1 F;
   use ring F1
   time localBasis(F1, x,y);
@@ -882,7 +877,7 @@ localBasis(RingElement, RingElement, RingElement) := opts -> (F,x,y) -> (
 -------------------------------------
 -- Code being written: 28 Jan 2014 --
 -------------------------------------
-{*
+-*
 localBasis(RingElement, RingElement, RingElement) := opts -> (F,gx,y) -> (
     assert(numgens ring F == 2);
     if numgens ring F =!= 2 then error "expected a polynomial ring in 2 variables";
@@ -908,7 +903,7 @@ localBasis(RingElement, RingElement, RingElement) := opts -> (F,gx,y) -> (
     B = apply(B, b -> {b#0, fromR b#1});
     apply(B, db -> new Divide from {db#1, new Power from {x, db#0}})
     )
-*}
+*-
 transformToInfinity = (F) -> (
     -- R = ring of F, should be in 2 vars y > x.
     -- return a ring map f : Frac R --> frac R
@@ -930,10 +925,10 @@ transformToInfinity = (F) -> (
     )
 TEST ///
   -- test of transformToInfinity
-  {*
+  -*
   restart
   debug needsPackage "LocalBasis"
-  *}
+  *-
   kk = ZZ/2
   R = kk[y,x, MonomialOrder=>{1,1}]
   P = x^3+x^2+1
@@ -1218,10 +1213,10 @@ traceMap(Ring,Ring) := (R2, R1) -> (
 
 TEST ///
   -- testing traceMap
-{*  
+-*  
   restart
   needsPackage "LocalBasis"
-*}
+*-
   kk = ZZ/3
   A = kk[a];
   ga = a^3+a^2-1;
@@ -1243,10 +1238,10 @@ TEST ///
 
 TEST ///
   -- testing traceMap
-{*  
+-*  
   restart
   needsPackage "LocalBasis"
-*}
+*-
   kk = QQ
   A = kk[a];
   ga = a^3+a^2-1;
@@ -1676,9 +1671,9 @@ TEST ///
 ///
 
 TEST ///
-{*
+-*
   restart
-*}
+*-
   debug needsPackage "LocalBasis"
   --boehm1
   kk = ZZ/7 
@@ -1701,37 +1696,34 @@ TEST ///
   --
   -- F: if not monic in y, transformit so it is.
 ///
-end
 
-doc ///
-Key
-  LocalBasis
-Headline
-Description
-  Text
-  Example
-Caveat
-SeeAlso
+///
+  Key
+  Headline
+  Usage
+  Inputs
+  Outputs
+  Consequences
+  Description
+    Text
+    Example
+  Caveat
+  SeeAlso
 ///
 
+end--
+
+restart
+uninstallPackage "LocalBasis"
+restart
+loadPackage "LocalBasis"
+restart
+installPackage "LocalBasis"
+restart
+check "LocalBasis"
 
 
 
-doc ///
-Key
-Headline
-Usage
-Inputs
-Outputs
-Consequences
-Description
-  Text
-  Example
-  Code
-  Pre
-Caveat
-SeeAlso
-///
 
 TEST ///
 -- test code and assertions here

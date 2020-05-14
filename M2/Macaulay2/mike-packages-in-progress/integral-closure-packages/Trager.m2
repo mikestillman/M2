@@ -1,8 +1,4 @@
-factorize = method()
-factorize RingElement := (F) -> (
-    facs := factor F;
-    facs//toList/toList/reverse
-    )
+needsPackage  "FractionalIdeals" -- for factorize, what else?
 
 trager = method()
 trager(Ring, RingElement) := (R, Q) -> (

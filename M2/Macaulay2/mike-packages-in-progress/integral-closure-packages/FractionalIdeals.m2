@@ -17,26 +17,33 @@ newPackage(
 -- Requires at least M2 version 1.4.0.1
 
 export {
-     "FractionalRing",
-     "FractionalIdeal", 
-     "fractionalIdeal",
-     "fractionalRing",
-     "fractions",
-     "getIntegralEquation",
-     "possibleDenominators",
-     "newDenominator",
-     "disc", -- this name will change!
-     "simplify",
-     -- the following two should be where??
-     "integralClosureHypersurface",
-     "integralClosureDenominator",
-     "ringFromFractionalIdeal",
-     "fractionalRingPresentation"
-     }
+    "factorize",
+    "FractionalRing",
+    "FractionalIdeal", 
+    "fractionalIdeal",
+    "fractionalRing",
+    "fractions",
+    "getIntegralEquation",
+    "possibleDenominators",
+    "newDenominator",
+    "disc", -- this name will change!
+    "simplify",
+    -- the following two should be where??
+    "integralClosureHypersurface",
+    "integralClosureDenominator",
+    "ringFromFractionalIdeal",
+    "fractionalRingPresentation"
+    }
 
 exportMutable {
      "GLOBALEND"
      }
+
+factorize = method()
+factorize RingElement := (F) -> (
+     facs := factor F;
+     facs//toList/toList/reverse
+     )
 
 GLOBALEND = {}
 TraceLevel = 2

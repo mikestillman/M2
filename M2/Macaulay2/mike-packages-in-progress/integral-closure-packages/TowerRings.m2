@@ -483,7 +483,7 @@ restart
 uninstallPackage "TowerRings"
 restart
 needsPackage "TowerRings"
-check "TowerRings" -- 1 error occurs
+check "TowerRings" -- 3 error occurs
 restart
 installPackage "TowerRings" -- no doc nodes.
 

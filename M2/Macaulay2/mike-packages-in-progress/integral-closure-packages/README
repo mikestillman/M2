@@ -30,25 +30,45 @@ Part C. Integral closures
   FractionalIdeals (uses TraceForm)
 
       
-Status of the various packages:
-  TraceForm:
-    14 May 2020: loads, installs, checks(1 error), doc exists for some.
-
-  FractionalIdeals:
-    14 May 2020: loads, no doc, one test fails.
-    
-  AdjoinRoots: 
-    install: OK
-    checks: OK
+Status of the various packages (14 May 2020, "at" Cleveland M2 workshop)
+  TowerRings:
+    install: ok (but no doc nodes)
+    checks:
+      3 tests fail.  2 seem to have worked when I tried this last.
     completeness of doc:
-      missing: main package node is weak
+      no doc nodes at all
     what is missing?
       not sure yet.  Needs more extensive testing.
-    missing in engine:
+    missing in engine (comment from earlier, probably still relevant).
       if A --> B has lift, promote defined, then
         lift and promote should work for A[M] --> B[M]  
+    
+  TraceForm:
+    install: ok
+    checks: 1 test fails
+    completeness of doc:
+      there are 4 doc nodes written
+    what is missing?
+    
+  FractionalIdeals: needs TraceForm
+    14 May 2020: loads, no doc, one test fails.
+    install: ok (but no doc nodes)
+    checks: 1 test fails
+    completeness of doc: none!
+    what is missing?
 
-  UPolynomials
+  AdjoinRoots: 
+    install: yes 
+    checks: 3 errors
+    completeness of doc: 2 doc nodes?
+    what is missing?
+
+  UPolynomials: AdjoinRoots
+    install: ok
+    checks: 1 error
+    completeness of doc: only 2 doc nodes?
+    what is missing?
+
     install: OK
     checks: OK
     completeness of doc: lots missing
@@ -58,18 +78,45 @@ Status of the various packages:
     problems:
       adjoinRoots is here, but the package above should be used.
 
-  Puiseux
+  Puiseux: UPolynomials
+    install: 1 error
+    checks: 3 tests fail
+    completeness of doc:
+    what is missing?
+
     Uses UPolynomials.  Why?  Hopefully we can avoid this?  It needs adjoinRoots, factorization (I think).
     3 tests fail: two seem just wrong, one seems like a real issue.
       but the tests are not so good anyway.
     1 example fails.  I might have the example wrong?  In any case there are too many 
     this package has an inscrutable interface!  Needs to be improved.
-  
-  UPolynomials2 ??
-  
+
+  MatrixNormalForms: nothing?
+    install: ok (and 4 doc nodes)
+    checks: no errors (and a number of tests, it seems)
+    completeness of doc: ??
+    what is missing? ??
+    
+  IntegralBases: UPolynomials, FractionalIdeals, Puiseux, MatrixNormalForms
+    install: ok (but no doc!)
+    checks: no tests!
+    completeness of doc: no doc!
+    what is missing?
+
+  LocalBasis: UPolynomials, TowerRings, FractionalIdeals
+    install: 3 example failures
+    checks: lots of tests, 28 failures though!
+    completeness of doc:
+    what is missing?
+      switchCenter: need to use one from adjoinRoots.
+            
   ModularGCD: note says do not use.  It has been moved elsewhere.
+
+  Trager: just code, not a package. (also trager-test)
+  Valuations: just code, not a package.
+
+  UPolynomials2: what is this, is it to be used?
   
-  TowerRings: no doc, one test fails.
+    
       
 Question:
   Given a tower ring which is a field, find a univariate extension giving the same ring.

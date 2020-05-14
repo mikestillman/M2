@@ -2,4 +2,73 @@ These packages were moved from the svn repo M2-dev/mike/integral-closure-package
     to the M2 repo 2018-mike-packages
 and placed into a new directory M2/Macaulay2/mike-packages-in-progess
 The plan is to clean up these packages, possibly removing some of these files/packages, and add them to M2.    
+
+
+Here is the general plan:
+
+Part A.
+  Basic arithmetic in tower rings, both over a finite field and over QQ
+  gcd's, division, univariate factorization over these rings.
+  multivariate factorization over these rings (less important for now?)
+
+  this includes packages:
+    AdjoinRoots
+    UPolynomials
+    (UPolynomials2?)
+    ModularGCD
+    TowerRings
+    
+Part B. Puiseux and algorithms on (mostly plane) curves
+  Puiseux
+  IntegralBases
+  LocalBasis
+  TraceForm
+  Trager
+  MatrixNormalForms?
+  
+Part C. Integral closures
+  FractionalIdeals
+  
+Status of the various packages:
+  AdjoinRoots: 
+    install: OK
+    checks: OK
+    completeness of doc:
+      missing: main package node is weak
+    what is missing?
+      not sure yet.  Needs more extensive testing.
+    missing in engine:
+      if A --> B has lift, promote defined, then
+        lift and promote should work for A[M] --> B[M]  
+
+  UPolynomials
+    install: OK
+    checks: OK
+    completeness of doc: lots missing
+    missing?
+      really want factorization over a tower of fields, but this function doesn't provide that.
+      in fact, when does the factorization function actually work?
+    problems:
+      adjoinRoots is here, but the package above should be used.
+
+  Puiseux
+    Uses UPolynomials.  Why?  Hopefully we can avoid this?  It needs adjoinRoots, factorization (I think).
+    3 tests fail: two seem just wrong, one seems like a real issue.
+      but the tests are not so good anyway.
+    1 example fails.  I might have the example wrong?  In any case there are too many 
+    this package has an inscrutable interface!  Needs to be improved.
+  
+  UPolynomials2 ??
+  
+  ModularGCD: note says do not use.  It has been moved elsewhere.
+  
+  TowerRings: no doc, one test fails.
+      
+Question:
+  Given a tower ring which is a field, find a univariate extension giving the same ring.
+  Problem here: working over tower rings is (almost certainly) much better, but maybe we should
+    get a version working in the univariate case first.
+   
+
+
     

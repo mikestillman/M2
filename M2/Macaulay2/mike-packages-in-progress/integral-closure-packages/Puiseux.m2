@@ -1466,3 +1466,36 @@ puiseux(F,10)
 jacF = ideal F + ideal jacobian ideal F
 codim jacF
 decompose jacF
+
+--------------
+-- MvH code --
+--------------
+lift_exp(v,f,x,y)
+  v[1]: expansion so far
+  v[2]: accuracy
+  v[3]: ramification (as x^r), (in which case t is 1/x^r)
+  v[4]: algebraic extension of this expansion
+  v[5]: multiplicity of this factor
+  v[6]: degree of the extension above the ground field.
+  v[7]: sum of valuations of differences of this expansion with other expansions.
+  v[8]: list of previous expansions
+  starting values:
+  v[1]: 0
+  v[2]: 0
+  v[3]: x
+  v[4]: ext ??
+  v[5]: degree(f,y)
+  v[6]: 1
+  v[7]: 1-degree(f,y)
+  v[8]: {}
+functions called:
+  g_factors
+  v_ext_m
+  g_expand
+  g_normal
+functions called in this file:
+  truncate_subs
+  Newtonpolygon
+  monic
+  almost_monic
+  

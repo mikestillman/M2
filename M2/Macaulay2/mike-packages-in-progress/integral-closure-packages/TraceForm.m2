@@ -268,7 +268,6 @@ Node
     
       This package provides routines for finding the multiplication map associated to an element
       of $R$, and for finding the trace form.
-    Example
   Caveat
   
 Node
@@ -424,15 +423,15 @@ Node
 ///
 
 TEST ///
-S = ZZ/32003[a..d]
-I = monomialCurveIdeal(S,{1,3,4})
-R = S/I
+  S = ZZ/32003[a..d]
+  I = monomialCurveIdeal(S,{1,3,4})
+  R = S/I
 
-B1 = noetherPosition({a,d})
-describe B1
-use B1
-assert(getBasis B1 === {1_B1, c, b, c^2, b^2})
-assert(multiplication b - 
+  B1 = noetherPosition({a,d})
+  describe B1
+  use B1
+  assert(getBasis B1 === {1_B1, c, b, c^2, b^2})
+  assert(multiplication b - 
      matrix"0, ad, 0, 0, 0; 
             0, 0, 0, ad, a2; 
 	    1, 0, 0, 0, 0; 
@@ -440,38 +439,38 @@ assert(multiplication b -
 	    0, 0, 1, 0, 0" 
 	== 0)
 
--- now the extension field
-B2 = noetherField B1
-multiplication \ {1_B2, b, c, b^2, c^2}
-assert(multiplication b - 
+  -- now the extension field
+  B2 = noetherField B1
+  multiplication \ {1_B2, b, c, b^2, c^2}
+  assert(multiplication b - 
      matrix {{0, a*d, 0, 0}, 
 	  {0, 0, 0, a*d}, 
 	  {1, 0, 0, 0}, 
 	  {0, 0, (a)/(d), 0}}
      == 0)
 
-assert(0 == traceForm B1 - 
+  assert(0 == traceForm B1 - 
      matrix {{4, 0, 0, 0, 0}, 
 	  {0, 0, 4*a*d, 0, 0}, 
 	  {0, 4*a*d, 0, 0, 0}, 
 	  {0, 0, 0, 4*a*d^3, 4*a^2*d^2}, 
 	  {0, 0, 0, 4*a^2*d^2, 4*a^3*d}})
-assert(0 == traceForm B2 - 
+  assert(0 == traceForm B2 - 
      matrix {{4, 0, 0, 0}, 
 	  {0, 0, 4*a*d, 0}, 
 	  {0, 4*a*d, 0, 0}, 
 	  {0, 0, 0, 4*a*d^3}})
 
-kx = coefficientRing B1
-assert(ring traceForm B1 === kx)
-assert(ring traceForm B2 === kx)
+  kx = coefficientRing B1
+  assert(ring traceForm B1 === kx)
+  assert(ring traceForm B2 === kx)
 ///
 
 TEST ///
---boehm4
---S = frac (ZZ/32003[v,z])[u]
-S = ZZ/32003[u,v,z]
-F = 25*u^8+184*u^7*v+518*u^6*v^2+720*u^5*v^3+
+  --boehm4
+  --S = frac (ZZ/32003[v,z])[u]
+  S = ZZ/32003[u,v,z]
+  F = 25*u^8+184*u^7*v+518*u^6*v^2+720*u^5*v^3+
      576*u^4*v^4+282*u^3*v^5+84*u^2*v^6+14*u*v^7+
      v^8+244*u^7*z+1326*u^6*v*z+2646*u^5*v^2*z+2706*u^4*v^3*z+
      1590*u^3*v^4*z+546*u^2*v^5*z+102*u*v^6*z+8*v^7*z+
@@ -483,73 +482,71 @@ F = 25*u^8+184*u^7*v+518*u^6*v^2+720*u^5*v^3+
      70*v^4*z^4+508*u^3*z^5+738*u^2*v*z^5+354*u*v^2*z^5+
      56*v^3*z^5+132*u^2*z^6+122*u*v*z^6+28*v^2*z^6+
      18*u*z^7+8*v*z^7+z^8
-R1 = S/F
-R = noetherPosition{v,z}
-time traceForm noetherField R
-getBasis R
+  R1 = S/F
+  R = noetherPosition{v,z}
+  time traceForm noetherField R
+  getBasis R
 
-time traceForm R;
-time traceForm noetherField R;
+  time traceForm R;
+  time traceForm noetherField R;
 
-use R
-M = multiplication u
+  use R
+  M = multiplication u
 ///
 
 TEST ///
---vanHoeij2
-S = QQ[x,y]
-ideal"y20+y13x+x4y5+x3(x+1)2"
-R = S/oo
+  --vanHoeij2
+  S = QQ[x,y]
+  ideal"y20+y13x+x4y5+x3(x+1)2"
+  R = S/oo
 
-use R
-R1 = noetherPosition( {x})
-describe R1
-getBasis R1
-time traceForm R1;
-time traceForm noetherField R1;
+  use R
+  R1 = noetherPosition( {x})
+  describe R1
+  getBasis R1
+  time traceForm R1;
+  time traceForm noetherField R1;
 
-use R
-R2 = noetherPosition {y}
-describe R2
-getBasis R2
-time traceForm R2;
-time traceForm noetherField R2;
+  use R
+  R2 = noetherPosition {y}
+  describe R2
+  getBasis R2
+  time traceForm R2;
+  time traceForm noetherField R2;
 ///
 
 TEST ///
---GLS7-char32003
-kk = ZZ/32003 -- from Greuel-Laplagne-Seelisch arXiv:0904.3561v1
-S = kk[x,y,z,w,t]
-I = ideal"x2+zw,
-  y3+xwt,
-  xw3+z3t+ywt2,
-  y2w4-xy2z2t-w3t3"
-I = sub(I, {z => z+w, t => t+w})
-R = S/I
+  --GLS7-char32003
+  kk = ZZ/32003 -- from Greuel-Laplagne-Seelisch arXiv:0904.3561v1
+  S = kk[x,y,z,w,t]
+  I = ideal"x2+zw,
+    y3+xwt,
+    xw3+z3t+ywt2,
+    y2w4-xy2z2t-w3t3"
+  I = sub(I, {z => z+w, t => t+w})
+  R = S/I
 
-R1 = noetherPosition({z,t})
-getBasis R1
-(noetherField R1)#"Traces"
-B = getBasis noetherField R1
-time traceForm R1;
-time traceForm noetherField R1;
+  R1 = noetherPosition({z,t})
+  getBasis R1
+  (noetherField R1)#"Traces"
+  B = getBasis noetherField R1
+  time traceForm R1;
+  time traceForm noetherField R1;
 ///
 
 TEST ///
---boehm15
-kk = ZZ/32003
-kk = QQ
-S = kk[u,v,z]
-F = -2*u*v^4*z^4+u^4*v^5+12*u^4*v^3*z^2+12*u^2*v^4*z^3-u^3*v*z^5+11*u^3*v^2*z^4-21*u^3*v^3*z^3-4*u^4*v*z^4+2*u^4*v^2*z^3-6*u^4*v^4*z+u^5*z^4-3*u^5*v^2*z^2+u^5*v^3*z-3*u*v^5*z^3-2*u^2*v^3*z^4+u^3*v^4*z^2+v^5*z^4
-G = sub(F, {v => u+v})
-R1 = S/G
-R = noetherPosition {v,z}
-describe R
-time traceForm R
-time traceForm noetherField R
+  --boehm15
+  kk = ZZ/32003
+  kk = QQ
+  S = kk[u,v,z]
+  F = -2*u*v^4*z^4+u^4*v^5+12*u^4*v^3*z^2+12*u^2*v^4*z^3-u^3*v*z^5+11*u^3*v^2*z^4-21*u^3*v^3*z^3-4*u^4*v*z^4+2*u^4*v^2*z^3-6*u^4*v^4*z+u^5*z^4-3*u^5*v^2*z^2+u^5*v^3*z-3*u*v^5*z^3-2*u^2*v^3*z^4+u^3*v^4*z^2+v^5*z^4
+  G = sub(F, {v => u+v})
+  R1 = S/G
+  R = noetherPosition {v,z}
+  describe R
+  time traceForm R
+  time traceForm noetherField R
 ///
-end
-
 
 ///
 Node
@@ -566,13 +563,14 @@ Node
   SeeAlso
 ///
 
-
+end--
 
 restart
 loadPackage "TraceForm"
 uninstallPackage "TraceForm"
 installPackage "TraceForm"
-check TraceForm
+check TraceForm -- one error currently.
+
 --------------------------------
 -- Testing the creation of border basis
 restart

@@ -27,9 +27,16 @@ Part B. Puiseux and algorithms on (mostly plane) curves
   MatrixNormalForms?
   
 Part C. Integral closures
-  FractionalIdeals
-  
+  FractionalIdeals (uses TraceForm)
+
+      
 Status of the various packages:
+  TraceForm:
+    14 May 2020: loads, installs, checks(1 error), doc exists for some.
+
+  FractionalIdeals:
+    14 May 2020: loads, no doc, one test fails.
+    
   AdjoinRoots: 
     install: OK
     checks: OK

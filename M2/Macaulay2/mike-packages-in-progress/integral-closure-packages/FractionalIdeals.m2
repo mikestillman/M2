@@ -10,7 +10,7 @@ newPackage(
               	  Email => "mike@math.cornell.edu", 
                   HomePage => "http://www.math.cornell.edu/~mike"}},
         Headline => "fractional ideals given a domain in Noether normal position",
-	PackageExports => {"TraceForm"},
+        PackageExports => {"TraceForm", "Elimination", "IntegralClosure"},
         DebuggingMode => true
         )
 
@@ -465,7 +465,7 @@ radical(FractionalIdeal, FractionalIdeal) := opts -> (F,R1) -> (
      << toExternalString ring J0 << endl;
      time Jrad := rad J0;
      --time Jrad := intersect decompose J0;
-{*
+-*
      -- do the radical
      J0 := first flattenRing J;
      << "R0 = " << toExternalString ring J0 << endl;
@@ -475,7 +475,7 @@ radical(FractionalIdeal, FractionalIdeal) := opts -> (F,R1) -> (
      << " rad components " << netList Jcomps << endl;
      time Jrad := trim radical J; -- note: these are all linear in the new vars
      Jrad = lift(gens Jrad, S');
-*}
+*-
      wt := splice{numgens source newvars : 1, numgens S' - numgens source newvars : 0};
      Jrad1 := matrix{select(flatten entries gens gb Jrad, f -> ((lo,hi) := weightRange(wt,leadTerm f); hi <= 1))};
      (mn,cf) := coefficients(Jrad1, Monomials => vS', Variables=>flatten entries newvars);
@@ -807,147 +807,158 @@ newDenominator(FractionalIdeal, RingElement) := (F,g) -> (
 beginDocumentation()
 
 doc ///
-Key
-  FractionalIdeals
-Headline
-  manipulation of fractional ideals in a domain in Noether normal position
-Description
-  Text
-  Example
-Caveat
-SeeAlso
+  Key
+    FractionalIdeals
+  Headline
+    manipulation of fractional ideals in a domain in Noether normal position
+  Description
+    Text
+      Not ready for use.
+  Caveat
+    Not ready for use
 ///
 
 TEST ///
 -- of simplification of fractional ideals, in Noether position
-restart
-needsPackage "FractionalIdeals"
-S = QQ[a..d]
-I = monomialCurveIdeal(S, {1,3,4})
-A = S/I
-R = noetherPosition {a,d}
-F = fractionalIdeal(a^3, ideal(a^2*c, a*(a+1)^4*b))
-fractions F
-G = fractionalIdeal(b^4, ideal(a^2*c, a*(a+1)^4*b))
-fractions G
+-*
+  restart
+  needsPackage "FractionalIdeals"
+*-
+  S = QQ[a..d]
+  I = monomialCurveIdeal(S, {1,3,4})
+  A = S/I
+  R = noetherPosition {a,d}
+  F = fractionalIdeal(a^3, ideal(a^2*c, a*(a+1)^4*b))
+  fractions F
+  G = fractionalIdeal(b^4, ideal(a^2*c, a*(a+1)^4*b))
+  fractions G
 ///
 
 TEST ///
 -- of simplification of fractional ideals, NOT in Noether position
-restart
-needsPackage "FractionalIdeals"
-S = QQ[a..d]
-I = monomialCurveIdeal(S, {1,3,4})
-R = S/I
-F = fractionalIdeal(a^3, ideal(a^2*c, a*(a+1)^4*b))
-G = fractionalIdeal(b^4, ideal(a^2*c, a*(a+1)^4*b))
-fractions F
-fractions G
-oo/value
+-*
+  restart
+  needsPackage "FractionalIdeals"
+*-
+  S = QQ[a..d]
+  I = monomialCurveIdeal(S, {1,3,4})
+  R = S/I
+  F = fractionalIdeal(a^3, ideal(a^2*c, a*(a+1)^4*b))
+  G = fractionalIdeal(b^4, ideal(a^2*c, a*(a+1)^4*b))
+  fractions F
+  fractions G
+  oo/value
 ///
-
-TEST ///
-
-///
-
 
 TEST ///  -- test of getIntegralEquation
-restart
-needsPackage "FractionalIdeals"
---taken from: singular-vasconcelos
-kk = ZZ/32003
-w = symbol w
-t = symbol t
-S = kk[x,y,z,w,t]
-I = ideal"
-  x2+zw,
-  y3+xwt,
-  xw3+z3t+ywt2,
-  y2w4-xy2z2t-w3t3"
-I = sub(I, {t => t+z})
-A = S/I
-R = noetherPosition{w,t}
-kx = coefficientRing R
-time F = getIntegralEquation(x, 1_kx, kx[T])
-assert(degree(T,F) == 23)
+-*
+  restart
+  needsPackage "FractionalIdeals"
+*-
+  --taken from: singular-vasconcelos
+  kk = ZZ/32003
+  w = symbol w
+  t = symbol t
+  S = kk[x,y,z,w,t]
+  I = ideal"
+    x2+zw,
+    y3+xwt,
+    xw3+z3t+ywt2,
+    y2w4-xy2z2t-w3t3"
+  I = sub(I, {t => t+z})
+  A = S/I
+  R = noetherPosition{w,t}
+  kx = coefficientRing R
+  time F = getIntegralEquation(x, 1_kx, kx[T])
+  assert(degree(T,F) == 23)
   -- assert(leadCoefficient F == 1)  FAILS: has -1 lead coeff...
-assert(isUnit leadCoefficient F)
+  assert(isUnit leadCoefficient F)
 
-use A
-time F = getIntegralEquation(x, 1_A, A[T])
-assert(F == T - x)
+  use A
+  time F = getIntegralEquation(x, 1_A, A[T])
+  assert(F == T - x)
 
-use R; use coefficientRing R
-time integralClosureDenominator(R, w*t)
-FR = fractions oo
+  use R; use coefficientRing R
+  time integralClosureDenominator(R, w*t)
+  FR = fractions oo
 
-time for f in FR list getIntegralEquation(f, R[T])
-time for f in FR list getIntegralEquation(f, (coefficientRing R)[T])
+  time for f in FR list getIntegralEquation(f, R[T])
+  time for f in FR list getIntegralEquation(f, (coefficientRing R)[T])
 
-use A
-getIntegralEquation(y*z, w, A[T])
-getIntegralEquation(y^2, w, A[T])
-getIntegralEquation(x*y, w, A[T])
-getIntegralEquation(y^2*z^2, w^2, A[T])
-time getIntegralEquation(x*y^2*z^2, w^3, A[T])
-time getIntegralEquation(x*y*z^3+w*x*y^2*z-w^4*y, t*w^2, A[T])
+  use A
+  getIntegralEquation(y*z, w, A[T])
+  getIntegralEquation(y^2, w, A[T])
+  getIntegralEquation(x*y, w, A[T])
+  getIntegralEquation(y^2*z^2, w^2, A[T])
+  time getIntegralEquation(x*y^2*z^2, w^3, A[T])
+  time getIntegralEquation(x*y*z^3+w*x*y^2*z-w^4*y, t*w^2, A[T])
 
-time FR = icFractions A
-FR = prepend(1_(frac A), FR)
-use A
-possibleDenominators FR
-F = fractionalIdeal FR
-newDenominator(F, y*w^2)
-FR1 = fractions oo
-fractionalIdeal FR1
+  time FR = icFractions A
+  FR = prepend(1_(frac A), FR)
+  use A
+  possibleDenominators FR
+  F = fractionalIdeal FR
+  newDenominator(F, y*w^2)
+  FR1 = fractions oo
+  fractionalIdeal FR1
 
-use R; use coefficientRing R
-time integralClosureDenominator(R, t)
+  use R; use coefficientRing R
+  time integralClosureDenominator(R, t)
 
-FR = fractions oo
-getIntegralEquation(FR#1, R[T])
-
+  FR = fractions oo
+  getIntegralEquation(FR#1, R[T])
 ///
 
 TEST ///
 --boehm5-QQ
-restart
-needsPackage "FractionalIdeals"
-kk = QQ
-kk = ZZ/32003
-S = kk[u,v] -- QQ is currently out of range, this one is just the dehomogenization of boehm4, and takes much longer!
-F = 25*u^8+184*u^7*v+518*u^6*v^2+720*u^5*v^3+576*u^4*v^4+282*u^3*v^5+84*u^2*v^6+14*u*v^7+v^8+244*u^7+1326*u^6*v+2646*u^5*v^2+2706*u^4*v^3+1590*u^3*v^4+546*u^2*v^5+102*u*v^6+8*v^7+854*u^6+3252*u^5*v+4770*u^4*v^2+3582*u^3*v^3+1476*u^2*v^4+318*u*v^5+28*v^6+1338*u^5+3740*u^4*v+4030*u^3*v^2+2124*u^2*v^3+550*u*v^4+56*v^5+1101*u^4+2264*u^3*v+1716*u^2*v^2+570*u*v^3+70*v^4+508*u^3+738*u^2*v+354*u*v^2+56*v^3+132*u^2+122*u*v+28*v^2+18*u+8*v+1
-A = S/F
-singF = intersect decompose(ideal F + ideal jacobian ideal F)
-see trim oo
-use A
-R = noetherPosition {v}
-singF = decompose(ideal F + ideal jacobian ideal F)
-singF = sub(intersect singF, R)
-Q = (ideal selectInSubring(1,gens gb singF))_0
-IR = time integralClosureDenominator(R,lift(Q,coefficientRing R))
-FR = fractions oo  -- very complicatd.  Is this the way they should be?
-FR = FR/value
-time U = fractionalRingPresentation IR
-minimalPresentation U
-
--- non Noether position variant
-
-
+-*
+  restart
+  needsPackage "FractionalIdeals"
+*-
+  kk = QQ
+  kk = ZZ/32003
+  S = kk[u,v] -- QQ is currently out of range, this one is just the dehomogenization of boehm4, and takes much longer!
+  F = 25*u^8+184*u^7*v+518*u^6*v^2+720*u^5*v^3+576*u^4*v^4+282*u^3*v^5+84*u^2*v^6+14*u*v^7+v^8+244*u^7+1326*u^6*v+2646*u^5*v^2+2706*u^4*v^3+1590*u^3*v^4+546*u^2*v^5+102*u*v^6+8*v^7+854*u^6+3252*u^5*v+4770*u^4*v^2+3582*u^3*v^3+1476*u^2*v^4+318*u*v^5+28*v^6+1338*u^5+3740*u^4*v+4030*u^3*v^2+2124*u^2*v^3+550*u*v^4+56*v^5+1101*u^4+2264*u^3*v+1716*u^2*v^2+570*u*v^3+70*v^4+508*u^3+738*u^2*v+354*u*v^2+56*v^3+132*u^2+122*u*v+28*v^2+18*u+8*v+1
+  A = S/F
+  singF = intersect decompose(ideal F + ideal jacobian ideal F)
+  see trim oo
+  use A
+  R = noetherPosition {v}
+  singF = decompose(ideal F + ideal jacobian ideal F)
+  singF = sub(intersect singF, R)
+  Q = (ideal selectInSubring(1,gens gb singF))_0
+  IR = time integralClosureDenominator(R,lift(Q,coefficientRing R))
+  FR = fractions oo  -- very complicatd.  Is this the way they should be?
+  FR = FR/value
+  time U = fractionalRingPresentation IR
+  minimalPresentation U
+  -- non Noether position variant
 ///
-end
+
+end--
+
+restart
+needsPackage "FractionalIdeals" -- OK
+restart
+uninstallPackage "FractionalIdeals" 
+restart
+installPackage "FractionalIdeals" -- no doc yet, but loads.
+viewHelp
+restart
+check "FractionalIdeals" -- one test (at least) takes too long, also fails...
+                          -- tests don't have assertions!
 
 doc ///
-Key
-Headline
-Inputs
-Outputs
-Consequences
-Description
-  Text
-  Example
-Caveat
-SeeAlso
+  Key
+  Headline
+  Inputs
+  Outputs
+  Consequences
+  Description
+    Text
+    Example
+  Caveat
+  SeeAlso
 ///
 
 TEST ///

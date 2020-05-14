@@ -9,14 +9,13 @@ newPackage(
 	     {Name => "David Eisenbud", Email => "de@msri.org", HomePage => "http://www.msri.org/~de/"},
 	     {Name => "Mike Stillman", Email => "mike@math.cornell.edu", HomePage => "http://www.math.cornell.edu/~mike"}
 	     },
-    	Headline => "Integral Closure",
-
+    	Headline => "integral closure",
+     	PackageImports => { "PrimaryDecomposition", "ReesAlgebra" },
     	DebuggingMode => false,
 	AuxiliaryFiles => true
     	)
 --
 
-needsPackage "PrimaryDecomposition"
 debug PrimaryDecomposition
    
 export{
@@ -61,8 +60,6 @@ export{
      "RadicalBuiltin" -- true: use 'intersect decompose' to get radical, other wise use 'rad' in PrimaryDecomposition package
 
 verbosity = 0
-
-needsPackage "ReesAlgebra"
 
 --- Should Singh/Swanson be an option to integralClosure or its own
 --- program.  Right now it is well documented on its own.  I'm not
@@ -863,8 +860,8 @@ extendIdeal = (I,f) -> (
      M:=target f;
      iota:= matrix f;
      psi:=syz transpose presentation M;
-     beta:=(transpose gens I)//((transpose iota)*psi);
-     trim ideal(psi*beta))
+     trim ideal psi)
+
 
 TEST ///
   assert isNormal (QQ[x]/(x^2+1))
@@ -2133,6 +2130,13 @@ time R'=integralClosure(R, Verbosity =>3, Strategy=>{RadicalCodim1})
 assert(numgens R' == 13)
 assert(numgens ideal gens gb ideal R' == 54) -- this is not an invariant!
 icFractions R
+///
+
+TEST ///
+    -- see https://github.com/Macaulay2/M2/issues/933
+    S=QQ[a..f]
+    I=ideal(a*b*c,a*d*f,c*e*f,b*e*d)
+    assert (integralClosure I == integralClosure trim I)
 ///
 
 end 

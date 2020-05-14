@@ -7,20 +7,13 @@ newPackage(
 		  Email => "boehm@mathematik.uni-kl.de", 
 		  HomePage => "http://www.math.uni-sb.de/ag/schreyer/jb/"}
                   },
-    	Headline => "Deformations of Stanley-Reisner rings and related computations",
+    	Headline => "deformations of Stanley-Reisner rings and related computations",
     	DebuggingMode => false,
+     	PackageImports => { "ConvexInterface", "OldPolyhedra" },
         Configuration => {"UseConvex"=>false}
         )
 
 -- For information see documentation key "SRdeformations" below.
-
-
---if ((options SRdeformations).Configuration)#"UseConvex"==true then (
-  needsPackage "ConvexInterface"
---);
-needsPackage "OldPolyhedra"
-
-
 
 -*
 Before using "ConvexInterface" via giving the option 

@@ -18,8 +18,7 @@ newPackage(
         {Name => "Mahrud Sayrafi", Email => "mahrud@berkeley.edu",   HomePage => "http://ocf.berkeley.edu/~mahrud/"},
         {Name => "Mike Stillman",  Email => "mike@math.cornell.edu", HomePage => "http://www.math.cornell.edu/~mike/"}
         },
-    Headline => "Prunes a given complex over R, R_m, and R_p",
-    DebuggingMode => true,
+    Headline => "pruning chain complexes over polynomial and local rings",
     AuxiliaryFiles => true
     )
 
@@ -44,10 +43,10 @@ export {
     "Direction", "PruningMap", "UnitTest"
     }
 
-<< "--------------------------------------------------------------------------------------" << endl;
-<< "-- The PruneComplex package is experimental.                                        --" << endl;
-<< "-- See the documentation and comments in the package to learn more.                 --" << endl;
-<< "--------------------------------------------------------------------------------------" << endl;
+-- << "--------------------------------------------------------------------------------------" << endl;
+-- << "-- The PruneComplex package is experimental.                                        --" << endl;
+-- << "-- See the documentation and comments in the package to learn more.                 --" << endl;
+-- << "--------------------------------------------------------------------------------------" << endl;
 
 debug Core;
 

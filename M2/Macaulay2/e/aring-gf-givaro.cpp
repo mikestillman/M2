@@ -409,7 +409,7 @@ void ARingGFGivaro::getGenerator(ElementType &result_gen) const
 
 bool ARingGFGivaro::is_unit(const ElementType f) const
 {
-  return givaroField.isunit(f);
+  return givaroField.isUnit(f);
 }
 
 bool ARingGFGivaro::is_zero(const ElementType f) const
@@ -476,7 +476,7 @@ void ARingGFGivaro::set_from_long(ElementType &result, int64_t a) const
   givaroField.init(result, a1);
 }
 
-void ARingGFGivaro::set_from_mpz(ElementType &result, const mpz_ptr a) const
+void ARingGFGivaro::set_from_mpz(ElementType &result, mpz_srcptr a) const
 {
   UTT b = static_cast<UTT>(mpz_fdiv_ui(a, mCharac));
   givaroField.init(result, b);

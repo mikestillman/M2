@@ -6,17 +6,15 @@ newPackage(
 		  Email =>"boehm@mathematik.uni-kl.de", 
 		  HomePage =>"http://www.math.uni-sb.de/ag/schreyer/jb/"}
                   },
-    	Headline =>"Interface to Convex",
+    	Headline =>"interface to Convex",
     	DebuggingMode => false,
         Configuration =>{"ConvexPath"=>""},
 	CacheExampleOutput => true,
+     	PackageImports => { "MapleInterface" },
 	AuxiliaryFiles => true
         )
 
 -- For information see documentation key "ConvexInterface" below.
-
-
-needsPackage "MapleInterface"
 
 export({"mConvexHullFaces","mConvexHullFacesAndDuals","mHomology","FinitelyGeneratedAbelianGroup","toFile","readConvexHullFaces","mLatticePoints","mPosHullFaces","mPosHullFacesAndDuals","readPosHullFaces","callConvex","mIsSubcone"})
 

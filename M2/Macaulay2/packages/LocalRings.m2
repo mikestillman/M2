@@ -28,9 +28,8 @@ newPackage(
         {Name => "Mike Stillman",  Email => "mike@math.cornell.edu", HomePage => "http://www.math.cornell.edu/~mike/"},
         {Name => "David Eisenbud", Email => "de@msri.org",           HomePage => "http://www.msri.org/~de/"}
         },
-    Headline => "Operations over a local ring (R, P)",
+    Headline => "operations over a local ring (R, P)",
     PackageExports => {"PruneComplex"},
-    DebuggingMode => true,
     AuxiliaryFiles => true
     )
 
@@ -50,10 +49,10 @@ export {
     "maxIdeal"
     }
 
-<< "--------------------------------------------------------------------------------------" << endl;
-<< "-- The LocalRings package is experimental, but old methods are still available.     --" << endl;
-<< "-- See the documentation and comments in the package to learn more.                 --" << endl;
-<< "--------------------------------------------------------------------------------------" << endl;
+-- << "--------------------------------------------------------------------------------------" << endl;
+-- << "-- The LocalRings package is experimental, but old methods are still available.     --" << endl;
+-- << "-- See the documentation and comments in the package to learn more.                 --" << endl;
+-- << "--------------------------------------------------------------------------------------" << endl;
 
 debug Core;
 

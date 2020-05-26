@@ -10,11 +10,13 @@ newPackage(
               	  Email => "mike@math.cornell.edu", 
                   HomePage => "http://www.math.cornell.edu/~mike"}},
         Headline => "fractional ideals given a domain in Noether normal position",
-        PackageExports => {"TraceForm", "Elimination", "IntegralClosure"},
+        PackageExports => {
+            "TraceForm", 
+            "Elimination", -- for discriminant.
+            "IntegralClosure" -- for Index, Verbosity
+            },
         DebuggingMode => true
         )
-
--- Requires at least M2 version 1.4.0.1
 
 export {
     "factorize",
@@ -45,8 +47,8 @@ factorize RingElement := (F) -> (
      facs//toList/toList/reverse
      )
 
-GLOBALEND = {}
-TraceLevel = 2
+GLOBALEND = {} -- this must be a debugging thing? TODO: remove it.
+traceLevel = 2
 
 FractionalIdeal = new Type of HashTable
 FractionalRing = new Type of FractionalIdeal
@@ -423,19 +425,19 @@ traceRadical(RingElement, FractionalIdeal) := (Q, J) -> (
      if char K > 0 and char K <= #B then 
        << "warning: characteristic is too small, this algorithm may not produce the entire integral closure" << endl;
      G := matrix{B} ** gens numerator J;
-     print "--------------------";
-     print "--  computing M   --";
+     if traceLevel > 1 then print "--------------------";
+     if traceLevel > 1 then print "--  computing M   --";
      time M := last coefficients(G, Monomials => B);
-     << "fast version has size M = " << numColumns M << endl;     
+     if traceLevel > 1 then << "fast version has size M = " << numColumns M << endl;     
      M = gens trim image lift(M,K);
-     print "--  matrix mult   --";
+     if traceLevel > 1 then print "--  matrix mult   --";
      time newTrace := transpose(M) * traceR * M;
      denom := denominator J;
      try denom = lift(denom, K) else error "expected denominator of ideal to be liftable to the coefficient ring"; 
      Qdiag := Q * (denom^2) * id_(target newTrace);
-     print "--   modulo       --";
+     if traceLevel > 1 then print "--   modulo       --";
      time radGens := modulo(newTrace,Qdiag);
-     print "-- make frac ideal--";
+     if traceLevel > 1 then print "-- make frac ideal--";
      time rad := fractionalIdeal(denom, trim ideal(((matrix {B})*M)*radGens));
      rad
      )
@@ -548,7 +550,7 @@ fractionalIdealFromICFracs(List, Ring) := (icFracs, R) -> (
      previous := J;
      output := J*J;
      while output != previous do (
-	  print "got here";
+	  if traceLevel > 1 then print "got here";
 	  previous = output;
 	  output = output * J;
 	  );
@@ -576,18 +578,18 @@ trager(FractionalRing, RingElement) := (F, Q) -> (
      R := ring F;
      K := coefficientRing R;
      if not ring Q === K then error "expected first argument to be an element of the coefficientRing of the second.";
-     print "--  trace form   --";
+     if traceLevel > 1 then print "--  trace form   --";
      time traceR := traceForm R;
      oldRing := F;
      radQ := traceRadical(Q, oldRing);
-     print "-- endomorphisms --";
+     if traceLevel > 1 then print "-- endomorphisms --";
      time currentRing := Hom(radQ, radQ);
      while oldRing != currentRing do (
 	  oldRing = currentRing;	  
 	  --radQOld = traceRadicalOld(Q, currentRing);
 	  radQ = traceRadical(Q, currentRing);
 	  --if not radQOld == radQ then error "outputs do not agree for old and new";
-          print "-- endomorphisms --";	  
+          if traceLevel > 1 then print "-- endomorphisms --";	  
 	  time currentRing = Hom(radQ, radQ);
 	  );
      oldRing
@@ -602,9 +604,9 @@ integralClosureNonNoether(FractionalRing,RingElement) := (R,Q) -> (
      j := fractionalIdeal ideal Q;
      while (
 	  e1 := e;
-     	  if TraceLevel > 1 then << "radical:" << endl;
+     	  if traceLevel > 1 then << "radical:" << endl;
 	  time (k,j) = radical(j,e1);
-     	  if TraceLevel > 1 then << "end:" << endl;
+     	  if traceLevel > 1 then << "end:" << endl;
 	  time e = ends(j);
 	  e1 != e) do (
 	  );
@@ -835,10 +837,21 @@ TEST ///
   I = monomialCurveIdeal(S, {1,3,4})
   A = S/I
   R = noetherPosition {a,d}
+  
+  kk = coefficientRing R
+  assert(ring a === kk)
+  assert(ring d === kk)
+  assert(ring b === R)
+  assert(ring c === R)
   F = fractionalIdeal(a^3, ideal(a^2*c, a*(a+1)^4*b))
-  fractions F
+  fractions F -- these fractions are "held" expressions
+
   G = fractionalIdeal(b^4, ideal(a^2*c, a*(a+1)^4*b))
   fractions G
+  -- oo/value -- TODO: gives error while doing display
+  
+  integralClosureDenominator(R, a) -- not valid
+  fractions oo
 ///
 
 TEST ///
@@ -854,7 +867,7 @@ TEST ///
   G = fractionalIdeal(b^4, ideal(a^2*c, a*(a+1)^4*b))
   fractions F
   fractions G
-  oo/value
+  oo/value -- works in this case.
 ///
 
 TEST ///  -- test of getIntegralEquation
@@ -876,7 +889,7 @@ TEST ///  -- test of getIntegralEquation
   A = S/I
   R = noetherPosition{w,t}
   kx = coefficientRing R
-  time F = getIntegralEquation(x, 1_kx, kx[T])
+  time F = getIntegralEquation(x, 1_kx, kx[T]) -- should return MONIC polynomial!
   assert(degree(T,F) == 23)
   -- assert(leadCoefficient F == 1)  FAILS: has -1 lead coeff...
   assert(isUnit leadCoefficient F)
@@ -942,20 +955,21 @@ TEST ///
   -- non Noether position variant
 ///
 
-end--
+///
+-*
+  restart
+  needsPackage "FractionalIdeals"
+*-
+  --vanHoeij2
+  S = QQ[x,y]
+  I = ideal"y20+y13x+x4y5+x3(x+1)2"
+  R = S/I
+  elapsedTime integralClosure R -- 1.96 sec
+  B = noetherPosition {y}
+  J = fractionalIdeal
+///
 
-restart
-needsPackage "FractionalIdeals" -- OK
-restart
-uninstallPackage "FractionalIdeals" 
-restart
-installPackage "FractionalIdeals" -- no doc yet, but loads.
-viewHelp
-restart
-check "FractionalIdeals" -- one test (at least) takes too long, also fails...
-                          -- tests don't have assertions!
-
-doc ///
+///
   Key
   Headline
   Inputs
@@ -968,9 +982,41 @@ doc ///
   SeeAlso
 ///
 
-TEST ///
--- test code and assertions here
--- may have as many TEST sections as needed
+end--
+
+restart
+needsPackage "FractionalIdeals" -- OK
+restart
+uninstallPackage "FractionalIdeals" 
+restart
+installPackage "FractionalIdeals" -- no doc yet, but loads.
+viewHelp
+restart
+check "FractionalIdeals" -- one test (at least) takes too long, also fails...
+                          -- tests don't have assertions!
+///
+-*
+  restart
+  needsPackage "FractionalIdeals"
+*-
+  kk = QQ
+  S = kk[u,v]
+  I = ideal(u^3-v^4)
+  R = S/I
+
+  B = noetherPosition({v})
+  -- Basically, 4 rings get created:
+  noetherField B
+  noetherRing B -- do we need this?
+  kkx = coefficientRing noetherField B -- this is the fraction field of B.
+  kx = coefficientRing noetherRing B
+  assert(kkx === frac kx)
+  -- frac B -- perhaps this should be set to noetherField B?
+  assert(getBasis B == {1, u, u^2})
+  assert(multiplication u * multiplication u == multiplication u^2)
+  assert(multiplication (u^2+u) == (multiplication u)^2 + multiplication u)
+  traceForm B
+  traceFormAll B
 ///
 
 ---- examples from IntegralClosure/examples.m2

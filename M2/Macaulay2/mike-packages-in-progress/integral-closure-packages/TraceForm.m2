@@ -23,6 +23,9 @@ export {
      "noetherRing"   -- two functions must change!
      }
 
+debug Core
+isField EngineRing := R -> (R.?isField and R.isField) or rawIsField raw R
+
 noetherPosition = method()
 noetherPosition List := (xv) -> (
      -- R should be a quotient of a polynomial ring,
@@ -50,8 +53,9 @@ noetherPosition List := (xv) -> (
      B := S/J;
      BK := SK/JK;
      BtoBK := map(BK,B,generators BK);
+     inverse B := f -> 1_BK // BtoBK f;
      B / A := (f,g) -> (1/g) * BtoBK f;
-     B / B := (f,g) -> error "crap";
+     B / B := (f,g) -> (BtoBK f) * (inverse g);
      BK / A := (f,g) -> (1/g) * f;
      mapBtofracSProd := map(frac SProd, B);
      mapBKtofracSProd := map(frac SProd, BK);
@@ -71,6 +75,9 @@ noetherPosition List := (xv) -> (
      factor BK := opts -> (f) -> (hold factor (numerator mapBKtofracSProd f))/(factor denominator f);
      B#"NoetherField" = BK;
      BK#"NoetherRing" = B;
+     B.frac = BK; -- TODO: also add in promotion/lift functions?
+     BK.frac = BK; -- I wonder if we need to set L to be a field too?  If so, that miight be a problem...
+     BK.isField = true;
      setTraces BK;
      B)
 
@@ -463,7 +470,7 @@ TEST ///
 
   kx = coefficientRing B1
   assert(ring traceForm B1 === kx)
-  assert(ring traceForm B2 === kx)
+  assert(ring traceForm B2 === frac kx)
 ///
 
 TEST ///
@@ -597,8 +604,10 @@ traceForm A
 
 TEST ///
 -- test of noetherPosition and its use
+-*
   restart
   loadPackage "TraceForm"
+*-
   S = QQ[x,y]
   F = 2*y^2 - y*x + 1
   R = S/F
@@ -628,8 +637,10 @@ TEST ///
 ///
 
 TEST ///
+-*
   restart
   loadPackage "TraceForm"
+*-
   S = QQ[a,b,c,x,y,z]
   R = S/(x^2-a, y^2-x, z^2-y)
   A = noetherPosition {a,b,c}
@@ -644,12 +655,13 @@ TEST ///
   netList applyTable(entries M, net)
   G = F^4 + F^2 + 1
   factor G
-
 ///
 
 TEST ///
+-*
   restart
   loadPackage "TraceForm"
+*-
   S = QQ[a,b]
   R = S/(b^2-b-a)
   A = noetherPosition{a}
@@ -659,7 +671,55 @@ TEST ///
   B = sub(matrix{getBasis A}, noetherField A)
   M = (multiplication F) ** noetherField A
   M^-1
-  I = flatten entries oo_{0}
+  I = flatten entries oo_{0} -- 
   G = sum for i from 0 to #I-1 list (I_i * M_(i,0))
   G * sub(F, ring G)
+///
+
+TEST ///
+-*
+  restart
+  needsPackage "NoetherNormalization"
+  loadPackage "TraceForm"
+*-
+  S = ZZ/101[a..d]
+  I = monomialCurveIdeal(S, {1,3,4})
+  (f1, I1, basevars) = noetherNormalization I
+  assert(f1 I == I1)
+  basevars == {d,c}
+///
+
+TEST ///
+-*
+  restart
+  loadPackage "TraceForm"
+*-
+  R = ZZ/101[x,y]/(y^3-x*y-x^2)
+  B = noetherPosition {x}
+  describe B
+  L1 = frac R
+  L = noetherField B
+  A = coefficientRing B
+  K = coefficientRing L
+  assert(K === frac A)
+  assert(L === frac B)
+
+  ring x === K
+  ring y === L
+  use B
+  matrix{{1 / y}}
+  use A
+  promote((x+y),L) * (1/(x+y)) -- no function for B * BK !!
+  -- no promote/lift availabble from B to BK?
+  -- want to be able to add A + BK into L?
+  1/(3*y^2+x)
+  --fraction(1_B, y_B)
+  1_L // y_L  
+
+
+  y^3/(x+1)
+  1/y
+  
+  use L
+  1_L / y -- doesn't work yet...
 ///

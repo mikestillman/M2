@@ -12,9 +12,9 @@ installPackage "IntegralBases"
 installPackage "LocalBasis"
 
 restart
-check "TowerRings" -- 3 errors
-check "TraceForm" -- 1 error
-check "FractionalIdeals" -- 1 error
+check "TowerRings" -- no errors, but many things not really working yet.
+check "TraceForm" -- no errors
+check "FractionalIdeals" -- 1 error check_2 fails
 check "AdjoinRoots" -- 3 errors
 check "UPolynomials" -- 1 error
 check "Puiseux" -- 1 error

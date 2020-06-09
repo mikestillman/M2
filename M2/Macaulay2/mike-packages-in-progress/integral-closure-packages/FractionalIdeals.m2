@@ -267,8 +267,9 @@ chooseNZD FractionalIdeal := (F) -> (
 ends := (F) -> (
      -- returns the FractionalIdeal Hom_R(F,F)
      I := numerator F;
-     -- f := chooseNZD F; -- TODO: fix this!  Use chooseNZD for Noether position?
-     f := I_0; -- don't use this if we use chooseNZD (MES)
+     f := chooseNZD F; -- TODO: fix this!  Use chooseNZD for Noether position?
+     -- f := I_0; -- don't use this if we use chooseNZD (MES)
+     -- error "debug me";
      timing(H1 := (f*I):I);
      H := compress ((gens H1) % f);
      fractionalRing(f,ideal(matrix{{f}} | H))
@@ -960,6 +961,7 @@ TEST ///  -- test of getIntegralEquation
 
   use A
   elapsedTime integralClosureDenominator(A, y)
+  elapsedTime integralClosureDenominator(A, z*t)
     
   R = noetherPosition{w,t}
   kx = coefficientRing R

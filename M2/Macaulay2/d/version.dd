@@ -19,7 +19,8 @@ header "
    #include <memtailor.h>
    #include <mathic.h>
    #include <gdbm.h>
-   #include <mathicgb.h>
+   /*#include <mathicgb.h>*/
+   #define MATHICGB_VERSION_STRING \"custom, in M2\"
    #include <mps/version.h>
        #ifndef MPS_MAJOR_VERSION
        #error \"MPS_MAJOR_VERSION undefined\"

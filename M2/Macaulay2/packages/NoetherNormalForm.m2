@@ -11,7 +11,7 @@ newPackage(
                 HomePage => "http://www.math.cornell.edu/~mike"}
             },
         Headline => "code for Noether normal forms of affine rings",
-        PackageExports => {"NoetherNormalization"},
+        PackageExports => {"NoetherNormalization", "PushForward"},
         DebuggingMode => true
         )
 
@@ -36,7 +36,7 @@ newPackage(
 --    discriminant?
 
 export {
-    "isFiniteOverCoefficientRing", -- TODO: get this to work
+--    "isFiniteOverCoefficientRing", -- TODO: get this to work
 --    "checkNoetherNormalization", -- TODO: get this to work
     "noetherForm",
     "noetherBasis",
@@ -212,6 +212,7 @@ isComputablePolynomialRing Ring := Boolean => R ->(
     not instance(k, FractionField)
     )
 
+-*
 -- TODO: this function is not general enough?
 isFiniteOverCoefficients1 = method()
 isFiniteOverCoefficients1 Ring := Boolean => R -> (
@@ -220,6 +221,7 @@ isFiniteOverCoefficients1 Ring := Boolean => R -> (
     lt := flatten entries (leadTerm g%promote(ideal vars S,ring g));
     #select(lt/support , l->#l==1) == numgens R
     )
+*-
     
 TEST/// -- of finiteOverCoefficients
 -*
@@ -230,76 +232,71 @@ TEST/// -- of finiteOverCoefficients
   R2 = ZZ/5[a,b][x,y]/intersect(ideal (a*x-1,y), ideal(x^2,y^2))
   R3 = ZZ/5[a,b][x,y]/intersect(ideal ((a-1)*x-1,y), ideal(x^2,y^2))
   R4 = QQ[a,b][x,y]
-
   R5 = QQ[a,b][x,y]/ideal(x^2-a,y^2-b)
   R6 = QQ[x,y]/(x^2-1, x*y^3-3)
   R7 = GF(27)[x,y]/(x^2-1, y^3-a)
   R8 = GF(27)[x,y]/(x^2-1, x*y^3-a)
-
   R9 = QQ[x,y]/(x^2, x*y^3-3) -- is trivial.
   x = symbol x; y = symbol y
   R10 = QQ[a..d]/(b^2-a, b*c-d)
 
-  assert not isFiniteOverCoefficients1 R1
-  assert not isFiniteOverCoefficients1 R2
-  assert not isFiniteOverCoefficients1 R3
-  assert not isFiniteOverCoefficients1 R4
+  assert not isModuleFinite R1
+  assert not isModuleFinite R2
+  assert not isModuleFinite R3
+  assert not isModuleFinite R4
+  assert isModuleFinite R5
+  assert isModuleFinite R6
+  assert isModuleFinite R7 
+  assert isModuleFinite R8 
+
+  assert isModuleFinite R9 --wrong
+
+  assert not isModuleFinite R10
+
+  assert isModuleFinite ZZ -- wrong-- a bug! should say "no CoefficientRing present"
+
+  assert isModuleFinite (ZZ/32003) --wrong -- a bug! should say "no CoefficientRing present"
+
+  assert isModuleFinite QQ
   
-  assert isFiniteOverCoefficients1 R5
-  assert isFiniteOverCoefficients1 R6
-  assert isFiniteOverCoefficients1 R7 -- WRONG
-  assert not isFiniteOverCoefficients1 R8 
+  assert not isModuleFinite map(QQ , ZZ) -- bug
 
-  assert not isFiniteOverCoefficientRing R1
-  assert not isFiniteOverCoefficientRing R2
-  assert not isFiniteOverCoefficientRing R3
-  assert not isFiniteOverCoefficientRing R4
-  
-  assert isFiniteOverCoefficientRing R5
-  assert isFiniteOverCoefficientRing R6
-  assert isFiniteOverCoefficientRing R7 -- WRONG
-  assert not isFiniteOverCoefficientRing R8
+  assert isModuleFinite (A = frac (QQ[a,b]))
 
-  assert not isFiniteOverCoefficients1 R9
-  assert not isFiniteOverCoefficients1 R10
-
-  assert not isFiniteOverCoefficientRing R9
-  assert not isFiniteOverCoefficientRing R10
-
-  assert not isFiniteOverCoefficientRing ZZ
-  assert isFiniteOverCoefficientRing (ZZ/32003)
-  assert isFiniteOverCoefficientRing QQ
-  assert isFiniteOverCoefficientRing (frac (QQ[a,b]))
-
-  assert isFiniteOverCoefficientRing ( (frac (QQ[a,b]))[x]/(a*x^2-1))
+  assert isModuleFinite ( (frac (QQ[a,b]))[x]/(a*x^2-1))
   
   A = (frac (QQ[a,b]));
   R11 = A[x]/(a*x^2-1)
   coefficientRing R11 === A
-  assert isFiniteOverCoefficientRing R11 -- WRONG...
-  assert not isFiniteOverCoefficientRing A -- WRONG...
+  assert isModuleFinite R11
+  assert not isModuleFinite A
+
 
   A = (frac (ZZ[a,b]));
   R12 = A[x]/(a*x^2-1)
-  assert isFiniteOverCoefficientRing R12 -- WRONG...
+  assert isModuleFinite R12
 
   A = toField(QQ[a]/(a^2-a-1))
   R13 = A[x,y]/(x^2-a, a*y^3-x)
-  assert isFiniteOverCoefficientRing R13
+  assert isModuleFinite R13
 
   kk = toField(QQ[a]/(a^2-a-1))
   A = kk[t]
   R14 = A[x,y]/(x^2-a*t, a*y^3-x-t)
-  assert isFiniteOverCoefficientRing R14
+  assert isModuleFinite R14
   
-  assert not isFiniteOverCoefficientRing(ZZ[]/32743287482974) -- ??
+  assert isModuleFinite(A = ZZ[]/32743287482974)
+  coefficientRing A  
   
   A = ZZ/101[a,b]
   B = A[x,y]/(x^2+y^2)
   R15 = B[z]/(z^3-1)
-  assert not isFiniteOverCoefficientRing R15 -- over B or over A?  Do we need to be more specific?
+  coefficientRing R15
+  assert isModuleFinite R15
+  assert(not isModuleFinite map(R15,A))
 ///
 
+-*
 isFiniteOverCoefficientRing = method()
 isFiniteOverCoefficientRing Ring := Boolean => (R) -> (
     if R.?NoetherInfo then return true;
@@ -320,7 +317,7 @@ isFiniteOverCoefficientRing Ring := Boolean => (R) -> (
         )
     else true
     )    
-
+*-
 -- TODO
 checkNoetherNormalization = method()
 checkNoetherNormalization RingMap := Boolean => (phi) -> (
@@ -340,7 +337,7 @@ checkNoetherNormalization Ring := Boolean => (B) -> (
     -- if so:
     --   set frac B? (using makeFrac)
     --   set NoetherInfo in B, frac B.
-    if not isFiniteOverCoefficientRing B
+    if not isModuleFinite B
     then error "ring is not in the proper form (set 'debugLevel>0' for details)";
     )
 
@@ -348,7 +345,7 @@ checkNoetherNormalization Ring := Boolean => (B) -> (
 makeFrac = method()
 makeFrac Ring := Ring => (B) -> (
 -- TODO: put this check back in once it is working:
---    if not isFiniteOverCoefficientRing B
+--    if not isModuleFinite B
 --    then error "expected the ring to be finite over the chosen polynomial ring";
     A := coefficientRing B; -- ASSUME: a polynomial ring over a field.
     KA := frac A;
@@ -733,7 +730,7 @@ noetherForm RingMap := Ring => opts -> (f) -> (
     if not all(gensk, x -> promote(x,R) == f promote(x,A)) then 
         error "expected ring map to be identity on coefficient ring";
     --check finiteness
-    -- if not isFiniteOverCoefficientRing(A, R) then 
+    -- if not isModuleFinite(A, R) then 
     --     error "expected ring to be finite over coefficients";
 
     if A === kk then (
@@ -1409,17 +1406,17 @@ TEST ///
 *-
   A = ZZ/101[t]  
   B = A[x,y]/(x^2-y*t, y^3)
-  assert isFiniteOverCoefficientRing B
+  assert isModuleFinite B
 
   debugLevel = 1
   A = ZZ/101
   B = A[x,y]/(x^2, y^3)
-  assert isFiniteOverCoefficientRing B
+  assert isModuleFinite B
 
 
   A = ZZ/101
   B = A[x,y]/(x^2, x*y)
-  assert not isFiniteOverCoefficientRing B
+  assert not isModuleFinite B
 ///
 
 TEST ///

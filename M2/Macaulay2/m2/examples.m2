@@ -7,6 +7,9 @@
  * examples
  *-
 
+needs "hypertext.m2"
+needs "run.m2"
+
 processExamplesStrict = true
 
 -----------------------------------------------------------------------------
@@ -47,6 +50,7 @@ EXAMPLE VisibleList := x -> (
 -----------------------------------------------------------------------------
 -- capture
 -----------------------------------------------------------------------------
+-- TODO: move to capture.m2
 
 -- TODO: the output format is provisional
 -- TODO: doesn't capture stderr
@@ -190,7 +194,7 @@ storeExampleOutput = (pkg, fkey, outf, verboseLog) -> (
 
 -- used in installPackage.m2
 -- TODO: reduce the inputs to this function
-captureExampleOutput = (desc, inputs, pkg, cacheFunc, inf, outf, errf, data, inputhash, changeFunc, usermode) -> (
+captureExampleOutput = (desc, inputs, pkg, inf, outf, errf, data, inputhash, changeFunc, usermode) -> (
     stdio << flush; -- just in case previous timing information hasn't been flushed yet
     -- try capturing in the same process
     if isCapturable(inputs, pkg, false) then (
@@ -198,12 +202,14 @@ captureExampleOutput = (desc, inputs, pkg, cacheFunc, inf, outf, errf, data, inp
 	stderr << commentize pad("capturing " | desc, 72) << flush; -- the timing info will appear at the end
 	(err, output) := capture(inputs, UserMode => false, PackageExports => pkg);
 	if err then printerr "capture failed; retrying ..."
-	else return outf << M2outputHash << inputhash << endl << output << close);
+	else (outf << M2outputHash << inputhash << endl << output << close;
+	    return true));
     -- fallback to using an external process
     stderr << commentize pad("making " | desc, 72) << flush;
     inf << replace("-\\* no-capture-flag \\*-", "", inputs) << endl << close;
-    if runFile(inf, inputhash, outf, errf, pkg, changeFunc, usermode, data)
-    then ( removeFile inf; cacheFunc() ))
+    r := runFile(inf, inputhash, outf, errf, pkg, changeFunc, usermode, data);
+    if r then removeFile inf;
+    r)
 
 -----------------------------------------------------------------------------
 -- process examples

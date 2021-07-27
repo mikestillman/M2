@@ -913,7 +913,7 @@ getIntegralEquation FractionalIdeal := opts -> I -> (
      denom := denominator I;
      K := coefficientRing ring numerator I;
      t := getSymbol "t";
-     Kt := K monoid [t];
+     Kt := K (monoid [t]);
      apply(flatten entries gens numerator I, num -> getIntegralEquation(num,denom,Kt,opts))
      )
 

@@ -36,7 +36,6 @@ newPackage(
 --    discriminant?
 
 export {
---    "isFiniteOverCoefficientRing", -- TODO: get this to work
 --    "checkNoetherNormalization", -- TODO: get this to work
     "noetherForm",
     "noetherBasis",
@@ -50,9 +49,12 @@ export {
     "Remove"
     }
 
+----------------------------------------------------------------
+-- The following 3 lines: probably should be in m2/enginering.m2?
 raw = value Core#"private dictionary"#"raw"
 rawIsField = value Core#"private dictionary"#"rawIsField"
 isField EngineRing := R -> (R.?isField and R.isField) or rawIsField raw R
+----------------------------------------------------------------
 
 --inNoetherForm
 -- this function isn't used locally, instead the internal function `noetherInfo` is used.
@@ -200,6 +202,7 @@ traceForm Ring := (R) -> (
     else error "internal error in traceForm"
     )
 
+-- TODO: is this what we want?
 isComputablePolynomialRing = method()
 isComputablePolynomialRing Ring := Boolean => R ->(
     --checks whether R is suitable as coefficientRing for a Noether normalization
@@ -212,22 +215,14 @@ isComputablePolynomialRing Ring := Boolean => R ->(
     not instance(k, FractionField)
     )
 
--*
--- TODO: this function is not general enough?
-isFiniteOverCoefficients1 = method()
-isFiniteOverCoefficients1 Ring := Boolean => R -> (
-    g := gens gb ideal R;
-    S := coefficientRing R;
-    lt := flatten entries (leadTerm g%promote(ideal vars S,ring g));
-    #select(lt/support , l->#l==1) == numgens R
-    )
-*-
-    
-TEST/// -- of finiteOverCoefficients
+TEST/// 
+  -- of isModuleFinite, which occurs in PushForward.
+  -- we test it here, as it is important.
+  -- TODO We should move these tests to PushForward.
 -*
   restart
 *-
-  debug needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalForm"
   R1 = ZZ/5[a,b][x,y]/intersect(ideal (a*(x-1),y), ideal(x^2,y^2))
   R2 = ZZ/5[a,b][x,y]/intersect(ideal (a*x-1,y), ideal(x^2,y^2))
   R3 = ZZ/5[a,b][x,y]/intersect(ideal ((a-1)*x-1,y), ideal(x^2,y^2))
@@ -261,7 +256,7 @@ TEST/// -- of finiteOverCoefficients
   
   assert not isModuleFinite map(QQ , ZZ) -- bug
 
-  assert isModuleFinite (A = frac (QQ[a,b]))
+  assert isModuleFinite (A = frac (QQ[a,b])) -- bug?
 
   assert isModuleFinite ( (frac (QQ[a,b]))[x]/(a*x^2-1))
   
@@ -270,7 +265,6 @@ TEST/// -- of finiteOverCoefficients
   coefficientRing R11 === A
   assert isModuleFinite R11
   assert not isModuleFinite A
-
 
   A = (frac (ZZ[a,b]));
   R12 = A[x]/(a*x^2-1)
@@ -344,11 +338,16 @@ checkNoetherNormalization Ring := Boolean => (B) -> (
 
 makeFrac = method()
 makeFrac Ring := Ring => (B) -> (
--- TODO: put this check back in once it is working:
---    if not isModuleFinite B
---    then error "expected the ring to be finite over the chosen polynomial ring";
+    -- If the user has somehow already set the fraction field of B (generally as an engine ring)
+    -- then should we silently change that, or give an error?  Right now, we give an error.
+    if not isModuleFinite B then
+        error "expected the ring to be finite over the chosen polynomial ring";
     A := coefficientRing B; -- ASSUME: a polynomial ring over a field.
     KA := frac A;
+    
+    if KA === A then return frac B;
+    
+    if B.?frac then <<"warning: ring had a fraction field; creating simpler fraction field"<<endl;
     kk := coefficientRing A; -- must be a field, but not a fraction field.
     I := ideal B;
     ambientB := ring I;
@@ -759,6 +758,15 @@ noetherForm RingMap := Ring => opts -> (f) -> (
     B)
 
 noetherForm Ring := Ring => opts -> R -> (
+    -- TODO: set the noether map.
+    S := coefficientRing R;
+    
+    if (isPolynomialRing S or isField S) and isModuleFinite R then (
+	KR := makeFrac R;
+	setNoetherInfo(R,KR);
+	R.NoetherInfo#"noether map" = map(R,R);
+	return R);
+    
     (F, J, xv) := noetherNormalization R;
     kk := coefficientRing R;
     t := opts.Variable;
@@ -814,6 +822,57 @@ debug needsPackage "NoetherNormalForm"
   -- f = matrix(kk, {{1,1}})  
   -- g = map(R^{0,1},, {{1,1},{1,1}})
   -- f*g
+///
+
+TEST ///
+  -- we test usage of noetherForm R, where R is a ring:
+  -- here: if R is finite over its base, (and R.?frac is not set).
+  --          in this case, we set the noether info, and set frac R too.
+  -- if R is not finite over its base, we call the noether normalization code.
+-*  
+  restart
+  needsPackage "NoetherNormalForm"
+*-
+  R = ZZ/101[x,y]/(x^2-y-1, y^3-x*y-3)
+
+  B = noetherForm R
+  noetherMap B -- FAILS: need to set this!
+  A = coefficientRing B
+  assert(coefficientRing frac B === frac A)
+///
+
+TEST ///
+  -- we test usage of noetherForm R, where R is a ring:
+  -- here: if R is finite over its base, (and R.?frac is not set).
+  --          in this case, we set the noether info, and set frac R too.
+  -- if R is not finite over its base, we call the noether normalization code.
+-*  
+  restart
+  needsPackage "NoetherNormalForm"
+*-
+  R = ZZ/101[x,y]/(x*y^3-x^2-y*x)
+  B = noetherForm R
+  noetherMap B -- FAILS: need to set this!
+  A = coefficientRing B
+  assert(coefficientRing frac B === frac A)
+///
+
+TEST ///
+  -- we test usage of noetherForm f, f a RingMap A --> R
+  -- case 1: f is the inclusion of A into R, where A is the coefficient ring of R, and B is finite over A
+  --   in this case, return B, as in the previous case.
+  -- In other cases, we set B = A[new vars]/I, where B is isomorphic to target of f.
+  --   "new vars": either given by the user, or, if some of the variables appear in A and target 
+  --   AND they map to same elements, then we use these names in A, and leave them out of B.
+  --   any variables not mapping to themselves are given new names.
+  
+  -- This function creates A and B, then calls noetherForm B (which sets frac B, and the noether info).
+///
+
+TEST ///
+  -- we test usage of noetherForm List
+  -- A will be a polynomial ring given by variables taken from the list: if an element of the list is a variable,
+  --  then we use that name.  If not, we give it a new variable name.
 ///
 
 beginDocumentation()
@@ -1656,7 +1715,7 @@ TEST ///
   traceForm L
 
   R = QQ[a..d]/(b^2-a, b*c-d)
-  B = noetherForm{a,d};
+  B = noetherForm{a,d}; -- BUG: this should give an error, as B is not module finite over QQ[a,d].
   presentation B
   assert try (B = noetherForm{a,d}; false) else true  -- should give an error message
 ///
@@ -1704,7 +1763,8 @@ TEST ///
   S = reesAlgebra I
   S = first flattenRing S
 
-  noetherForm({a - w_0,b,c,d,w_0 + w_1 + w_2 + w_3})  
+  noetherForm({a - w_0,b,c,d,w_0 + w_1 + w_2 + w_3})  -- Is this finite?? I don't think so.  Therefore this should give an error.
+  -- BUT: let's fix the test instead, so it gives a finite ring over base.
 
   elapsedTime (F, J, xv) = noetherNormalization S -- wow, this takes more time than I would have thought! 3.1 sec on my macbookpro, Sep 2020.
 
@@ -1727,8 +1787,11 @@ TEST ///
 ///
 
 end----------------------------------------------------------
-
 restart
+uninstallPackage "PushForward"
+restart
+installPackage "PushForward"
+----
 uninstallPackage "NoetherNormalForm"
 restart
 installPackage "NoetherNormalForm"

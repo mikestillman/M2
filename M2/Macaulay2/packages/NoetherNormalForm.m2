@@ -248,15 +248,15 @@ TEST///
 
   assert not isModuleFinite R10
 
-  assert isModuleFinite ZZ -- wrong-- a bug! should say "no CoefficientRing present"
+  assert isModuleFinite ZZ
 
-  assert isModuleFinite (ZZ/32003) --wrong -- a bug! should say "no CoefficientRing present"
+  assert isModuleFinite (ZZ/32003)
 
   assert isModuleFinite QQ
   
   assert not isModuleFinite map(QQ , ZZ) -- bug
 
-  assert isModuleFinite (A = frac (QQ[a,b])) -- bug?
+  assert isModuleFinite (A = frac (QQ[a,b]))
 
   assert isModuleFinite ( (frac (QQ[a,b]))[x]/(a*x^2-1))
   

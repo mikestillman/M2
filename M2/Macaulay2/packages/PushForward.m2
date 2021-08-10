@@ -73,6 +73,9 @@ isFinite1 = (f) -> (
 
 isModuleFinite = method()
 isModuleFinite Ring := Boolean => R -> (
+    if isField R then return true;
+    if R===ZZ then return true;
+    
     I := ideal leadTerm ideal R;
     ge := flatten select(I_*/support, ell -> #ell == 1);
     set ge === set gens ring I

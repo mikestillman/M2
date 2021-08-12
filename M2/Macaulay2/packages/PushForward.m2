@@ -35,7 +35,8 @@ export {
 isInclusionOfCoefficientRing = method()
 isInclusionOfCoefficientRing RingMap := Boolean => inc -> (
     --checks whether the map is the inclusion of the coefficientRing
-    if source inc =!= coefficientRing target inc then return false;
+    coefRing := if isField target inc then target inc else coefficientRing target inc;
+    if source inc =!= coefRing then return false;
     inc vars source inc == promote (vars source inc, target inc)
     )
 
@@ -71,15 +72,19 @@ isFinite1 = (f) -> (
     true
     )
 
+///
+isFinite1(map(QQ,ZZ)) == false
+///
+
 isModuleFinite = method()
 isModuleFinite Ring := Boolean => R -> (
     if isField R then return true;
     if R===ZZ then return true;
-    
     I := ideal leadTerm ideal R;
     ge := flatten select(I_*/support, ell -> #ell == 1);
     set ge === set gens ring I
     )
+
 isModuleFinite RingMap := Boolean => f -> (
     if isInclusionOfCoefficientRing f then
         isModuleFinite target f
@@ -740,6 +745,80 @@ assert isModuleFinite f
 pN = pushFwd(f,N)
 assert(isFreeModule pN)
 assert(numgens pN == 3) 
+///
+
+--test 9
+TEST/// 
+-*
+  restart
+  installNewPackage "PushForward"
+--  check PushForward
+*-
+  R1 = ZZ/5[a,b][x,y]/intersect(ideal (a*(x-1),y), ideal(x^2,y^2))
+  R2 = ZZ/5[a,b][x,y]/intersect(ideal (a*x-1,y), ideal(x^2,y^2))
+  R3 = ZZ/5[a,b][x,y]/intersect(ideal ((a-1)*x-1,y), ideal(x^2,y^2))
+  R4 = QQ[a,b][x,y]
+  R5 = QQ[a,b][x,y]/ideal(x^2-a,y^2-b)
+  R6 = QQ[x,y]/(x^2-1, x*y^3-3)
+  R7 = GF(27)[x,y]/(x^2-1, y^3-a)
+  R8 = GF(27)[x,y]/(x^2-1, x*y^3-a)
+  R9 = QQ[x,y]/(x^2, x*y^3-3) -- is trivial.
+  x = symbol x; y = symbol y
+  R10 = QQ[a..d]/(b^2-a, b*c-d)
+
+  assert not isModuleFinite R1
+  assert not isModuleFinite R2
+  assert not isModuleFinite R3
+  assert not isModuleFinite R4
+  assert isModuleFinite R5
+  assert isModuleFinite R6
+  assert isModuleFinite R7 
+  assert isModuleFinite R8 
+
+  assert isModuleFinite R9 --wrong
+
+  assert not isModuleFinite R10
+
+  assert isModuleFinite ZZ
+
+  assert isModuleFinite (ZZ/32003)
+
+  assert isModuleFinite QQ
+  
+  assert not isModuleFinite map(QQ , ZZ) -- bug
+
+  assert isModuleFinite (A = frac (QQ[a,b]))
+
+  assert isModuleFinite ( (frac (QQ[a,b]))[x]/(a*x^2-1))
+  
+  A = (frac (QQ[a,b]));
+  R11 = A[x]/(a*x^2-1)
+  coefficientRing R11 === A
+  assert isModuleFinite R11
+  assert not isModuleFinite A
+
+  A = (frac (ZZ[a,b]));
+  R12 = A[x]/(a*x^2-1)
+  assert isModuleFinite R12
+
+  A = toField(QQ[a]/(a^2-a-1))
+  R13 = A[x,y]/(x^2-a, a*y^3-x)
+  assert isModuleFinite R13
+
+  kk = toField(QQ[a]/(a^2-a-1))
+  A = kk[t]
+  R14 = A[x,y]/(x^2-a*t, a*y^3-x-t)
+  assert isModuleFinite R14
+  
+  assert isModuleFinite(A = ZZ[]/32743287482974)
+  coefficientRing A  
+  
+  A = ZZ/101[a,b]
+  B = A[x,y]/(x^2+y^2)
+  R15 = B[z]/(z^3-1)
+  coefficientRing R15
+  assert isModuleFinite R15
+  assert(not isModuleFinite map(R15,A))
 ///
 
 TEST///

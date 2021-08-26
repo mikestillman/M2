@@ -16,7 +16,10 @@ export {
     "readExampleFile",
     "example",
     "names",
-    "surfacesP4"
+    "surfacesP4",
+    "sectionalGenus",
+    "arithmeticGenus",
+    "canonicalModule"
     }
 
 readExampleFile = method()
@@ -26,7 +29,7 @@ readExampleFile = method()
 --allow several lines of comments (beginning with --)
 
 readExampleFile String := HashTable => name -> (
-    filename := if filexists name then name else currentFileDirectory | "SurfacesInP4/" | name;
+    filename := if fileExists name then name else currentFileDirectory | "SurfacesInP4/" | name;
     --filename := currentFileDirectory | "SurfacesInP4/" | name;
     --“SurfacesInP4/P4Surfaces.txt”;
     << "file: " << filename << endl;
@@ -56,26 +59,58 @@ example(String, HashTable) := (ind, exampleHash) -> (
 names = method()
 names HashTable := (H) -> sort keys H
 
+sectionalGenus  = method()
+sectionalGenus Ideal := I -> (genera I)_1
+
+arithmeticGenus = method()
+arithmeticGenus Ideal := I -> (genera I)_0
+
+   canonicalModule = method()
+   canonicalModule Ideal := I -> (
+       S := ring I;
+       n := numgens S;
+       Ext^(codim I)(S^1/I, S^{-n})
+       )
+
 --surfacesP4 = readExampleFile "./SurfacesInP4/P4Surfaces.txt"
 
 -* Documentation section *-
 beginDocumentation()
 
-///
+doc///
 Key
   SurfacesInP4
 Headline
+  List of surfaces not of general type in P^4. 
 Description
   Text
-  Tree
+   It is known that the degrees of smooth projective complex surfaces, not of general type, embedded in P^4,
+   are bounded. It is conjectured that the bound is 15, but the known bound is ****; see ****.
   Example
-  CannedExample
+   P = readExampleFile "P4Surfaces.txt";
+   names P
+  Text
+   Each example has a name consisting of the Enriques classification
+   (ab = Abelian, enr = Enriques, ell = Elliptic, rat = rational etc.)
+  Example
+   I = example("enr.d11.g10", P);
+  Text
+   This is an enriques surface of degree 11 and sectional genus 10 in P4.
+  Example
+   degree I
+   euler I
+   arithmeticGenus I
+   sectionalGenus I
+   minimalBetti I
+   canonicalModule I
 Acknowledgement
 Contributors
 References
 Caveat
+ Though these are supposed be examples in characterist 0, they are actually computed in characteristic p.
+ This was done in Macaulay classic, and seemed necessary because of limitations in speed, and because
+ the adjunction of roots of unity was not possible there.
 SeeAlso
-Subnodes
 ///
 
 ///
@@ -129,22 +164,22 @@ installPackage "SurfacesInP4"
 restart
 debug needsPackage "SurfacesInP4"
 check "SurfacesInP4"
-viewHelp "SurfacesInP4"
+viewHelp SurfacesInP4
 
 
 
 needsPackage "SurfacesInP4"
-S = ZZ/43[x,y,z,u,v]
 P = readExampleFile "P4Surfaces.txt";
 names P
-
-I1 = example("enr.d11.g10", P);
-S = ring I1
-use S
-I = value get "enr.d11.m2";
-
+I = example("enr.d11.g10", P);
 minimalBetti I
 degree I
+genera I
+genus I
+euler I
+sectionalGenus  = I -> (genera I)_1
+arithmeticGenus = I -> (genera I)_0
+
 (gens sub( I1, S))%I
 (gens I) % (sub( I1, S))
 minimalBetti I1

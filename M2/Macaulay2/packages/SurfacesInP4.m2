@@ -16,8 +16,14 @@ export {
     "readExampleFile",
     "example",
     "names",
-    "surfacesP4"
+    "surfacesP4",
+    "sectionalGenus",
+    "arithmeticGenus",
+    "canonicalModule",
+    "intersectionProduct"
     }
+
+--SurfacesInP4#"source directory"|"SurfacesInP4/P4Surfaces.txt"
 
 readExampleFile = method()
 --beginning of each example is ---*\\s
@@ -26,7 +32,7 @@ readExampleFile = method()
 --allow several lines of comments (beginning with --)
 
 readExampleFile String := HashTable => name -> (
-    filename := if fileExists name then name else currentFileDirectory | "SurfacesInP4/" | name;
+    filename := if fileExists name then name else SurfacesInP4#"source directory" | "SurfacesInP4/" | name;
     --filename := currentFileDirectory | "SurfacesInP4/" | name;
     --“SurfacesInP4/P4Surfaces.txt”;
     << "file: " << filename << endl;
@@ -56,26 +62,62 @@ example(String, HashTable) := (ind, exampleHash) -> (
 names = method()
 names HashTable := (H) -> sort keys H
 
+sectionalGenus  = method()
+sectionalGenus Ideal := I -> (genera I)_1
+
+arithmeticGenus = method()
+arithmeticGenus Ideal := I -> (genera I)_0
+
+   canonicalModule = method()
+   canonicalModule Ideal := I -> (
+       S := ring I;
+       n := numgens S;
+       Ext^(codim I)(S^1/I, S^{-n})
+       )
+intersectionProduct = method()
+intersectionProduct (Ideal, Module, Module) := ZZ => (I,M,N) -> (
+    euler comodule I - euler M - euler N + euler(M**N)
+)
+
 --surfacesP4 = readExampleFile "./SurfacesInP4/P4Surfaces.txt"
 
 -* Documentation section *-
 beginDocumentation()
 
-///
+doc///
 Key
   SurfacesInP4
 Headline
+  List of surfaces not of general type in P^4. 
 Description
   Text
-  Tree
+   It is known that the degrees of smooth projective complex surfaces, not of general type, embedded in P^4,
+   are bounded. It is conjectured that the bound is 15, but the known bound is 80; see ***.
   Example
-  CannedExample
+   P = readExampleFile "P4Surfaces.txt";
+   names P
+  Text
+   Each example has a name consisting of the Enriques classification
+   (ab = Abelian, enr = Enriques, ell = Elliptic, rat = rational etc.)
+  Example
+   I = example("enr.d11.g10", P);
+  Text
+   This is an enriques surface of degree 11 and sectional genus 10 in P4.
+  Example
+   degree I
+   euler I
+   arithmeticGenus I
+   sectionalGenus I
+   minimalBetti I
+   canonicalModule I
 Acknowledgement
 Contributors
 References
 Caveat
+ Though these are supposed be examples in characterist 0, they are actually computed in characteristic p.
+ This was done in Macaulay classic, and seemed necessary because of limitations in speed, and because
+ the adjunction of roots of unity was not possible there.
 SeeAlso
-Subnodes
 ///
 
 ///
@@ -127,16 +169,20 @@ restart
 uninstallPackage "SurfacesInP4"
 restart
 installPackage "SurfacesInP4"
+peek loadedFiles
 restart
 debug needsPackage "SurfacesInP4"
 check "SurfacesInP4"
-viewHelp "SurfacesInP4"
+viewHelp SurfacesInP4
+viewHelp
 
 
+intersectionProduct(
 
 needsPackage "SurfacesInP4"
 P = readExampleFile "P4Surfaces.txt";
 names P
+
 Ilist = for s in names P list s => elapsedTime example(s,P);
 elapsedTime netList (Ilist/(I->(first I, minimalBetti last I)))
 depth2 = select(Ilist, I -> pdim minimalBetti last I == 3);
@@ -144,6 +190,16 @@ netList (depth2/(I->(first I, minimalBetti last I)))
 
 I1 = example("enr.d11.g10", P);
 S = ring I1
+K = canonicalModule I1
+
+H = (ring I1)^{1}**comodule I1
+
+intersectionProduct(I1,K,K)
+intersectionProduct(I1,H,H)
+minimalBetti(K**K)
+minimalBetti saturate image relations(K**K)
+intersectionProduct(I1,H,saturate(K**K))
+
 use S
 betti res I1
 I = value get "enr.d11.m2";
@@ -177,6 +233,12 @@ pushForward(p, (R'^1/(ideal(x*t-s^2))))
 
 minimalBetti I
 degree I
+genera I
+genus I
+euler I
+sectionalGenus  = I -> (genera I)_1
+arithmeticGenus = I -> (genera I)_0
+
 (gens sub( I1, S))%I
 (gens I) % (sub( I1, S))
 minimalBetti I1

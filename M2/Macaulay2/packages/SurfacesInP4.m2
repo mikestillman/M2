@@ -26,7 +26,7 @@ readExampleFile = method()
 --allow several lines of comments (beginning with --)
 
 readExampleFile String := HashTable => name -> (
-    filename := if filexists name then name else currentFileDirectory | "SurfacesInP4/" | name;
+    filename := if fileExists name then name else currentFileDirectory | "SurfacesInP4/" | name;
     --filename := currentFileDirectory | "SurfacesInP4/" | name;
     --“SurfacesInP4/P4Surfaces.txt”;
     << "file: " << filename << endl;
@@ -50,7 +50,7 @@ readExampleFile String := HashTable => name -> (
 example = method()
 example(String, HashTable) := (ind, exampleHash) -> (
     if not exampleHash#?ind then error "example does not exist";
-    value exampleHash#ind
+    trim value exampleHash#ind
     )
 
 names = method()
@@ -102,6 +102,7 @@ SeeAlso
 -* Test section *-
 TEST///
 P = readExampleFile "P4Surfaces.txt";
+#keys P
 --P = surfacesP4;
 for k in keys P list (
     deg := null;g := null;
@@ -134,14 +135,45 @@ viewHelp "SurfacesInP4"
 
 
 needsPackage "SurfacesInP4"
-S = ZZ/43[x,y,z,u,v]
 P = readExampleFile "P4Surfaces.txt";
 names P
+Ilist = for s in names P list s => elapsedTime example(s,P);
+elapsedTime netList (Ilist/(I->(first I, minimalBetti last I)))
+depth2 = select(Ilist, I -> pdim minimalBetti last I == 3);
+netList (depth2/(I->(first I, minimalBetti last I)))
 
 I1 = example("enr.d11.g10", P);
 S = ring I1
 use S
+betti res I1
 I = value get "enr.d11.m2";
+
+
+I1 = example("rat.d8.g6", P);
+S = ring I1
+use S
+betti res I1
+I1 == I1
+I1
+
+I1 = example("k3.d9.g8", P);
+S = ring I1
+use S
+betti res I1
+I1 
+param = (vars (R = S/I1))_{0,1,2}
+prune (HH_1 koszul param)
+
+R'=(flattenRing(R[s,t, Join=>false]))_0;
+degrees R1
+
+R'/(ideal(x*t-s^2))
+S' = S[s,t,Join=>false]
+p = map(R',S')
+isHomogeneous p
+isHomogeneous ((R'^1/(ideal(x*t-s^2))))
+use R'
+pushForward(p, (R'^1/(ideal(x*t-s^2))))
 
 minimalBetti I
 degree I

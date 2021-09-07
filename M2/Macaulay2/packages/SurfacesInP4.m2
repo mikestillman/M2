@@ -20,7 +20,8 @@ export {
     "sectionalGenus",
     "arithmeticGenus",
     "canonicalModule",
-    "intersectionProduct"
+    "intersectionProduct",
+    "intersectionMatrix"
     }
 
 --SurfacesInP4#"source directory"|"SurfacesInP4/P4Surfaces.txt"
@@ -78,6 +79,10 @@ intersectionProduct = method()
 intersectionProduct (Ideal, Module, Module) := ZZ => (I,M,N) -> (
     euler comodule I - euler M - euler N + euler(M**N)
 )
+intersectionMatrix = method()
+intersectionMatrix(Ideal, List) := Matrix=> (I,L) -> (
+   matrix for M in L list for N in L list intersectionProduct(I,M,N)
+)
 
 --surfacesP4 = readExampleFile "./SurfacesInP4/P4Surfaces.txt"
 
@@ -109,7 +114,9 @@ Description
    arithmeticGenus I
    sectionalGenus I
    minimalBetti I
-   canonicalModule I
+   K = canonicalModule I
+   H = S^1/I**S^{1}
+   intersectionMatrix(I,{H,K})
 Acknowledgement
 Contributors
 References
@@ -146,7 +153,9 @@ TEST///
 P = readExampleFile "P4Surfaces.txt";
 #keys P
 --P = surfacesP4;
-for k in keys P list (
+for k in names P list (
+    if k === "ell.d12.g14.ssue" then continue;
+    <<k<<endl;
     deg := null;g := null;
     I := example(k,P);
     R := regex("\\.d([0-9]+)\\.",k);
@@ -158,8 +167,12 @@ for k in keys P list (
     g =  value substring(R#1,k);
     assert(3 == dim I);
     assert(deg == degree I);
-    assert(g == (genera I)#1);
-    {k,deg,g}
+    assert(g == sectionalGenus I);
+    S := ring I;
+    K = canonicalModule I;
+    H = S^1/I**S^{1};
+
+    {k,deg,g, elapsedTime intersectionMatrix(I,{H,K})}
     )
 ///
 
@@ -176,128 +189,48 @@ check "SurfacesInP4"
 viewHelp SurfacesInP4
 viewHelp
 
-
-intersectionProduct(
-
 needsPackage "SurfacesInP4"
 P = readExampleFile "P4Surfaces.txt";
 names P
 
 Ilist = for s in names P list s => elapsedTime example(s,P);
-elapsedTime netList (Ilist/(I->(first I, minimalBetti last I)))
-depth2 = select(Ilist, I -> pdim minimalBetti last I == 3);
-netList (depth2/(I->(first I, minimalBetti last I)))
 
-I1 = example("enr.d11.g10", P);
-S = ring I1
-K = canonicalModule I1
+I = last Ilist_4;
+    assert(deg == degree I);
+    assert(g == sectionalGenus I);
+    K = canonicalModule I;
+    H = S^1/I**S^{1};
+    {k,deg,g, elapsedTime intersectionMatrix(I,{H,K})}
+
 
 H = (ring I1)^{1}**comodule I1
-
-intersectionProduct(I1,K,K)
-intersectionProduct(I1,H,H)
-minimalBetti(K**K)
-minimalBetti saturate image relations(K**K)
-intersectionProduct(I1,H,saturate(K**K))
-
-use S
-betti res I1
-I = value get "enr.d11.m2";
+K
+intersectionProduct(I1,H,saturate image presentation(K**K))
+elapsedTime saturate image presentation(K**K)
 
 
-I1 = example("rat.d8.g6", P);
-S = ring I1
-use S
-betti res I1
-I1 == I1
-I1
-
-I1 = example("k3.d9.g8", P);
-S = ring I1
-use S
-betti res I1
-I1 
-param = (vars (R = S/I1))_{0,1,2}
-prune (HH_1 koszul param)
-
-R'=(flattenRing(R[s,t, Join=>false]))_0;
-degrees R1
-
-R'/(ideal(x*t-s^2))
-S' = S[s,t,Join=>false]
-p = map(R',S')
-isHomogeneous p
-isHomogeneous ((R'^1/(ideal(x*t-s^2))))
-use R'
-pushForward(p, (R'^1/(ideal(x*t-s^2))))
-
-minimalBetti I
-degree I
-genera I
-genus I
-euler I
-sectionalGenus  = I -> (genera I)_1
-arithmeticGenus = I -> (genera I)_0
-
-(gens sub( I1, S))%I
-(gens I) % (sub( I1, S))
-minimalBetti I1
-regex("^---* *(.*)", "---   ab c d")
-regex("^---* *(.*)", "---   --")
-
-restart
-needsPackage "SurfacesInP4"
-P = readExampleFile "SurfacesInP4/P4Surfaces.txt";
-names P
-
-I = example("rat.d8.g6", P)
-degree I
-(genera I)#1 -- sectional genus
-minimalBetti I
-
-I = example("elliptic.scroll", P);
-describe kk
-minimalBetti I
-degree I
-genera I
-
-for k in keys P list (
-    << "doing " << k << endl;
-    I = example(k, P);
-    time {k, degree I, genera I, minimalBetti I}
-    )
-
-restart
-needsPackage "SurfacesInP4"
-
-
-
-netList oo
-    << "doing " << k << endl;
-    I = example(k, P);
-    time {k, degree I, genera I, minimalBetti I}
-    )
-
-
-netList oo
-I = example("enr.d11.g10", P) -- hmmm, not good
-keys P
-S = ZZ/31991[
--*
---bad:
-"bielliptic.d10.g6"
-"bielliptic.d15.g21"
-"enr.d11.g1"
-
-S = ZZ/911[x,y,z,u,v]
-I = value P#"bielliptic.d10.g6";
-minimalBetti I
-
-S = ZZ/911[x,y,z,u,v]
-I = value P#"bielliptic.d15.g21";
-minimalBetti I
-
-S = ZZ/43[x,y,z,u,v]
-I = value P#"enr.d11.g10";
-minimalBetti I
-*-
+analyzeExample = k -> (
+    deg := null;g := null;
+    I = example(k,P);
+    R := regex("\\.d([0-9]+)\\.",k);
+    if R =!= null and #R > 1 then
+    deg = value substring(R#1,k);
+    
+    R = regex("\\.g([0-9]+)",k);
+    if R =!= null and #R > 1 then        
+    g =  value substring(R#1,k);
+    assert(3 == dim I);
+    assert(deg == degree I);
+    assert(g == sectionalGenus I);
+    K = canonicalModule I;
+    S = ring I;
+    H = S^1/I**S^{1};
+     {k,deg,g}
+)
+elapsedTime intersectionMatrix(I,{H,K})}
+k = "biellitic.d10.g6"
+analyzeExample k
+intersectionProduct(I,H,H)
+intersectionProduct(I,H,K)
+intersectionProduct(I,K,K)
+minimalBetti K

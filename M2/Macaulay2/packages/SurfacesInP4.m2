@@ -13,6 +13,7 @@ newPackage("SurfacesInP4",
     )
 
 export {
+    "UseExt",
     "readExampleFile",
     "example",
     "names",
@@ -69,12 +70,20 @@ sectionalGenus Ideal := I -> (genera I)_1
 arithmeticGenus = method()
 arithmeticGenus Ideal := I -> (genera I)_0
 
-   canonicalModule = method()
-   canonicalModule Ideal := I -> (
-       S := ring I;
-       n := numgens S;
-       Ext^(codim I)(S^1/I, S^{-n})
-       )
+canonicalModule = method(Options => {UseExt => false})
+canonicalModule Ideal := opts ->  I -> (
+    S := ring I;
+    n := numgens S;
+    c := codim I;
+    if not opts.UseExt then (
+        CI := ideal take(I_*, c);
+        if codim CI == c then return S^{CI/degree/first//sum - n} ** Hom(S^1/I, S^1/CI);
+        << "didn't quickly find a complete intersection, using Ext..." << endl;
+        );
+    -- either the first c gens of I are not a CI, or the user asked to not use that method...
+    Ext^(codim I)(S^1/I, S^{-n})
+    )
+
 intersectionProduct = method()
 intersectionProduct (Ideal, Module, Module) := ZZ => (I,M,N) -> (
     euler comodule I - euler M - euler N + euler(M**N)
@@ -150,12 +159,21 @@ SeeAlso
 
 -* Test section *-
 TEST///
+-*
+  restart
+  needsPackage "SurfacesInP4"
+*-
 P = readExampleFile "P4Surfaces.txt";
 #keys P
 --P = surfacesP4;
-for k in names P list (
-    if k === "ell.d12.g14.ssue" then continue;
-    <<k<<endl;
+names P
+for k in names P do elapsedTime (
+    if k === "ell.d12.g14.ssue" then ( << "skipping " << k << endl; continue);
+    if k === "k3.d11.g11.ss2" then ( << "skipping " << k << endl; continue);
+    if k === "k3.d11.g11.ss1" then ( << "skipping " << k << endl; continue);
+    if k === "k3.d11.g11.ss3" then ( << "skipping " << k << endl; continue);
+    if k === "rat.d10.g8" then ( << "skipping " << k << endl; continue);
+    << "doing " << k << endl;
     deg := null;g := null;
     I := example(k,P);
     R := regex("\\.d([0-9]+)\\.",k);
@@ -169,13 +187,39 @@ for k in names P list (
     assert(deg == degree I);
     assert(g == sectionalGenus I);
     S := ring I;
-    K = canonicalModule I;
+    elapsedTime K = canonicalModule I;
     H = S^1/I**S^{1};
-
-    {k,deg,g, elapsedTime intersectionMatrix(I,{H,K})}
+    M = elapsedTime intersectionMatrix(I,{H,K});
+    print {k, deg, g, M};
     )
 ///
 
+TEST ///
+-*
+  restart
+  needsPackage "SurfacesInP4"
+*-
+P = readExampleFile "P4Surfaces.txt";
+#keys P
+--P = surfacesP4;
+I = example("ab.d10.g6", P)
+I = example("ell.d12.g14.ssue", P);
+debug needsPackage "Divisor"
+R = (ring I)/I
+elapsedTime K = canonicalDivisor(R, IsGraded=>true);
+K
+elapsedTime KM = divisorToModule K
+euler oo
+euler(KM ** KM)
+
+CI = ideal(I_0, I_1)
+codim CI
+S^{first degree CI_0 + first degree CI_1 - 5} ** (prune Hom(S^1/I, S^1/CI))
+euler oo
+Ext^2(S^1/I, S^{-5})
+euler oo
+res o60
+///
 end--
 -* Development section *-
 restart

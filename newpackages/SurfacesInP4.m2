@@ -13,7 +13,9 @@ newPackage("SurfacesInP4",
     )
 
 export {
-    "UseExt",
+    "findRegularSequence",
+    "Colon",
+    "Random",
     "readExampleFile",
     "example",
     "names",
@@ -70,14 +72,38 @@ sectionalGenus Ideal := I -> (genera I)_1
 arithmeticGenus = method()
 arithmeticGenus Ideal := I -> (genera I)_0
 
-canonicalModule = method(Options => {UseExt => false})
+findRegularSequence = method()
+findRegularSequence Ideal := Ideal => J -> (
+    --finds a random homogeneous maximal regular sequence in J of minimal
+    --degree, and returns the link of J with respect to this sequence.
+    S := ring J;
+    if J == ideal(1_S) then return J;
+    genlist := J_*;
+    deglist :=  sort unique (genlist/(g -> (degree g)_0));
+    D := #deglist;
+    II := apply(deglist, d -> ideal select(genlist, g -> (degree g)_0 <= d));
+    codims := apply(II, I -> codim I);
+    levels := apply(D, i -> gens II_i * matrix basis(deglist_i, II_i));
+    regseq := levels_0 * random(source levels_0, S^{codims_0:-deglist_0});
+    for i from 1 to D-1 do(
+	regseq = regseq | 
+	         levels_i * random(source levels_i, S^{codims_i-codims_(i-1):-deglist_i}));
+    regs := ideal regseq;
+    assert (isHomogeneous regs);
+    assert (codim regs == codims_(D-1));
+    regs
+    )
+
+canonicalModule = method(Options => {Strategy => Ext})--Ext, Random, Colon})
 canonicalModule Ideal := opts ->  I -> (
     S := ring I;
     n := numgens S;
     c := codim I;
-    if not opts.UseExt then (
+    if not opts.Strategy === Ext then (
         CI := ideal take(I_*, c);
-        if codim CI == c then return S^{CI/degree/first//sum - n} ** Hom(S^1/I, S^1/CI);
+	twist := CI/degree/first//sum - n;
+        if codim CI == c then return S^{twist}**((CI:I)/CI);
+
         << "didn't quickly find a complete intersection, using Ext..." << endl;
         );
     -- either the first c gens of I are not a CI, or the user asked to not use that method...
@@ -203,7 +229,31 @@ P = readExampleFile "P4Surfaces.txt";
 #keys P
 --P = surfacesP4;
 I = example("ab.d10.g6", P)
+elapsedTime K=canonicalModule(I); -- 0.0499788 seconds elapsed
+elapsedTime K=canonicalModule(I, UseColon =>false); -- 0.091749 seconds elapsed
+elapsedTime K=canonicalModule(I, UseExt => true); -- 0.091749 seconds elapsed
+
 I = example("ell.d12.g14.ssue", P);
+elapsedTime K=canonicalModule(I);  -- 0.597377 seconds elapsed
+elapsedTime K=canonicalModule(I, UseColon =>false);  -- 1.33254 seconds elapsed
+elapsedTime K=canonicalModule(I, UseExt => true); -- too long
+
+I = example("k3.d11.g11.ss1",P);
+elapsedTime K=canonicalModule(I);  -- 3.08853 seconds elapsed
+elapsedTime K=canonicalModule(I, UseColon =>false); --too long
+elapsedTime K=canonicalModule(I, UseExt => true); --too long
+
+I = example("k3.d11.g11.ss3",P);
+elapsedTime K=canonicalModule(I);  -- 0.571776 seconds elapsed
+elapsedTime K=canonicalModule(I, UseColon =>false);  -- 3.49462 seconds elapsed
+elapsedTime K=canonicalModule(I, UseExt => true); 
+
+I = example("rat.d10.g8",P);
+elapsedTime K=canonicalModule(I, Strategy => Colon);  -- 0.392106 seconds elapsed
+elapsedTime K=canonicalModule(I, UseColon =>false); 
+elapsedTime K=canonicalModule(I, UseExt => true); 
+
+
 debug needsPackage "Divisor"
 R = (ring I)/I
 elapsedTime K = canonicalDivisor(R, IsGraded=>true);

@@ -94,7 +94,7 @@ findRegularSequence Ideal := Ideal => J -> (
     regs
     )
 
-canonicalModule = method(Options => {Strategy => Ext})--Ext, Random, Colon})
+canonicalModule = method(Options => {Strategy => Colon})--Ext, Random, Colon})
 canonicalModule Ideal := opts ->  I -> (
     S := ring I;
     n := numgens S;
@@ -184,7 +184,7 @@ SeeAlso
 ///
 
 -* Test section *-
-TEST///
+///
 -*
   restart
   needsPackage "SurfacesInP4"
@@ -218,6 +218,38 @@ for k in names P do elapsedTime (
     M = elapsedTime intersectionMatrix(I,{H,K});
     print {k, deg, g, M};
     )
+///
+///
+-*
+  restart
+  needsPackage "SurfacesInP4"
+*-
+P = readExampleFile "P4Surfaces.txt";
+#keys P
+--P = surfacesP4;
+names P
+elapsedTime for k in names P do elapsedTime (
+    << "doing " << k << endl;
+    I := example(k,P);
+    S := ring I;
+    J := jacobian I;
+elapsedTime    singI = minors(2, J)+I;
+elapsedTime c = codim singI;
+    print {k, c}
+    )
+
+elapsedTime for k in names P do elapsedTime (
+    << "doing " << k << endl;
+    I := example(k,P);
+    S := ring I;
+    J := jacobian I;
+elapsedTime    singI = minors(2, J)+I;
+elapsedTime gbsingI := groebnerBasis (singI, Strategy => "F4");
+elapsedTime c = codim ideal leadTerm gbsingI;
+    print {k, c}
+    )
+
+
 ///
 
 TEST ///

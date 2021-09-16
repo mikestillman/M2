@@ -29,7 +29,6 @@ N6(10,9,1)  -- should be 7!!
   t = binomial(d-1,3) - secgenus*(d-3) + 2*chi - 2     -- 21
   h = (delta * (delta - d + 2) - 3*t) // 2             -- 225
 ///
-     
 numinfo = method()
 numinfo Ideal := (I) -> (
      if dim I =!= 3 then error "expected the ideal of a projective surface";
@@ -82,18 +81,14 @@ numinfo Ideal := (I) -> (
        << "N6        = " << n6 << endl;
        );
      )
+     
 ///
 numinfo I
 
 R = ZZ/101[a..e]
 J = ideal random(R^1, R^{-3,-3})
 numinfo J
-
 HH^1(cotangentSheaf Proj(R/J))
-
-Proj ((ring I)/I)
-cotangentSheaf oo
-HH^1(oo)
-basis(0,oo)
-numgens source oo
 ///
+end--
+load"numinvariants.m2"

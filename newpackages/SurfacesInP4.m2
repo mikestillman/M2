@@ -24,7 +24,9 @@ export {
     "arithmeticGenus",
     "canonicalModule",
     "intersectionProduct",
-    "intersectionMatrix"
+    "intersectionMatrix",
+    "surfaceInvariants",
+    "Distrust"
     }
 
 --SurfacesInP4#"source directory"|"SurfacesInP4/P4Surfaces.txt"
@@ -118,6 +120,82 @@ intersectionMatrix = method()
 intersectionMatrix(Ideal, List) := Matrix=> (I,L) -> (
    matrix for M in L list for N in L list intersectionProduct(I,M,N)
 )
+
+
+N6 = (d,secgenus,chi) -> (
+    -- Le Barz 6-secant formula, if X is in P4.
+    -- degree of a double curve of a generic projection to P3.
+    delta := binomial(d-1,2) - secgenus;
+    -- the number of triple points of this curve.
+    t := binomial(d-1,3) - secgenus*(d-3) + 2*chi - 2;
+    -- the number of apparent double points.
+    << "t = " << t << endl;
+    h := (delta * (delta - d + 2) - 3*t) // 2;
+    -- N6: the value to be returned.
+    - d*(d-4)*(d-5)*(d^3 + 30*d^2 - 577*d + 786) // 144
+         + delta * ( 2*binomial(d,4) + 2*binomial(d,3) - 45*binomial(d,2) + 148*d - 317)
+         - binomial(delta,2) * (d^2 - 27*d + 120) // 2
+         - 2 * binomial(delta,3)
+         + h * (delta - 8*d + 56) + t * (9*d - 3*delta - 28) + binomial(t,2)
+    ) 
+
+surfaceInvariants = method(Options => {Distrust => false})
+surfaceInvariants Ideal := opts -> I -> (
+     if dim I =!= 3 then error "expected the ideal of a projective surface";
+     -- We assume that V(I) is smooth, but we don't check it.
+     -- We compute here the canonical module, although in general it is better
+     --  to avoid this, or do it elsewhere.
+     R := ring I;
+     n := numgens R;
+     c := codim I;
+     -- basics
+     d := degree I;
+     secgenus := (genera coker gens I)#1;
+     -- pg
+     KX := canonicalModule I;
+--     KX = Ext^c(coker gens I, R);
+--     KX = KX ** R^{-n};
+     pg := numgens source basis(0,KX);
+     -- q
+     chi := euler I;
+     q := 1-chi+pg;
+--     H1O = Ext^(c+1)(coker gens I, R);
+--     H1O = H1O ** R^{-n};
+--     q := numgens source basis(1,H1O);
+     -- chi
+  --   chi := 1 - q + pg;
+     -- h11.  Currently this is time consuming
+     -- unless X lies in P4.
+--     local K2, h11, eX;
+     if n === 5 then (
+	  HK := 2*secgenus - d - 2;
+	  K2 := (d^2 - 10*d - 5*HK + 12*chi) // 2;
+	  eX := 12*chi - K2;
+	  h11 := eX - 2 + 4*q - 2*pg;
+	  n6 := N6(d,secgenus,chi);
+	  );
+     if opts.Distrust then (
+	  (eX',h11',K2') := (eX, h11, K2);
+          X := Proj (R/I);
+          Omega := cotangentSheaf X;
+          h11 = rank HH^1(Omega);
+          eX = 2 - 4*q + (2*pg + h11);
+          K2 = 12*chi - eX;
+	  assert ((eX',h11',K2') == (eX, h11, K2));
+	  );
+     
+     << "degree    = " << d << endl;
+     << "sec genus = " << secgenus << endl;
+     << "irreg q   = " << q << endl;
+     << "pg        = " << pg << endl;
+     << "e(X)      = " << eX << endl;
+     << "K^2       = " << K2 << endl;
+     << "h11       = " << h11 << endl;
+     << "chi       = " << chi << endl;
+     if n === 5 then (
+       << "N6        = " << n6 << endl;
+       );
+     )
 
 --surfacesP4 = readExampleFile "./SurfacesInP4/P4Surfaces.txt"
 
@@ -302,6 +380,8 @@ Ext^2(S^1/I, S^{-5})
 euler oo
 res o60
 ///
+
+
 end--
 -* Development section *-
 restart

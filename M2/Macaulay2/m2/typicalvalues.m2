@@ -64,7 +64,6 @@ isOpen(Database) := Boolean => isOpen
 isOutputFile(File) := Boolean => isOutputFile
 mutable(Thing) := Boolean => mutable
 instance(Thing,Type) := Boolean => instance
-characters String := List => characters
 concatenate Nothing := concatenate String := concatenate Symbol := concatenate ZZ := concatenate BasicList := String => concatenate
 deepSplice BasicList := BasicList => deepSplice
 drop(BasicList,ZZ) := drop(BasicList,List) := BasicList => drop
@@ -93,9 +92,13 @@ openInOut String := openInOut File := File => openInOut
 openListener String := File => openListener
 pack(BasicList,ZZ) := List => pack
 pack(ZZ,BasicList) := List => pack
+pack(String,ZZ) := List => pack
+pack(ZZ,String) := List => pack
 reverse BasicList := BasicList => reverse
+reverse String := String => reverse
 set VisibleList := Set => set
 tally VisibleList := Tally => tally
+tally String := Tally => tally
 splice BasicList := BasicList => splice
 typicalValues#stack = Net
 stack BasicList := Net => stack
@@ -128,6 +131,7 @@ read Sequence := String => read
 read String := String => read
 Function Thing := Thing => x -> (dummy x;)
 scan(BasicList,Function) := scan(String,Function) := Nothing => scan
+scan(BasicList,BasicList,Function) := Nothing => scan
 scan(ZZ,Function) := Nothing => scan
 scanPairs(HashTable,Function) := Nothing => scanPairs
 lines(String,String) := List => lines

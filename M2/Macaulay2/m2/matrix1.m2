@@ -377,7 +377,8 @@ subquotient(Module,Matrix,Nothing) := (F,g,r) -> (
      subquotient(g,r))
 subquotient(Module,Nothing,Nothing) := (F,g,r) -> F
 
-Matrix ** Matrix := Matrix => ((f,g) -> (
+Matrix ** Matrix := Matrix => (A, B) -> tensor(A, B)
+tensor(Matrix, Matrix) := Matrix => {} >> opts -> ((f, g) -> (
      samering(target f,target g);
      samering(source f,source g);
      R := ring target f;
@@ -667,6 +668,7 @@ scan({ZZ,QQ}, S -> (
 	       else (ideal lift(generators I,S,opts)) + ideal (presentation ring I ** S))));
 
 content(RingElement) := Ideal => (f) -> ideal \\ last \ listForm f
+content(RingElement, RingElement) := Ideal => (f,x) -> ideal last coefficients(f, Variables => {x})
 
 cover(Matrix) := Matrix => (f) -> matrix f
 

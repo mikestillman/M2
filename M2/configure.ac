@@ -20,7 +20,6 @@ m4_include(config/openmp.m4)
 m4_include(config/search-libraries.m4)
 m4_include(config/ax_boost_base.m4)
 m4_include(config/ax_boost_regex.m4)
-m4_include(config/ax_python.m4)
 
 dnl define(TO_UPPER,[translit($1, [a-z], [A-Z])])
 
@@ -651,8 +650,7 @@ AC_SUBST(PROGLIST, "4ti2 gfan normaliz csdp nauty cddplus lrslib gftables topcom
 # The list PROGLIST is the list of programs and libraries for them that are distributed with M2.
 #     Initially, we offer no option for not compiling some of them.
 
-# AC_SUBST(SUBLIST, " memtailor mathic mathicgb fflas_ffpack givaro ")
-AC_SUBST(SUBLIST, " fflas_ffpack givaro ")
+AC_SUBST(SUBLIST, " memtailor mathic mathicgb fflas_ffpack givaro ")
 
 # The list SUBLIST is the list of submodules that might be used and linked into M2.
 
@@ -901,26 +899,32 @@ if test $BUILD_givaro = yes
 then BUILTLIBS="-lgivaro $BUILTLIBS"
 fi
 
+# We add these directories to the end, so the user can override this by setting CPPFLAGS.
+# /cddlib/ is more modern than /cdd/
+if test -d /usr/local/include/cddlib 
+then CPPFLAGS="$CPPFLAGS -I/usr/local/include/cddlib"
+fi
+if test -d /usr/local/include/cdd 
+then CPPFLAGS="$CPPFLAGS -I/usr/local/include/cdd"
+fi
+if test -d /usr/include/cddlib 
+then CPPFLAGS="$CPPFLAGS -I/usr/include/cddlib"
+fi
+if test -d /usr/include/cdd 
+then CPPFLAGS="$CPPFLAGS -I/usr/include/cdd"
+fi
 AC_LANG(C)
-SAVE=$CPPFLAGS
-dnl topcom includes "setoper.h" -- no prefix
-dnl We try 3 different filenames to thwart the caching of results:
-AC_CHECK_HEADER(cdd.h,,[
-  dnl for Ubuntu
-  CPPFLAGS="$SAVE -I/usr/include/cdd"
-  AC_CHECK_HEADER(cddmp.h,,[
-    dnl for Fedora
-    CPPFLAGS="$SAVE -I/usr/include/cddlib"
-    AC_CHECK_HEADER(setoper.h,,CPPFLAGS=$SAVE
-			        AC_MSG_RESULT([[cddlib not found, will build]])
-			        BUILD_cddlib=yes)])],
-    [#include <setoper.h>])
+AC_CHECK_HEADER(cdd.h,,[ AC_MSG_RESULT([[cddlib not found, will build]])
+			     BUILD_cddlib=yes],
+		       [
+		          #include <setoper.h>
+		       ])
 if test $BUILD_cddlib = yes
 then BUILTLIBS="-lcdd $BUILTLIBS"
 else if test $SHARED = no -a $TRY_STATIC = yes
      then SEARCH_LIBRARIES(dd_Equal,"/usr/lib/libcdd.a" "/usr/local/lib/libcdd.a",,
-				    [AC_MSG_ERROR([libcdd.a not found])])
-     else AC_SEARCH_LIBS(dd_Equal,"cdd",,[AC_MSG_ERROR([libcdd not found])])
+				    [AC_MSG_ERROR([cdd.h found but libcdd.a not found])])
+     else AC_SEARCH_LIBS(dd_Equal,"cdd",,[AC_MSG_ERROR([cdd.h found but libcdd not found])])
      fi
 fi
 
@@ -1259,13 +1263,34 @@ fi
 AC_SUBST(GTEST_PATH)
 
 AC_SUBST(PYTHON,no)
-AC_ARG_WITH(python, AS_HELP_STRING(--with-python,[link with libpython]), PYTHON=$withval)
-if test "$PYTHON" = yes
+AC_ARG_WITH(python, AS_HELP_STRING(--with-python@<:@=3.x@:>@.,
+    [link with libpython. If the version number is not specified, then the
+     system's default version will be detected.]), PYTHON=$withval)
+if test $PYTHON != no
 then AC_DEFINE(WITH_PYTHON,1,[whether we are linking with the python library])
-    AX_PYTHON
+    if test $PYTHON = yes
+    then
+	AC_CHECK_PROGS(PYTHON_BIN, python3, false)
+    else
+	AC_CHECK_PROGS(PYTHON_BIN, python$PYTHON, false)
+	PYTHON=yes
+    fi
+    if test $PYTHON_BIN = false
+    then
+	AC_MSG_ERROR([could not find python])
+    else
+	PYTHON_VERSION=`$PYTHON_BIN -c \
+	    "from sys import version_info; \
+	    print('%d.%d' % (version_info.major, version_info.minor))"`
+    fi
+    PYTHON_INCLUDE_DIR=`$PYTHON_BIN -c \
+	"from sysconfig import get_config_var; \
+	print(get_config_var('CONFINCLUDEPY'))"`
     CPPFLAGS="$CPPFLAGS -I$PYTHON_INCLUDE_DIR"
     AC_CHECK_HEADER(Python.h,,AC_MSG_ERROR(Python.h not found))
-    AC_SEARCH_LIBS(Py_Initialize, $PYTHON_LIB,,AC_MSG_ERROR(libpython not found))
+    AC_SEARCH_LIBS(Py_Initialize,
+	python${PYTHON_VERSION} python${PYTHON_VERSION}m,,
+	AC_MSG_ERROR(libpython not found))
 fi
 
 dnl boost 1.65 was the first release containing the stacktrace library
@@ -1865,7 +1890,7 @@ subset "$BUILDLIBLIST" "$BUILD_ALWAYS"
 sub=$?
 if test "$BUILDING" = no -a $sub = 1
 then c=`complement "$BUILDLIBLIST" "$BUILD_ALWAYS"`
-     AC_MSG_ERROR([automatic building of libraries disabled, but some must be built: $c])
+     AC_MSG_ERROR([ *** - automatic building of libraries disabled, but some must be built: $c])
 fi
 
 # Here we insert autoconf's default values so we can compute the relative locations in the directory tree

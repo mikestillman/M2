@@ -143,7 +143,7 @@ degreesMonoid List := memoize(
 	       Global => false,
 	       Inverses => true]))
 
-tensorDefaults = merge(monoidDefaults, 
+monoidTensorDefaults = merge(monoidDefaults,
      new OptionTable from {
 	  MonomialOrder => null,
 	  VariableBaseName => null,			    -- monoids being tensored already have variable names
@@ -403,7 +403,7 @@ findHeft List := opts -> (degs) -> (
      	  if not instance(degrk,ZZ) then error "expected DegreeRank option to be an integer";
 	  );
      if not all(degs, d -> #d === degrk) then error ("expected all degrees to be of length ", toString degrk);
-     if #degs === 0 then return toList(degrk : 0);
+     if #degs === 0 then return toList(degrk : 1);
      if degrk === 0 then return null;
      if degrk === 1 then return if all(degs,d->d#0 > 0) then {1} else if all(degs,d->d#0 < 0) then {-1} ;
      if all(degs,d->d#0 > 0) then return splice {  1, degrk-1:0 };
@@ -499,10 +499,6 @@ monoid Array := opts -> args -> (
      else if args =!= () then error "variables provided conflict with Variables option";
      makeMonoid opts)
 
-tensor = method( Options => tensorDefaults, Dispatch => Thing)
-
-Monoid ** Monoid := Monoid => (M,N) -> tensor(M,N)
-
 tensoradj := (f,g,m,n) -> (
      if f === identity then (
 	  if g === identity 
@@ -527,7 +523,10 @@ degreePad = (n,x) -> (
 
 degreeNoLift = () -> error "degree not liftable"
 
-tensor(Monoid, Monoid) := Monoid => opts0 -> (M,N) -> (
+-- TODO: do we want to support a syntax this?
+--   'tensor (a => ZZ^2, b => ZZ^3, c => ZZ^4)'
+Monoid ** Monoid := Monoid => (M, N) -> tensor(M, N)
+tensor(Monoid, Monoid) := Monoid => monoidTensorDefaults >> opts0 -> (M, N) -> (
      Mopts := M.Options;
      Nopts := N.Options;
      opts := new MutableHashTable from opts0;

@@ -47,7 +47,7 @@ document {
      "This is the customary way to make a polynomial ring.",
      PARA{},
      "Optional arguments (placed inside the array):",
-     UL (TO \ keys value Core#"private dictionary"#"monoidDefaults"),
+     UL (TO \ keys core "monoidDefaults"),
      SeeAlso => "polynomial rings"}
 document {
      Key => (symbol SPACE, Ring, List),
@@ -56,7 +56,7 @@ document {
      ordered monoid specified by ", TT "...", ", together with the option ", TT "Local => true", ".",
      PARA{},
      "Optional arguments (placed inside the list):",
-     UL (TO \ keys value Core#"private dictionary"#"monoidDefaults"),
+     UL (TO \ keys core "monoidDefaults"),
      SeeAlso => "polynomial rings"}
 document {
      Key => (symbol SPACE,Ring, OrderedMonoid),
@@ -136,12 +136,10 @@ document {
 	 (heft, Ring),
 	 (heft, PolynomialRing),
 	 (heft, QuotientRing),
-	 (heft, Module),
-	 (heft, GradedModule),
-	 (heft, Resolution)},
+	 (heft, Module)},
      Headline => "heft vector of ring, module, graded module, or resolution",
      Usage => "heft X",
-     Inputs => { "X" => {ofClass{Ring,Module,GradedModule,Resolution}} },
+     Inputs => { "X" => {ofClass{Ring,Module}} },
      Outputs => { List => {"the heft vector in use for ", TT "X", ", if ", TT "X", " is a
 	       ring, or for the ring of ", TT "X", ", if ", TT "X", " is a module.
 	       If there is no heft vector, then ", TO "null", " is returned."

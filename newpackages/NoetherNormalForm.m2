@@ -97,12 +97,9 @@ noetherMap Ring := Ring => (B) -> (
     )
 
 computeBasis = method()
-computeBasis Ring := Sequence => (R) -> (
+computeBasis Ring := Matrix => (R) -> (
     -- assumption: R is finite over the coefficient ring
-    -- returns a sequence (B, S, H):
-    --   B: matrix of module generators of R over its coeff ring
-    --   S: not sure: seems to be a hashtable: each monom over ambient => actual monom in R.
-    --   H: hashtable, keys: monomial generators, value: index in B.
+    -- returns  B: matrix of module generators of R over its coeff ring
     -- This just does the computation, does not stash anything!
     LT := leadTerm ideal R;
     K := ultimate(coefficientRing, R);
@@ -113,11 +110,11 @@ computeBasis Ring := Sequence => (R) -> (
     -- (1) as a list of monomials in R (or, as a matrix?)
     -- (2) as a hash table, m => i, giving the index of each monomial.
     B = sort B;
-    L := flatten entries B;
-    H := hashTable for i from 0 to #L-1 list L#i => i;
-    Rambient := ambient R;
-    S := new MutableHashTable from apply(L, s -> {lift(s,Rambient),s});
-    (B, S, H)
+--    L := flatten entries B;
+--    H := hashTable for i from 0 to #L-1 list L#i => i;
+--    Rambient := ambient R;
+--    S := new MutableHashTable from apply(L, s -> {lift(s,Rambient),s});
+    B
     )
 
 -- The following sets (or gets, if already computed) the
@@ -131,8 +128,8 @@ basisOfRing Ring := (R) -> (
     NI := noetherInfo R;
     if not NI#?"basis of ring" then NI#"basis of ring" = computeBasis NI#"ring";
     if not NI#?"basis of field" then NI#"basis of field" = computeBasis NI#"field";
-    if R === NI#"ring" then first NI#"basis of ring"
-    else if R === NI#"field" then first NI#"basis of field"
+    if R === NI#"ring" then  NI#"basis of ring"
+    else if R === NI#"field" then NI#"basis of field"
     else error "internal error in basisOfRing"
     )
 

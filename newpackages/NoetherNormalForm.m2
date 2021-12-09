@@ -269,20 +269,24 @@ makeFrac Ring := Ring => (B) -> (
     A := coefficientRing B; -- ASSUME: a polynomial ring over a field.
     KA := frac A;
     
-    if KA === A then return frac B;
-    
-    if B.?frac then <<"warning: ring had a fraction field; creating simpler fraction field"<<endl;
-    kk := coefficientRing A; -- must be a field, but not a fraction field.
-    I := ideal B;
-    ambientB := ring I;
-    ambientKB := ((frac A)(monoid B)); -- TODO: does this handle degrees correctly?
-    phiK := map(ambientKB,ambientB, vars ambientKB);
-    JK := trim phiK I;
-    KB := ambientKB / JK;
+    if KA =!= A then (
+        if B.?frac then <<"warning: ring had a fraction field; creating simpler fraction field"<<endl;
+    	kk := coefficientRing A; -- must be a field, but not a fraction field.
+    	I := ideal B;
+    	ambientB := ring I;
+    	ambientKB := ((frac A)(monoid B)); -- TODO: does this handle degrees correctly?
+    	phiK := map(ambientKB,ambientB, vars ambientKB);
+    	JK := trim phiK I;
+    	KB := ambientKB / JK;
+        KB.baseRings = append(KB.baseRings, B))    
+     else( 
+        KB = B;
+    	I = ideal B;
+    	ambientB = ring I);
+
     B.frac = KB;
     KB.frac = KB;
     KB.isField = true;
-    KB.baseRings = append(KB.baseRings, B);    
     BtoKB := map(KB,B,generators KB);
     inverse B := f -> 1_KB // BtoKB f;
     inverse KB := f -> 1 // f;
@@ -307,13 +311,15 @@ makeFrac Ring := Ring => (B) -> (
     mapBtofracS := map(frac S, B); -- TODO: does this do a 'sub'?
     mapKBtofracS := map(frac S, KB); -- TODO: does this do a 'sub'?
     StoB := map(B, S);
+--error here when the ground field is a GF
     numerator B := (f) -> StoB (numerator mapBtofracS f);
-    numerator KB := (f) -> StoB (numerator mapKBtofracS f);
     denominator B := (f) -> lift(StoB denominator mapBtofracS f, A);
-    denominator KB := (f) -> lift(StoB denominator mapKBtofracS f, A);
+    if B =!= KB then(    
+        numerator KB := (f) -> StoB (numerator mapKBtofracS f);
+        denominator KB := (f) -> lift(StoB denominator mapKBtofracS f, A));
     factor KB := opts -> (f) -> hold numerator f/factor denominator f;
     expression KB := f -> expression numerator f / expression denominator f;
-    setNoetherInfo(B, KB);
+    setNoetherInfo(B, KB); -- watch out!
     KB
     )
 
@@ -624,7 +630,7 @@ noetherForm List := Ring => opts -> (xv) -> (
     B
     )
 
--- Input: a ring map F : A --> R such that:
+-- Input: a ring map f : A --> R such that:
 --   (a) A is a polynomial ring over a field, TODO: should allow a field too!
 --   (b) R is a quotient of a polynomial ring over the same field
 --   (c) R is a finite A-module
@@ -653,12 +659,11 @@ noetherForm RingMap := Ring => opts -> (f) -> (
     if not all(gensk, x -> promote(x,R) == f promote(x,A)) then 
         error "expected ring map to be identity on coefficient ring";
     --check finiteness
-    -- if not isModuleFinite(A, R) then 
-    --     error "expected ring to be finite over coefficients";
-
-    if A === kk then (
+    if not isModuleFinite f then 
+        error "expected ring to be finite over coefficients";
+    if A === kk then ( --TODO: logic mysterious in this case
         setNoetherInfo(R, R);
-	    return R
+	return R
         );
     
      -- AAA    
@@ -679,6 +684,7 @@ noetherForm RingMap := Ring => opts -> (f) -> (
     J2 = trim ideal((gens J2) % J1);
     B := ambientB/(J1 + J2);
     L := makeFrac B;
+    --TODO: need to set noetherMap
     B)
 
 noetherForm Ring := Ring => opts -> R -> (
@@ -1716,6 +1722,8 @@ uninstallPackage "PushForward"
 restart
 installPackage "PushForward"
 ----
+restart
+load "NoetherNormalForm.m2"
 uninstallPackage "NoetherNormalForm"
 restart
 installPackage "NoetherNormalForm"

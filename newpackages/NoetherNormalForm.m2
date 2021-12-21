@@ -74,6 +74,7 @@ inNoetherForm Ring := Boolean => (R) -> R.?NoetherInfo
 --   "noether map" -- isomorphism back to the original ring.
 setNoetherInfo = method()
 setNoetherInfo(Ring, Ring) := (B, KB) -> (
+    -- this is meant to also handle the case B === KB.
     NI := new MutableHashTable;
     B.NoetherInfo = NI;
     KB.NoetherInfo = NI;
@@ -278,12 +279,32 @@ makeFrac Ring := Ring => (B) -> (
     	phiK := map(ambientKB,ambientB, vars ambientKB);
     	JK := trim phiK I;
     	KB := ambientKB / JK;
-        KB.baseRings = append(KB.baseRings, B))    
-     else( 
+        KB.baseRings = append(KB.baseRings, B)
+        )
+     else ( 
+        -- in this case, B is finite over a field.  We basically assume it is a field here.
+        -- even if it isn't we treat it as such.  I think we will not create a non-invertible
+        -- element in B.
         KB = B;
+        B.frac = B;
+        B.isField = true; -- ASSUMPTION: this is not correct, if we are dealing with a reduced ring...!
     	I = ideal B;
-    	ambientB = ring I);
+    	ambientB = ring I;
+        --fraction(B,B) := (f,g) -> (BtoKB f) * inverse g;
+        --fraction(KB,KB) := (f,g) -> f * inverse g;
+        --promote(B, KB) := (f,KB) -> BtoKB f;
+        -- todo: factorization?
+        numerator B := f -> f;
+        denominator B := f -> 1_B;
+        B / B := (a,b) -> a * (1 // b);
+        inverse B := f -> 1 // f;
+        factor B := opts -> (f) -> hold f; -- TODO: call this factorDenominator?
+        setNoetherInfo(B, KB); -- watch out!
+        return KB;
+        );
 
+    -- At this point: A =!= KA
+    -- B will not be KB.  But we want to set frac B to be (frac A) **_A B.
     B.frac = KB;
     KB.frac = KB;
     KB.isField = true;
@@ -312,14 +333,14 @@ makeFrac Ring := Ring => (B) -> (
     mapKBtofracS := map(frac S, KB); -- TODO: does this do a 'sub'?
     StoB := map(B, S);
 --error here when the ground field is a GF
+--error "debug me";
     numerator B := (f) -> StoB (numerator mapBtofracS f);
     denominator B := (f) -> lift(StoB denominator mapBtofracS f, A);
-    if B =!= KB then(    
-        numerator KB := (f) -> StoB (numerator mapKBtofracS f);
-        denominator KB := (f) -> lift(StoB denominator mapKBtofracS f, A));
+    numerator KB := (f) -> StoB (numerator mapKBtofracS f);
+    denominator KB := (f) -> lift(StoB denominator mapKBtofracS f, A);
     factor KB := opts -> (f) -> hold numerator f/factor denominator f;
     expression KB := f -> expression numerator f / expression denominator f;
-    setNoetherInfo(B, KB); -- watch out!
+    setNoetherInfo(B, KB);
     KB
     )
 
@@ -714,15 +735,23 @@ debug needsPackage "NoetherNormalForm"
 
   R = QQ[x,y]/(x^4-3, y^3-2);
   phi = map(R, QQ, {})
-  noetherForm phi
+  B = noetherForm phi
   assert inNoetherForm R
-  
+  assert(B === R)
+  assert(# noetherBasis R == 12)
+
+  -- XXX  
   kk = ZZ/32003
   R = kk[x,y]/(x^4-3, y^3-2);
   phi = map(R, kk, {})
   isWellDefined phi  -- ok
   B = noetherForm R
+  assert(B === R)
   assert inNoetherForm R
+  assert(# noetherBasis B == 12)
+  numerator x_B
+  denominator x_B
+  assert(x/y == -16001 * x * y^2)
 
   kk = QQ
   R = kk[x,y]/(x^4-3, y^3-2);
@@ -731,11 +760,18 @@ debug needsPackage "NoetherNormalForm"
   assert inNoetherForm B
 
   kk = GF(27)
+  assert(kk === frac kk)
   R = kk[x,y]/(x^4-2, y^5-2);
   phi = map(R, kk, {})
   isWellDefined phi  -- ok
   B = noetherForm R
-  noetherBasis B
+  assert(B === R)
+  assert(frac B === R)
+  assert(x/y === - x * y^4)
+  f = x^3/y
+  factor oo
+  factor((x^3/y)) -- fails...
+  assert(# noetherBasis B == 20)
   traceForm B -- (now works). (used to fail! due to the bug below, which is now git issue #1999)
 
   kk = QQ
@@ -746,12 +782,13 @@ debug needsPackage "NoetherNormalForm"
   traceForm B
   det oo
 
-  -- bug in M2 #1999  
+  -- bug in M2 #1999  NOW FIXED, it appears.
   -- kk = ZZ/101
   -- R = kk[x]
   -- f = matrix(kk, {{1,1}})  
   -- g = map(R^{0,1},, {{1,1},{1,1}})
   -- f*g
+  --   also try:   lift(f*g, kk)
 ///
 
 TEST ///

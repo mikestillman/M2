@@ -1730,7 +1730,96 @@ TEST ///
   S = reesAlgebra I
   S = first flattenRing S
 
-  noetherForm({a - w_0,b,c,d,w_0 + w_1 + w_2 + w_3})  -- Is this finite?? I don't think so.  Therefore this should give an error.
+ss = (subsets(gens S, 2)/sum),5);
+noetherForm (v = for i from 1 to 5 list sum ss_(random 28))
+
+--it seems that the following v, with a repeated element, caused a crash, 
+--but I couldn't reproduce the bug.
+
+v = {w_3+c, w_1+d, w_3+c, w_3+b, w_0+w_1}.
+NoetherForm v 
+
+i58 : NoetherNormalForm.m2:595:66:(3):[5]: error: no method for binary operator - applied to objects:
+--            7 (of class ZZ)
+--      -     null (of class Nothing)
+NoetherNormalForm.m2:595:66:(3):[5]: --entering debugger (type help to see debugger commands)
+NoetherNormalForm.m2:595:59-595:92: --source code:
+      removeIndices := apply(transpose entries inM0, x -> nR - 1 - position(x, x1 -> x1 != 0));
+
+///
+
+TEST ///
+-*
+  restart
+  needsPackage "NoetherNormalForm"
+*-
+  kk = ZZ/101
+  R = kk[a,b,c,d]
+  I = ideal"a2,ab,cd,d2"
+  S = reesAlgebra I
+  S = first flattenRing S
+toString oo59
+oo59 = {w  + c, w  + d, w  + c, w  + b, w  + w } -- this produces a bad error message
+         3       1       3       3       0    1
+
+integralClosure S
+break
+noetherNormalization S
+use S
+
+elapsedTime sss = subsets(ss = (subsets(gens S, 3)/sum),5);
+#sss
+T = kk[t_0..t_4]
+i = 0
+f = map(S,T,sss_0)
+while not isModuleFinite f do (i= random (#sss); f =  map(S,T,sss_i);print i)
+
+matrix {{w_0+w_1+w_3, w_1+w_2+a, w_0+w_1+b, w_3+b+c, w_1+c+d}}
+isModuleFinite f
+
+
+elapsedTime sss = subsets(ss = (subsets(gens S, 3)/sum),5);
+#sss
+T = kk[t_0..t_4]
+i = 0
+f = map(S,T,sss_0)
+while not isModuleFinite f do (i= random (#sss); f =  map(S,T,sss_i);print i)
+
+use S
+matrix {{w_0+w_1+w_3, w_1+w_2+a, w_0+w_1+b, w_3+b+c, w_1+c+d}}
+isModuleFinite f
+
+break
+use S
+f = map(S,T, {w_3+c, w_1+d, w_3+c, w_3+b, w_0+w_1})
+noetherForm f
+
+
+
+
+elapsedTime sss = subsets(ss = (subsets(gens S, 2)/sum),5);
+#sss
+T = kk[t_0..t_4]
+i = 0
+f = map(S,T,sss_0)
+while not isModuleFinite f do (i= random (#sss); f =  map(S,T,sss_i);print i)
+--none!
+
+elapsedTime sss = subsets(ss = (subsets(gens S, 3)/sum),5);
+#sss
+T = kk[t_0..t_4]
+i = 0
+f = map(S,T,sss_0)
+while not isModuleFinite f do (i= random (#sss); f =  map(S,T,sss_i);print i)
+--lots, it seems.
+--one of the module-finite examples:
+matrix {{w_0+w_1+w_3, w_1+w_2+a, w_0+w_1+b, w_3+b+c, w_1+c+d}}
+isModuleFinite f
+
+
+noetherForm (v = for i from 1 to 5 list sum ss_(random 28))
+
+noetherForm({a - w_0,b-w_1-w_2,c-w_2,d-w_3,w_0 + w_1 + w_2 + w_3})  -- Is this finite?? I don't think so.  Therefore this should give an error.
   -- BUT: let's fix the test instead, so it gives a finite ring over base.
 
   elapsedTime (F, J, xv) = noetherNormalization S -- wow, this takes more time than I would have thought! 3.1 sec on my macbookpro, Sep 2020.

@@ -556,7 +556,7 @@ createCoefficientRing(Ring, List) := RingMap => opts -> (R, L) -> (
     count := -1;
     t := opts.Variable;
     coeffVarNames := for f in L list (
-        if index f  =!= null then 
+        if index f =!= null then 
             f 
         else (
             count = count+1;
@@ -566,6 +566,12 @@ createCoefficientRing(Ring, List) := RingMap => opts -> (R, L) -> (
     A := (coefficientRing R)(monoid [coeffVarNames]);
     map(R, A, L)
     )
+
+-- XXX Next function:
+-- From this ring map f: A --> R (created from createCoefficientRing(Ring, List), or given by the user
+--  check (perhaps): ker = 0, 
+--  create a new ring, isomorphic to R (stash isomorphisms too), of the form A[new vars]/I.
+-- This is what the following function is supposed to do.  But it should give errors that are reasonabe.
 
   -- The following is currently hideous code to do something simple.
   createRingPair = method()
@@ -725,6 +731,101 @@ noetherForm Ring := Ring => opts -> R -> (
     phi := map(R,A,for x in xv list F^-1 x);
     noetherForm (phi, Remove => opts.Remove)
     )
+
+----------------------------------------------------------
+----- Hopefully final versions ---------------------------
+----------------------------------------------------------
+noetherForm Ring := Ring => opts -> R -> (
+    -- case 1: R is already in Noether form: finite over its coeff ring.
+    --   In this case, set NoetherInfo, map to/from R is the identity
+    -- case 2: not the case.
+    --   Compute random linear forms (if not too low of characteristic).
+    --   make a list L of these, call noetherForm L.
+
+    A := coefficientRing R;
+    
+    if (isPolynomialRing A or isField A) and isModuleFinite R then (
+	KR := makeFrac R; -- do this?
+	setNoetherInfo(R,KR);
+	R.NoetherInfo#"noether map" = map(R,R);
+	return R
+        );
+    
+    -- get the flattened coeff ring of R.
+    -- use the flattened ring to get elements.    
+    (F, J, xv) := noetherNormalization R;
+    kk := coefficientRing R;
+    t := opts.Variable;
+    A = if #xv == 0 then kk else kk[t_0..t_(#xv-1)];
+    phi := map(R,A,for x in xv list F^-1 x);
+    noetherForm phi
+    )
+
+noetherForm List := Ring => opts -> L -> (
+    -- check that ring R of all elements is the same
+    if #L === 0 then 
+        error "expected non-empty list of ring elements";
+    if any(L, f -> not instance(f, RingElement)) then 
+        error "expected non-empty list of ring elements";
+    R := ring L_0;
+    if not all(L, f -> ring f === R) then
+        error "expected elements in the same ring";
+    f := createCoefficientRing(R, L, Variable => opts.Variable);
+    noetherForm f
+    )
+
+noetherForm RingMap := Ring => opts -> f -> (
+    if not isModuleFinite f then
+        error "expected map or elements which make ring finite over the base";
+    -- check that f is module finite
+    -- if f : A --> R has A = cofficient ring of R, then set noether info in R and return it.
+    -- otherwise:
+    --   determine what variables from R to keep in B over A.
+    --   construct ambientB = A[these vars]
+    --             J inside ambientB
+    --             B = ambientB/J
+    --             isomorphism from R to B, vice versa.
+    --             
+    F := createRingPair f;
+    G := inverse F;
+    -- now we need to descend this to R --> B = ambientB/(image of I)
+    R := source G;
+    I := trim ker F;
+    B := (target G)/I;
+    L := makeFrac B;
+    -- Now create the isomorphism B --> R and its inverse.
+    GR := map(B, R, G.matrix);
+    FR := map(R, B, F.matrix);
+    GR.cache.inverse = FR;
+    FR.cache.inverse = GR;
+    B.NoetherInfo#"noether map" = FR; -- stash the map B --> R, but the other can be obtained via 'inverse'
+    B
+    )
+
+TEST ///
+-*
+  restart
+  debug needsPackage "NoetherNormalForm"
+*-
+  kk = ZZ/101
+  S = kk[a..d]
+  I = monomialCurveIdeal(S, {1,2,3})
+  R = S/I
+  phi1 = noetherForm R
+  assert isModuleFinite phi1
+  B = noetherForm phi1
+  assert isModuleFinite B
+  frac B
+  g = B.NoetherInfo#"noether map"
+  assert(g^-1 * g == 1)
+  assert(g * g^-1 == 1)
+  use R
+  phi2 = noetherForm {a,d}
+  assert isModuleFinite phi2
+  
+  
+///
+
 
 TEST ///
 -*
@@ -1721,8 +1822,9 @@ TEST ///
 
 TEST ///
 -*
+  -- XXX
   restart
-  needsPackage "NoetherNormalForm"
+  debug needsPackage "NoetherNormalForm"
 *-
   kk = ZZ/101
   R = kk[a,b,c,d]
@@ -1730,14 +1832,33 @@ TEST ///
   S = reesAlgebra I
   S = first flattenRing S
 
+  use R
+  phi = createCoefficientRing(R, {a+b,a+b,c})
+  isModuleFinite phi
+  ker phi != 0
+    
+  use R
+  noetherForm {a+b,a+b,c} -- fails too...
+
+  use R
+  noetherForm {a-b, b-c, a-c} -- fails inscrutably
+  
+  use R
+  noetherForm {a-b, b-c, d, a} -- fails inscrutably
+
+  use R
+  noetherForm {a-b, b-c, d} -- gives an error message as it should.
+
+
 ss = (subsets(gens S, 2)/sum),5);
 noetherForm (v = for i from 1 to 5 list sum ss_(random 28))
 
 --it seems that the following v, with a repeated element, caused a crash, 
 --but I couldn't reproduce the bug.
 
-v = {w_3+c, w_1+d, w_3+c, w_3+b, w_0+w_1}.
-NoetherForm v 
+use S
+v = {w_3+c, w_1+d, w_3+c, w_3+b, w_0+w_1}
+noetherForm v 
 
 i58 : NoetherNormalForm.m2:595:66:(3):[5]: error: no method for binary operator - applied to objects:
 --            7 (of class ZZ)

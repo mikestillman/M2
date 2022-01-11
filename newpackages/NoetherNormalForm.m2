@@ -581,8 +581,10 @@ createCoefficientRing(Ring, List) := RingMap => opts -> (R, L) -> (
       --   preferably, the ideal I has no linear forms of the "new vars".
       -- Return a ring map phi: R --> B
       A := source f;
-      kk := coefficientRing A;
       R := target f;
+      if isField A or A === ZZ then return id_R;
+      
+      kk := coefficientRing A;
       nR := numgens R;
       lins := positions(flatten entries f.matrix, g -> (exponents g)/sum//max == 1);
       -- create the matrix over the base: of size #elems of A x (numgens R + numgens A)
@@ -837,6 +839,7 @@ debug needsPackage "NoetherNormalForm"
   R = QQ[x,y]/(x^4-3, y^3-2);
   phi = map(R, QQ, {})
   B = noetherForm phi
+  
   assert inNoetherForm R
   assert(B === R)
   assert(# noetherBasis R == 12)
@@ -859,6 +862,7 @@ debug needsPackage "NoetherNormalForm"
   phi = map(R, kk, {})
   -- TODO: isWellDefined phi -- fails... BUG in Core... git issue #1998
   assert inNoetherForm B
+--isWellDefined phi
 
   kk = GF(27)
   assert(kk === frac kk)
@@ -1783,9 +1787,8 @@ TEST ///
   traceForm L
 
   R = QQ[a..d]/(b^2-a, b*c-d)
-  B = noetherForm{a,d}; -- BUG: this should give an error, as B is not module finite over QQ[a,d].
-  presentation B
-  assert try (B = noetherForm{a,d}; false) else true  -- should give an error message
+  assert try (B = noetherForm{a,d}; false) else true  
+ -- noetherForm{a,d} should fail, as R is not finite over QQ[a,d]
 ///
 
 TEST ///
@@ -1820,54 +1823,6 @@ TEST ///
   noetherForm phi
 ///
 
-TEST ///
--*
-  -- XXX
-  restart
-  debug needsPackage "NoetherNormalForm"
-*-
-  kk = ZZ/101
-  R = kk[a,b,c,d]
-  I = ideal"a2,ab,cd,d2"
-  S = reesAlgebra I
-  S = first flattenRing S
-
-  use R
-  phi = createCoefficientRing(R, {a+b,a+b,c})
-  isModuleFinite phi
-  ker phi != 0
-    
-  use R
-  noetherForm {a+b,a+b,c} -- fails too...
-
-  use R
-  noetherForm {a-b, b-c, a-c} -- fails inscrutably
-  
-  use R
-  noetherForm {a-b, b-c, d, a} -- fails inscrutably
-
-  use R
-  noetherForm {a-b, b-c, d} -- gives an error message as it should.
-
-
-ss = (subsets(gens S, 2)/sum),5);
-noetherForm (v = for i from 1 to 5 list sum ss_(random 28))
-
---it seems that the following v, with a repeated element, caused a crash, 
---but I couldn't reproduce the bug.
-
-use S
-v = {w_3+c, w_1+d, w_3+c, w_3+b, w_0+w_1}
-noetherForm v 
-
-i58 : NoetherNormalForm.m2:595:66:(3):[5]: error: no method for binary operator - applied to objects:
---            7 (of class ZZ)
---      -     null (of class Nothing)
-NoetherNormalForm.m2:595:66:(3):[5]: --entering debugger (type help to see debugger commands)
-NoetherNormalForm.m2:595:59-595:92: --source code:
-      removeIndices := apply(transpose entries inM0, x -> nR - 1 - position(x, x1 -> x1 != 0));
-
-///
 
 TEST ///
 -*
@@ -1879,14 +1834,10 @@ TEST ///
   I = ideal"a2,ab,cd,d2"
   S = reesAlgebra I
   S = first flattenRing S
-toString oo59
-oo59 = {w  + c, w  + d, w  + c, w  + b, w  + w } -- this produces a bad error message
-         3       1       3       3       0    1
 
-integralClosure S
-break
-noetherNormalization S
-use S
+B = noetherForm S
+assert (numgens coefficientRing B == 5)
+assert(radical ideal leadTerm ideal B == ideal gens ambient B)
 
 elapsedTime sss = subsets(ss = (subsets(gens S, 3)/sum),5);
 #sss
@@ -1894,73 +1845,11 @@ T = kk[t_0..t_4]
 i = 0
 f = map(S,T,sss_0)
 while not isModuleFinite f do (i= random (#sss); f =  map(S,T,sss_i);print i)
-
-matrix {{w_0+w_1+w_3, w_1+w_2+a, w_0+w_1+b, w_3+b+c, w_1+c+d}}
 isModuleFinite f
+B = noetherForm f
+assert(numgens coefficientRing B == 5)
+assert(radical ideal leadTerm ideal B == ideal gens ambient B)
 
-
-elapsedTime sss = subsets(ss = (subsets(gens S, 3)/sum),5);
-#sss
-T = kk[t_0..t_4]
-i = 0
-f = map(S,T,sss_0)
-while not isModuleFinite f do (i= random (#sss); f =  map(S,T,sss_i);print i)
-
-use S
-matrix {{w_0+w_1+w_3, w_1+w_2+a, w_0+w_1+b, w_3+b+c, w_1+c+d}}
-isModuleFinite f
-
-break
-use S
-f = map(S,T, {w_3+c, w_1+d, w_3+c, w_3+b, w_0+w_1})
-noetherForm f
-
-
-
-
-elapsedTime sss = subsets(ss = (subsets(gens S, 2)/sum),5);
-#sss
-T = kk[t_0..t_4]
-i = 0
-f = map(S,T,sss_0)
-while not isModuleFinite f do (i= random (#sss); f =  map(S,T,sss_i);print i)
---none!
-
-elapsedTime sss = subsets(ss = (subsets(gens S, 3)/sum),5);
-#sss
-T = kk[t_0..t_4]
-i = 0
-f = map(S,T,sss_0)
-while not isModuleFinite f do (i= random (#sss); f =  map(S,T,sss_i);print i)
---lots, it seems.
---one of the module-finite examples:
-matrix {{w_0+w_1+w_3, w_1+w_2+a, w_0+w_1+b, w_3+b+c, w_1+c+d}}
-isModuleFinite f
-
-
-noetherForm (v = for i from 1 to 5 list sum ss_(random 28))
-
-noetherForm({a - w_0,b-w_1-w_2,c-w_2,d-w_3,w_0 + w_1 + w_2 + w_3})  -- Is this finite?? I don't think so.  Therefore this should give an error.
-  -- BUT: let's fix the test instead, so it gives a finite ring over base.
-
-  elapsedTime (F, J, xv) = noetherNormalization S -- wow, this takes more time than I would have thought! 3.1 sec on my macbookpro, Sep 2020.
-
-  xv/(x -> F x)
-
-  F (ideal S) == J  
-  R' = (ambient S)/J  
-  A = kk[t_0..t_(#xv-1)]
-  
-  phi = map(S,A, xv/(x -> F x))
-  
-  B = noetherForm phi
-  L = frac B
-  describe L
-  
-  isHomogeneous S -- true
-  isHomogeneous R' -- false
-  
-  noetherForm S
 ///
 
 end----------------------------------------------------------

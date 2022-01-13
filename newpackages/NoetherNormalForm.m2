@@ -11,32 +11,21 @@ newPackage(
                 HomePage => "http://www.math.cornell.edu/~mike"}
             },
         Headline => "code for Noether normal forms of affine rings",
-        PackageExports => {"NoetherNormalization", "PushForward"},
+        PackageExports => {
+            "NoetherNormalization", 
+            "PushForward" -- for 'isModuleFinite'
+            },
         DebuggingMode => true
         )
 
--- TODO:
---  Currently (Feb 2021) one test fails (#14 at the moment), as 
---    noetherForm should give an error, but it doesn't. (this is (1), next line)
---  1. bug: finiteness is still not checked?
---  2. bug: if original ring has multigrading, then get an error.
---  remove old bracketed code
---  get noetherForm(RingMap) to work with the other methods.
---  if R is multigraded, then we get an error.  Fix.  What do we want to happen?
---  place this code into NoetherNormalization?
---  call the functions here noetherNormalization?
 
 -- TODO:
---  need a function that takes B, and determines if it has been placed into this form?
---    inNoetherForm -- change name?  MAYBE OK?
---  test noetherForm for all kinds of rings/gradings.
---
 --    DONE trace? of an element in B or L = frac B.
 --    DONE noetherBasis (getBasisMatrix) (of frac B, of B?)
 --    discriminant?
 
 export {
---    "checkNoetherNormalization", -- TODO: get this to work
+--    "checkNoetherNormalization", -- TODO: get this to work?
     "noetherForm",
     "noetherBasis",
     "noetherBasisMatrix",
@@ -215,28 +204,6 @@ isComputablePolynomialRing Ring := Boolean => R ->(
 
 
 
--*
-isFiniteOverCoefficientRing = method()
-isFiniteOverCoefficientRing Ring := Boolean => (R) -> (
-    if R.?NoetherInfo then return true;
-    if isField R then return true;
-    if not isAffineRing R then return false; 
-    A := coefficientRing R;
-    --if not (try (coefficientRing R; true) else false) then return false;
-    --if there is a coefficientRing R then does nothing; if not then the whole funct returns false.
-
-    --    if isField A then return(dim R ===0);
-
-    if not isField A and not isComputablePolynomialRing A then (
-	    if debugLevel > 0 then << "expected a quotient of a polynomial ring over a field" << endl;
-	    return false);
-    if not isFiniteOverCoefficients1 R then (
-        if debugLevel > 0 then << "ring is not finite over its coefficient ring" << endl;
-        false
-        )
-    else true
-    )    
-*-
 -- TODO
 checkNoetherNormalization = method()
 checkNoetherNormalization RingMap := Boolean => (phi) -> (
@@ -346,175 +313,6 @@ makeFrac Ring := Ring => (B) -> (
 
 noetherForm = method(Options => {Remove => null, Variable => getSymbol "t"})
 
---------- Code below to be removed ---------------------------------------------------------------
-noetherForm RingMap := Ring => opts -> (f) -> (
-    A := source f;
-    R := target f;
-    kk := coefficientRing R;
-    if not isCommutative A then 
-        error "expected source of ring map to be a commutative ring";
-    if A === kk then return R;
-    if not isAffineRing R then 
-        error "expected an affine ring";
-    if not isAffineRing A then 
-        error "expected an affine ring";
-    if not ( kk === coefficientRing A) then 
-        error "expected polynomial rings over the same ring";
-    gensk := generators(kk, CoefficientRing => ZZ);
-    if not all(gensk, x -> promote(x,R) == f promote(x,A)) then 
-        error "expected ring map to be identity on coefficient ring";
-
-    ambientB := A[gens R, MonomialOrder => (monoid R).Options.MonomialOrder,
-        Degrees => apply(degrees R, f.cache.DegreeMap)
-        ]; 
-    f' := map(ambientB, A, sub(f.matrix, ambientB));
-    J1 := ideal for x in gens A list f' x - x; 
-      -- todo: if opts.Remove, take lead terms of these (if they are linear?)
-      -- reduce them (in ambient ring?)
-      -- the lead terms which are variables in ambientB:
-      --   create new ambientB' which leaves these variables out.
-      -- then take J2 below, which should not involve the variables removed.
-      --   perhaps check that.
-      -- is the answer B = ambientB'/J2? (J2 after %J1, moving this to ambientB')
-    J2 := sub(ideal R, vars ambientB);
-    J2 = trim ideal((gens J2) % J1);
-    B := ambientB/(J1 + J2);
-    L := makeFrac B;
-    B)
-
--* MES working on this.
-noetherForm RingMap := Ring => opts -> (f) -> (
-    A := source f;
-    R := target f;
-    kk := coefficientRing R;
-    if not isCommutative A then 
-        error "expected source of ring map to be a commutative ring";
-    if A === kk then return R;
-    if not isAffineRing R then 
-        error "expected an affine ring";
-    if not isAffineRing A then 
-        error "expected an affine ring";
-    if not ( kk === coefficientRing A) then 
-        error "expected polynomial rings over the same ring";
-    gensk := generators(kk, CoefficientRing => ZZ);
-    if not all(gensk, x -> promote(x,R) == f promote(x,A)) then 
-        error "expected ring map to be identity on coefficient ring";
-
-    S := ambient R;
-    keep := findComplement lift(f.matrix, S); -- FIX.
-    ambientB := A[keep, Degrees => apply(keep/degree, f.cache.DegreeMap), Join => false
-        ];  -- IS CORRECT?
-    f' := map(ambientB, A, sub(f.matrix, ambientB)); -- FIX
-    J1 := ideal for x in gens A list f' x - x; 
-      -- todo: if opts.Remove, take lead terms of these (if they are linear?)
-      -- reduce them (in ambient ring?)
-      -- the lead terms which are variables in ambientB:
-      --   create new ambientB' which leaves these variables out.
-      -- then take J2 below, which should not involve the variables removed.
-      --   perhaps check that.
-      -- is the answer B = ambientB'/J2? (J2 after %J1, moving this to ambientB')
-    J2 := sub(ideal R, vars ambientB);
-    J2 = trim ideal((gens J2) % J1);
-    B := ambientB/(J1 + J2);
-    L := makeFrac B;
-    B)
-*-
-
--*
-noetherForm List := Ring => opts -> (xv) -> (
-    -- R should be a quotient of a polynomial ring,
-    -- xv a list of variables, algebraically independent in R
-    -- result: a ring over the sub-poly ring or subfield generated by
-    --  the variables xv.
-    -- TODO: allow the xv to be linear forms, or even perhaps higher degree polynomials.
-    --   for this part:
-    --     make a polynomial ring A with #xv variables.
-    --     make a ring map A --> (ring xv's), sending i-th var to xv#i.
-    --     call noetherForm Ringmap.
-    if #xv === 0 then error "expected non-empty list of variables";
-    R := ring xv#0;
-    if any(xv, x -> ring x =!= R) then error "expected variables all in the same ring";
-    if any(xv, x -> index x === null) then error "expected variables";
-    I := ideal R;
-    Rambient := ring I;
-    xindices := for x in xv list index x;
-    otherindices := sort toList (set toList(0..numgens R - 1) - set xindices);
-    kk := coefficientRing R;
-    A := kk [xv, Degrees => (degrees R)_xindices, Join=>false];
-    S := A[(gens R)_otherindices, Degrees => (degrees R)_otherindices, Join=>false];
-    phi := map(S,Rambient, sub(vars Rambient, S));
-    J := trim phi I;
-    B := S/J;
-    L := makeFrac B;
-    B
-    )
-*-
-
-noetherForm List := Ring => opts -> (xv) -> (
-    -- R should be a quotient of a polynomial ring,
-    -- xv a list of algebraically independent polynomials in R
-    -- result: a ring over the sub-poly ring or subfield generated by
-    --  the xv.
-    -- More detail:
-    --   If {f0, ..., fr} are the algebraically indep polynomials.
-    --   if any is a variable: use that name, remove from list of variables from ambientR
-    --          has lead term which is a variable: use a variable t_i, but remove the var from the ambientR vars
-    --          is a polynomial whose lead term is not linear: use a variable t_i.
-    --   This function constructs a polynomial ring A, and with the remaining set of variables
-    --      a quotient A[remaining vars]/I, isomorphic to R.
-    
-    -- TODO: allow the xv to be linear forms, or even perhaps higher degree polynomials.
-    --   for this part:
-    --     make a polynomial ring A with #xv variables.
-    --     make a ring map A --> (ring xv's), sending i-th var to xv#i.
-    --     call noetherForm Ringmap.
-    if #xv === 0 then error "expected non-empty list of ring elements";
-    R := ring xv#0;
-    if any(xv, x -> ring x =!= R) then error "expected elements all in the same ring";
-    I := ideal R;
-    ambientR := ring I; 
-    gensR := new MutableList from gens ambientR;
-    --gensA1 := select(xv, f -> index f =!= null); -- keep these in order.  Note that there should not be two the same.
-    --if #gensA1 != #(unique gensA1) then error "cannot have same variable occuring twice";
-    count := -1;
-    -- this loop returns a list of {varname, value in R}, 
-    -- and it also modifies gensR (sets any variable to null that should not be in gens of B).
-    elems := for f in xv list (
-        if index f =!= null then ( --index of the variable in R
-            gensR#(index f) = null;
-            {f, f}
-            )
-        else (
-            m := leadMonomial f;
-            if index m =!= null then (
-                gensR#(index m) = null;
-                );
-            count = count+1;
-            {(opts.Variable)_count, f}
-        ));
-    keepList := select(toList gensR, x -> x =!= null);
-    -- Create A and B' (ambient for the soon to be created B).
-    A := (coefficientRing R)(monoid [elems/first]);
-    B' := A(monoid [keepList, Join => false]);
-    -- Now create B, and the isomorphism phi: B --> R
-    phi' := map(R, B', keepList | (elems/last));
-    J := trim ker phi';
-    B := B'/J;
-    phi := map(R, B, phi'.matrix);
-    -- Now create the inverse of phi.  One should be able to do phi^-1, but fails (Sep 2020, 1.16)
-    -- Here is a workaround for the moment.
-    workAroundInverse phi; -- sets inverse of phi.
--*    
-    (B'', F) := flattenRing B; -- B == source phi, R == target phi
-    phi.cache.inverse = F^-1 * (phi * F^-1)^-1;
-    phi.cache.inverse.cache.inverse = phi;
-    assert(phi^-1 * phi === id_(source phi));
-    assert(phi * phi^-1 === id_(target phi));
-*-
-    B.cache#"NoetherMap" = phi; -- TODO: where to put this.
-    L := makeFrac B;
-    B
-    )
 
 -- This workaround sets the inverse of the isomorphism phi, in the case
 -- when the coefficient ring of source ring is not the coefficient ring of the target ring.
@@ -530,26 +328,6 @@ workAroundInverse RingMap := (phi) -> (
     --assert(phi^-1 * phi === id_B); -- TODO: make sure these are the same?  The matrices are different sometimes only with degrees.
     --assert(phi * phi^-1 === id_R); -- TODO: same
     )
-
---------- Code above to be removed ---------------------------------------------------------------
-
-  -- This one we would like to have the base be A = kk[t_0, t_1],
-  -- and B = A[c,d], know that t_0 --> a+b, t_1 --> a+d.
-  --                  a = d - t_1
-  --   therefore that b = d + t_0 - t_1.  How do we get this?
-  -- we have seversal sets of variables:
-  --  newA -- from linear equations, or higer degree elements of R.
-  --  oldA -- from B itself, these are variables in the list.
-  --  rewriteB -- these are variables we don't need, but we do need to know how to write them
-  --        in the new ring.
-  --  keepB -- these are the variables of B.  A subset of the current set of variables of R.
-  --
-  -- we are given the list L of polynomials (in ambient ring of R) that will form the variables of A
-  --   if L_i is a variable in ambientR, then use that name, remove from list of keepB, otherwise use a new name.
-  --   at this point, we can form the subring A.
-  -- now, we need the variables we will use in B
-  --   
-
 
 createCoefficientRing = method(Options => {Variable => getSymbol "t"})
 createCoefficientRing(Ring, List) := RingMap => opts -> (R, L) -> (
@@ -567,15 +345,13 @@ createCoefficientRing(Ring, List) := RingMap => opts -> (R, L) -> (
     map(R, A, L)
     )
 
--- XXX Next function:
--- From this ring map f: A --> R (created from createCoefficientRing(Ring, List), or given by the user
+-- From the ring map f: A --> R (created from createCoefficientRing(Ring, List), or given by the user
 --  check (perhaps): ker = 0, 
 --  create a new ring, isomorphic to R (stash isomorphisms too), of the form A[new vars]/I.
 -- This is what the following function is supposed to do.  But it should give errors that are reasonabe.
-
-  -- The following is currently hideous code to do something simple.
+-- The following is currently hideous code to do something simple.
   createRingPair = method()
-  createRingPair(RingMap) := RingMap => (f) -> (
+  createRingPair RingMap := RingMap => (f) -> (
       -- Given f : A --> R (R a polynomial ring) (A,R polynomial rings)
       -- create a ring B = A[new vars]/I, and an isomorphism R --> B.
       --   preferably, the ideal I has no linear forms of the "new vars".
@@ -618,125 +394,6 @@ createCoefficientRing(Ring, List) := RingMap => opts -> (R, L) -> (
       BtoR
       )
 
-noetherForm List := Ring => opts -> (xv) -> (
-    -- R should be a quotient of a polynomial ring,
-    -- xv a list of algebraically independent polynomials in R
-    -- result: a ring over the sub-poly ring or subfield generated by
-    --  the xv.
-    -- More detail:
-    --   If {f0, ..., fr} are the algebraically indep polynomials.
-    --   if any is a variable: use that name, remove from list of variables from ambientR
-    --          has lead term which is a variable: use a variable t_i, but remove the var from the ambientR vars
-    --          is a polynomial whose lead term is not linear: use a variable t_i.
-    --   This function constructs a polynomial ring A, and with the remaining set of variables
-    --      a quotient A[remaining vars]/I, isomorphic to R.
-    
-    -- TODO: allow the xv to be linear forms, or even perhaps higher degree polynomials.
-    --   for this part:
-    --     make a polynomial ring A with #xv variables.
-    --     make a ring map A --> (ring xv's), sending i-th var to xv#i.
-    --     call noetherForm Ringmap.
-    if #xv === 0 then error "expected non-empty list of ring elements";
-    R := ring xv#0;
-    if any(xv, x -> ring x =!= R) then error "expected elements all in the same ring";
-    I := ideal R;
-    -- First we create the rings A --> ambientB, without regard to I.
-    ambientR := ring I;
-    xvAmbientR := for x in xv list lift(x, ambientR);
-    f := createCoefficientRing(ambientR, xvAmbientR, Variable => opts.Variable);
-    F := createRingPair f;
-    G := inverse F;
-    -- now we need to descend this to R --> B = ambientB/(image of I)
-    J := trim (G I); 
-    B := (target G)/J;
-    L := makeFrac B;
-    -- Now create the isomorphism B --> R and its inverse.
-    GR := map(B, R, G.matrix);
-    FR := map(R, B, F.matrix);
-    GR.cache.inverse = FR;
-    FR.cache.inverse = GR;
-    B.NoetherInfo#"noether map" = FR; -- stash the map B --> R, but the other can be obtained via 'inverse'
-    B
-    )
-
--- Input: a ring map f : A --> R such that:
---   (a) A is a polynomial ring over a field, TODO: should allow a field too!
---   (b) R is a quotient of a polynomial ring over the same field
---   (c) R is a finite A-module
--- Output:
---   A ring B = A[vars]/I
---     which is isomorphic to R (the isomorphism is available as `noetherMap B`)
---     if A is the base field of R, then B should be the same as A.
--- Notes
---   (a) the `noetherMap B` is stored in B, not the original R.
---   (b) if the image of a variable is a variable, that variable is not in `vars`
---   (c) if the image of a variable is a linear polynomial, one of the variables present will not be 
---        placed into the vars of B.
-noetherForm RingMap := Ring => opts -> (f) -> (
-    A := source f;
-    R := target f;
-    kk := coefficientRing R;
-    if not isCommutative A then 
-        error "expected source of ring map to be a commutative ring";
-    if not isAffineRing R then 
-        error "expected an affine ring";
-    if not isAffineRing A then 
-        error "expected an affine ring";
-    if not (kk === A or kk === coefficientRing A) then 
-        error "expected polynomial rings over the same ring";
-    gensk := generators(kk, CoefficientRing => ZZ);
-    if not all(gensk, x -> promote(x,R) == f promote(x,A)) then 
-        error "expected ring map to be identity on coefficient ring";
-    --check finiteness
-    if not isModuleFinite f then 
-        error "expected ring to be finite over coefficients";
-    if A === kk then ( --TODO: logic mysterious in this case
-        setNoetherInfo(R, R);
-	return R
-        );
-    
-     -- AAA    
-
-    ambientB := A[gens R, MonomialOrder => (monoid R).Options.MonomialOrder,
-        Degrees => apply(degrees R, f.cache.DegreeMap)
-        ]; 
-    f' := map(ambientB, A, sub(f.matrix, ambientB));
-    J1 := ideal for x in gens A list f' x - x; 
-      -- todo: if opts.Remove, take lead terms of these (if they are linear?)
-      -- reduce them (in ambient ring?)
-      -- the lead terms which are variables in ambientB:
-      --   create new ambientB' which leaves these variables out.
-      -- then take J2 below, which should not involve the variables removed.
-      --   perhaps check that.
-      -- is the answer B = ambientB'/J2? (J2 after %J1, moving this to ambientB')
-    J2 := sub(ideal R, vars ambientB);
-    J2 = trim ideal((gens J2) % J1);
-    B := ambientB/(J1 + J2);
-    L := makeFrac B;
-    --TODO: need to set noetherMap
-    B)
-
-noetherForm Ring := Ring => opts -> R -> (
-    -- TODO: set the noether map.
-    S := coefficientRing R;
-    
-    if (isPolynomialRing S or isField S) and isModuleFinite R then (
-	KR := makeFrac R;
-	setNoetherInfo(R,KR);
-	R.NoetherInfo#"noether map" = map(R,R);
-	return R);
-    
-    (F, J, xv) := noetherNormalization R;
-    kk := coefficientRing R;
-    t := opts.Variable;
-    A := if #xv == 0 then kk else kk[t_0..t_(#xv-1)];
-    phi := map(R,A,for x in xv list F^-1 x);
-    noetherForm (phi, Remove => opts.Remove)
-    )
-
-----------------------------------------------------------
------ Hopefully final versions ---------------------------
-----------------------------------------------------------
 noetherForm Ring := Ring => opts -> R -> (
     -- case 1: R is already in Noether form: finite over its coeff ring.
     --   In this case, set NoetherInfo, map to/from R is the identity
@@ -1835,21 +1492,29 @@ TEST ///
   S = reesAlgebra I
   S = first flattenRing S
 
-B = noetherForm S
-assert (numgens coefficientRing B == 5)
-assert(radical ideal leadTerm ideal B == ideal gens ambient B)
+  noetherNormalization S
+  B = noetherForm S
+  assert (numgens coefficientRing B == 5)
+  assert(radical ideal leadTerm ideal B == ideal gens ambient B)
 
-elapsedTime sss = subsets(ss = (subsets(gens S, 3)/sum),5);
-#sss
-T = kk[t_0..t_4]
-i = 0
-f = map(S,T,sss_0)
-while not isModuleFinite f do (i= random (#sss); f =  map(S,T,sss_i);print i)
-isModuleFinite f
-B = noetherForm f
-assert(numgens coefficientRing B == 5)
-assert(radical ideal leadTerm ideal B == ideal gens ambient B)
+  T = kk[t_0..t_4]
+  use S
+  f = map(S,T,{w_0+w_2+b, w_3+a+c, w_1+w_2+d, a+b+d, w_2+c+d})
+  assert isModuleFinite f
+  B = noetherForm f
+  assert isModuleFinite B
+  assert(numgens coefficientRing B == 5)
+  assert(radical ideal leadTerm ideal B == ideal gens ambient B)
 
+-- We found this system of parameters as follows:
+-- This code is not run automatically as the first line takes too much space
+-*
+  elapsedTime sss = subsets(ss = (subsets(gens S, 3)/sum),5);
+  #sss
+  i = 0
+  f = map(S,T,sss_0)
+  while not isModuleFinite f do (i= random (#sss); f =  map(S,T,sss_i);print i)
+*-
 ///
 
 end----------------------------------------------------------
@@ -1904,10 +1569,7 @@ lift(MC,kk) -- error
 describe S
 describe kk
 
-monoid ring oo26
-options oo
-
 options monoid A
 methods flattenRing
 code 2
-code 
+

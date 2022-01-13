@@ -332,3 +332,8 @@ assert(F === map(R,R,{x, y}))
 assert(J == ideal(-x^3-x^2+y^2))
 assert(xs == {y})
 ///
+----------
+end--
+restart
+installPackage "NoetherNormalization"
+viewHelp NoetherNormalization

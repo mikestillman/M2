@@ -1,7 +1,7 @@
 newPackage(
         "NoetherNormalForm",
         Version => "0.9", 
-        Date => "13 January 2022",
+        Date => "17 January 2022",
         Authors => {
             {Name => "David Eisenbud", 
                 Email => "de@msri.org", 
@@ -9,21 +9,18 @@ newPackage(
             {Name => "Mike Stillman", 
                 Email => "mike@math.cornell.edu", 
                 HomePage => "http://www.math.cornell.edu/~mike"},
-	  {Name => "Bart Snapp", Email => "snapp@math.ohio-state.edu", HomePage => "http://www.math.ohio-state.edu/~snapp/"},
-	  {Name => "Nathaniel Stapleton", Email => "nstaple2@math.uiuc.edu"}
-	              },
+	        {Name => "Bart Snapp", 
+                Email => "snapp@math.ohio-state.edu", 
+                HomePage => "http://www.math.ohio-state.edu/~snapp/"},
+            {Name => "Nathaniel Stapleton", 
+                Email => "nstaple2@math.uiuc.edu"}
+            },
         Headline => "Noether normalizations",
         PackageExports => {
             "PushForward" -- for 'isModuleFinite'
             },
         DebuggingMode => true
         )
-
-
--- TODO:
---    DONE trace? of an element in B or L = frac B.
---    DONE noetherBasis (getBasisMatrix) (of frac B, of B?)
---    discriminant?
 
 export {
 --    "checkNoetherNormalization", -- TODO: get this to work?
@@ -663,154 +660,6 @@ noetherNormalization(QuotientRing) := noetherNormalization(PolynomialRing) := op
 --=========================================================================--
 
 
-
-
-
-TEST ///
--*
-  restart
-  debug needsPackage "NoetherNormalForm"
-*-
-  kk = ZZ/101
-  S = kk[a..d]
-  I = monomialCurveIdeal(S, {1,2,3})
-  R = S/I
-  phi1 = noetherForm R
-  assert isModuleFinite phi1
-  B = noetherForm phi1
-  assert isModuleFinite B
-  frac B
-  g = B.NoetherInfo#"noether map"
-  assert(g^-1 * g == 1)
-  assert(g * g^-1 == 1)
-  use R
-  phi2 = noetherForm {a,d}
-  assert isModuleFinite phi2
-  
-  
-///
-
-
-TEST ///
--*
-restart
-debug needsPackage "NoetherNormalForm"
-*-
-  -- Zero dimensional noetherForm...
-
-  R = QQ[x,y]/(x^4-3, y^3-2);
-  phi = map(R, QQ, {})
-  B = noetherForm phi
-  
-  assert inNoetherForm R
-  assert(B === R)
-  assert(# noetherBasis R == 12)
-
-  -- XXX  
-  kk = ZZ/32003
-  R = kk[x,y]/(x^4-3, y^3-2);
-  phi = map(R, kk, {})
-  isWellDefined phi  -- ok
-  B = noetherForm R
-  assert(B === R)
-  assert inNoetherForm R
-  assert(# noetherBasis B == 12)
-  numerator x_B
-  denominator x_B
-  assert(x/y == -16001 * x * y^2)
-
-  kk = QQ
-  R = kk[x,y]/(x^4-3, y^3-2);
-  phi = map(R, kk, {})
-  -- TODO: isWellDefined phi -- fails... BUG in Core... git issue #1998
-  assert inNoetherForm B
---isWellDefined phi
-
-  kk = GF(27)
-  assert(kk === frac kk)
-  R = kk[x,y]/(x^4-2, y^5-2);
-  phi = map(R, kk, {})
-  isWellDefined phi  -- ok
-  B = noetherForm R
-  assert(B === R)
-  assert(frac B === R)
-  assert(x/y === - x * y^4)
-  f = x^3/y
-  factor oo
-  factor((x^3/y)) -- fails...
-  assert(# noetherBasis B == 20)
-  traceForm B -- (now works). (used to fail! due to the bug below, which is now git issue #1999)
-
-  kk = QQ
-  R = kk[x,y]/(x^4-2, y^5-2);
-  phi = map(R, kk, {})
-  B = noetherForm R
-  noetherBasis B
-  traceForm B
-  det oo
-
-  -- bug in M2 #1999  NOW FIXED, it appears.
-  -- kk = ZZ/101
-  -- R = kk[x]
-  -- f = matrix(kk, {{1,1}})  
-  -- g = map(R^{0,1},, {{1,1},{1,1}})
-  -- f*g
-  --   also try:   lift(f*g, kk)
-///
-
-TEST ///
-  -- we test usage of noetherForm R, where R is a ring:
-  -- here: if R is finite over its base, (and R.?frac is not set).
-  --          in this case, we set the noether info, and set frac R too.
-  -- if R is not finite over its base, we call the noether normalization code.
--*  
-  restart
-  needsPackage "NoetherNormalForm"
-*-
-  R = ZZ/101[x,y]/(x^2-y-1, y^3-x*y-3)
-
-  B = noetherForm R
-  noetherMap B -- FAILS: need to set this!
-  A = coefficientRing B
-  assert(coefficientRing frac B === frac A)
-///
-
-TEST ///
-  -- we test usage of noetherForm R, where R is a ring:
-  -- here: if R is finite over its base, (and R.?frac is not set).
-  --          in this case, we set the noether info, and set frac R too.
-  -- if R is not finite over its base, we call the noether normalization code.
--*  
-  restart
-  needsPackage "NoetherNormalForm"
-*-
-  R = ZZ/101[x,y]/(x*y^3-x^2-y*x)
-  B = noetherForm R
-  noetherMap B -- FAILS: need to set this!
-  A = coefficientRing B
-  assert(coefficientRing frac B === frac A)
-///
-
-TEST ///
-  -- we test usage of noetherForm f, f a RingMap A --> R
-  -- case 1: f is the inclusion of A into R, where A is the coefficient ring of R, and B is finite over A
-  --   in this case, return B, as in the previous case.
-  -- In other cases, we set B = A[new vars]/I, where B is isomorphic to target of f.
-  --   "new vars": either given by the user, or, if some of the variables appear in A and target 
-  --   AND they map to same elements, then we use these names in A, and leave them out of B.
-  --   any variables not mapping to themselves are given new names.
-  
-  -- This function creates A and B, then calls noetherForm B (which sets frac B, and the noether info).
-///
-
-TEST ///
-  -- we test usage of noetherForm List
-  -- A will be a polynomial ring given by variables taken from the list: if an element of the list is a variable,
-  --  then we use that name.  If not, we give it a new variable name.
-///
-
-
-
 beginDocumentation()
 
 doc ///
@@ -1029,10 +878,8 @@ doc ///
     noetherForm
 ///
 
-
-
 document { 
-     Key => NoetherNormalization,
+     Key => "NoetherNormalization",
      Headline => "routines related to Noether normalization",
      EM "NoetherNormalization", " is a package for computing ring homomorphisms 
      which will place ideals in Noether normal position. The algorithms
@@ -1042,83 +889,247 @@ document {
      Springer, 1989, 259-273."
      }
 
------------------------------------------------------------------------------
-document {
-     Key => {noetherNormalization, 
-	  (noetherNormalization,Ideal), 
-	  (noetherNormalization,QuotientRing), 
-	  (noetherNormalization,PolynomialRing),
-	  LimitList,
-	  RandomRange,
-	  [noetherNormalization,LimitList],
-	  [noetherNormalization,RandomRange],
-	  [noetherNormalization,Verbose]
-	  },
-     Headline => "data for Noether normalization",
-     Usage => "(f,J,X) = noetherNormalization C",
-     Inputs => {
-	  "C" => null => {"which is either ", ofClass Ideal, " ", TT "I", ", or ", ofClass QuotientRing, " ", TT "R/I", " where ", TT "R", " is ", ofClass PolynomialRing },
-	  LimitList => List => "gives the value which ", TO "BasisElementLimit", "will take",
-	  RandomRange => ZZ => "if not 0, gives a integer bound for the random coefficients. If 0, then chooses random elements from the coefficient field."
-	  },
-     Outputs => {
-	  "f" => RingMap => {"an automorphism of ", TT "R"},
-	  "J" => Ideal => { "the image of ", TT "I", " under ", TT "f"},
-	  "X" => List => { "a list of variables which are algebraically independent in ", TT "R/J"},
-	  },
-     "The computations performed in the routine ", TT "noetherNormalization", " use a random linear change of coordinates,
-     hence one should expect the output to change each time the routine is executed.",
-     EXAMPLE lines ///
-     R = QQ[x_1..x_4];
-     I = ideal(x_2^2+x_1*x_2+1, x_1*x_2*x_3*x_4+1);
-     (f,J,X) = noetherNormalization I
-     ///,
-     "The next example shows how when we use the lexicographical ordering, we can see the integrality of ", 
-     TT "R/ f I", " over the polynomial ring in ", TT "dim(R/I)", " variables:",
-     EXAMPLE lines ///
-     R = QQ[x_1..x_5, MonomialOrder => Lex];
-     I = ideal(x_2*x_1-x_5^3, x_5*x_1^3);
-     (f,J,X) = noetherNormalization I
-     transpose gens gb J
-     ///,
-     "If ", TT "noetherNormalization", " is unable to place the ideal into the desired position after a few tries, the following warning is given:",
-     EXAMPLE lines ///
-     R = ZZ/2[a,b];
-     I = ideal(a^2*b+a*b^2+1);
-     (f,J,X) = noetherNormalization I
-     ///,
-     "Here is an example with the option ", TT "Verbose => true", ":",
-     EXAMPLE lines /// 
-     R = QQ[x_1..x_4];
-     I = ideal(x_2^2+x_1*x_2+1, x_1*x_2*x_3*x_4+1);
-     (f,J,X) = noetherNormalization(I,Verbose => true)
-     ///,
-     "The first number in the output above gives the number of
-     linear transformations performed by the routine while attempting to
-     place ", TT "I", " into the desired position.
-     The second number tells which ", TO "BasisElementLimit", " was used when computing the (partial) Groebner basis.
-     By default, ", TT "noetherNormalization", " tries to use a partial
-     Groebner basis. It does this by sequentially computing a Groebner
-     basis with the option ", TO "BasisElementLimit", " set to
-     predetermined values. The default values come from the following list:", TT "{5,20,40,60,80,infinity}", 
-     ". To set the values manually, use the option ", TT "LimitList", ":",
-     EXAMPLE lines ///
-     R = QQ[x_1..x_4]; 
-     I = ideal(x_2^2+x_1*x_2+1, x_1*x_2*x_3*x_4+1);
-     (f,J,X) = noetherNormalization(I,Verbose => true,LimitList => {5,10})
-     ///,
-     "To limit the randomness of the coefficients, use the option ", TT "RandomRange", 
-     ". Here is an example where the coefficients of the linear transformation are 
-     random integers from ", TT "-2", " to ", TT "2", ":", 
-     EXAMPLE lines ///
-     R = QQ[x_1..x_4];
-     I = ideal(x_2^2+x_1*x_2+1, x_1*x_2*x_3*x_4+1);
-     (f,J,X) = noetherNormalization(I,Verbose => true,RandomRange => 2)
-     ///,
-     PARA {
-     "This symbol is provided by the package ", TO NoetherNormalization, "."
-     }
-     }
+doc ///
+  Key
+    noetherNormalization
+    (noetherNormalization,Ideal)
+    (noetherNormalization,QuotientRing)
+    (noetherNormalization,PolynomialRing)
+    LimitList
+    RandomRange
+    [noetherNormalization,LimitList]
+    [noetherNormalization,RandomRange]
+    [noetherNormalization,Verbose]
+  Headline
+    data for Noether normalization
+  Usage
+    (f,J,X) = noetherNormalization C
+  Inputs
+    C:Ideal
+      $I$ or @ofClass  QuotientRing@ $R/I$ where $R$ is a @ofClass PolynomialRing@ 
+    LimitList => List 
+      gives the value which @TO "BasisElementLimit"@ will take 
+      in calls to groebner basis computations
+    RandomRange => ZZ 
+      if not 0, gives an integer bound for the random coefficients. 
+      If 0, then chooses random elements from the coefficient field
+  Outputs
+    f:RingMap 
+      an automorphism of $R$
+    J:Ideal 
+      the image of $I$ under $f$
+    X:List 
+      a list of variables which are algebraically independent in $R/J$
+  Description
+    Text
+      The computations performed in the routine {\tt noetherNormalization}
+      use a random linear change of coordinates,
+      hence one should expect the output to change each time the routine is executed.
+    Example
+      R = QQ[x_1..x_4];
+      I = ideal(x_2^2+x_1*x_2+1, x_1*x_2*x_3*x_4+1);
+      (f,J,X) = noetherNormalization I
+    Text
+      The next example shows how when we use the lexicographical ordering, 
+      we can see the integrality of $R/f(I)$
+      over the polynomial ring in $\dim(R/I)$, variables.
+    Example
+       R = QQ[x_1..x_5, MonomialOrder => Lex];
+       I = ideal(x_2*x_1-x_5^3, x_5*x_1^3);
+       (f,J,X) = noetherNormalization I
+       transpose gens gb J
+    Text
+      If {\tt noetherNormalization} is unable to place the ideal into 
+      the desired position after a few tries, the following warning is given.
+    Example
+      R = ZZ/2[a,b];
+      I = ideal(a^2*b+a*b^2+1);
+      (f,J,X) = noetherNormalization I
+    Text
+      Here is an example with the option {\tt Verbose => true}.
+    Example
+      R = QQ[x_1..x_4];
+      I = ideal(x_2^2+x_1*x_2+1, x_1*x_2*x_3*x_4+1);
+      (f,J,X) = noetherNormalization(I, Verbose => true)
+    Text
+      The first number in the output above gives the number of
+      linear transformations performed by the routine while attempting to
+      place $I$ into the desired position.
+      The second number tells which {\tt BasisElementLimit}
+      was used when computing the (partial) Groebner basis.
+      By default, {\tt noetherNormalization} tries to use a partial
+      Groebner basis. It does this by sequentially computing a Groebner
+      basis with the option {\tt BasisElementLimit}, set to
+      predetermined values. The default values come from the following list:
+      $\{5,20,40,60,80,\infty\}$.
+      To set the values manually, use the option {\tt LimitList}.
+    Example
+      R = QQ[x_1..x_4]; 
+      I = ideal(x_2^2+x_1*x_2+1, x_1*x_2*x_3*x_4+1);
+      (f,J,X) = noetherNormalization(I,Verbose => true,LimitList => {5,10})
+    Text
+      To limit the randomness of the coefficients, use the option {\tt RandomRange}. 
+      Here is an example where the coefficients of the linear transformation are 
+      random integers from in the range $[-2, 2]$.
+    Example
+      R = QQ[x_1..x_4];
+      I = ideal(x_2^2+x_1*x_2+1, x_1*x_2*x_3*x_4+1);
+      (f,J,X) = noetherNormalization(I,Verbose => true,RandomRange => 2)
+    Text
+      The algorithms
+      used are based on algorithms found in A. Logar's paper: {\it A
+      Computational Proof of the Noether Normalization Lemma}. In:
+      Proceedings 6th AAEEC, Lecture Notes in Computer Science 357,
+      Springer, 1989, 259-273.
+    Text
+      This symbol is provided by the package @TO "NoetherNormalForm"@
+  Caveat
+  SeeAlso
+///
+
+
+TEST ///
+-*
+  restart
+  debug needsPackage "NoetherNormalForm"
+*-
+  kk = ZZ/101
+  S = kk[a..d]
+  I = monomialCurveIdeal(S, {1,2,3})
+  R = S/I
+  phi1 = noetherForm R
+  assert isModuleFinite phi1
+  B = noetherForm phi1
+  assert isModuleFinite B
+  frac B
+  g = B.NoetherInfo#"noether map"
+  assert(g^-1 * g == 1)
+  assert(g * g^-1 == 1)
+  use R
+  phi2 = noetherForm {a,d}
+  assert isModuleFinite phi2
+  
+  
+///
+
+
+TEST ///
+-*
+restart
+debug needsPackage "NoetherNormalForm"
+*-
+  -- Zero dimensional noetherForm...
+
+  R = QQ[x,y]/(x^4-3, y^3-2);
+  phi = map(R, QQ, {})
+  B = noetherForm phi
+  
+  assert inNoetherForm R
+  assert(B === R)
+  assert(# noetherBasis R == 12)
+
+  -- XXX  
+  kk = ZZ/32003
+  R = kk[x,y]/(x^4-3, y^3-2);
+  phi = map(R, kk, {})
+  isWellDefined phi  -- ok
+  B = noetherForm R
+  assert(B === R)
+  assert inNoetherForm R
+  assert(# noetherBasis B == 12)
+  numerator x_B
+  denominator x_B
+  assert(x/y == -16001 * x * y^2)
+
+  kk = QQ
+  R = kk[x,y]/(x^4-3, y^3-2);
+  phi = map(R, kk, {})
+  -- TODO: isWellDefined phi -- fails... BUG in Core... git issue #1998
+  assert inNoetherForm B
+--isWellDefined phi
+
+  kk = GF(27)
+  assert(kk === frac kk)
+  R = kk[x,y]/(x^4-2, y^5-2);
+  phi = map(R, kk, {})
+  isWellDefined phi  -- ok
+  B = noetherForm R
+  assert(B === R)
+  assert(frac B === R)
+  assert(x/y === - x * y^4)
+  f = x^3/y
+  factor oo
+  factor((x^3/y)) -- fails...
+  assert(# noetherBasis B == 20)
+  traceForm B -- (now works). (used to fail! due to the bug below, which is now git issue #1999)
+
+  kk = QQ
+  R = kk[x,y]/(x^4-2, y^5-2);
+  phi = map(R, kk, {})
+  B = noetherForm R
+  noetherBasis B
+  traceForm B
+  det oo
+
+  -- bug in M2 #1999  NOW FIXED, it appears.
+  -- kk = ZZ/101
+  -- R = kk[x]
+  -- f = matrix(kk, {{1,1}})  
+  -- g = map(R^{0,1},, {{1,1},{1,1}})
+  -- f*g
+  --   also try:   lift(f*g, kk)
+///
+
+TEST ///
+  -- we test usage of noetherForm R, where R is a ring:
+  -- here: if R is finite over its base, (and R.?frac is not set).
+  --          in this case, we set the noether info, and set frac R too.
+  -- if R is not finite over its base, we call the noether normalization code.
+-*  
+  restart
+  needsPackage "NoetherNormalForm"
+*-
+  R = ZZ/101[x,y]/(x^2-y-1, y^3-x*y-3)
+
+  B = noetherForm R
+  noetherMap B -- FAILS: need to set this!
+  A = coefficientRing B
+  assert(coefficientRing frac B === frac A)
+///
+
+TEST ///
+  -- we test usage of noetherForm R, where R is a ring:
+  -- here: if R is finite over its base, (and R.?frac is not set).
+  --          in this case, we set the noether info, and set frac R too.
+  -- if R is not finite over its base, we call the noether normalization code.
+-*  
+  restart
+  needsPackage "NoetherNormalForm"
+*-
+  R = ZZ/101[x,y]/(x*y^3-x^2-y*x)
+  B = noetherForm R
+  noetherMap B
+  A = coefficientRing B
+  assert(coefficientRing frac B === frac A)
+///
+
+TEST ///
+  -- we test usage of noetherForm f, f a RingMap A --> R
+  -- case 1: f is the inclusion of A into R, where A is the coefficient ring of R, and B is finite over A
+  --   in this case, return B, as in the previous case.
+  -- In other cases, we set B = A[new vars]/I, where B is isomorphic to target of f.
+  --   "new vars": either given by the user, or, if some of the variables appear in A and target 
+  --   AND they map to same elements, then we use these names in A, and leave them out of B.
+  --   any variables not mapping to themselves are given new names.
+  
+  -- This function creates A and B, then calls noetherForm B (which sets frac B, and the noether info).
+///
+
+TEST ///
+  -- we test usage of noetherForm List
+  -- A will be a polynomial ring given by variables taken from the list: if an element of the list is a variable,
+  --  then we use that name.  If not, we give it a new variable name.
+///
 
 --=========================================================================--
 

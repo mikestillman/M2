@@ -877,7 +877,7 @@ doc ///
   SeeAlso
     noetherForm
 ///
-
+-*
 document { 
      Key => "NoetherNormalization",
      Headline => "routines related to Noether normalization",
@@ -888,7 +888,7 @@ document {
      Proceedings 6th AAEEC, Lecture Notes in Computer Science 357,
      Springer, 1989, 259-273."
      }
-
+*-
 doc ///
   Key
     noetherNormalization
@@ -1856,21 +1856,3 @@ uninstallPackage "NoetherNormalForm"
 restart
 installPackage "NoetherNormalForm"
 check NoetherNormalForm
-
-restart
-needsPackage  "NoetherNormalForm"
-check NoetherNormalForm
-
-doc ///
-  Key
-  Headline
-  Usage
-  Inputs
-  Outputs
-  Description
-    Text
-    Example
-  Caveat
-  SeeAlso
-///
-

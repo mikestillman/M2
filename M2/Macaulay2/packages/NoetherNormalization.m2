@@ -219,7 +219,7 @@ noetherNormalization(QuotientRing) := noetherNormalization(PolynomialRing) := op
 --=========================================================================--
 
 beginDocumentation() -- the start of the documentation
-
+ 
 -----------------------------------------------------------------------------
 
 document { 

@@ -1,5 +1,5 @@
 newPackage(
-        "NoetherNormalForm",
+        "NoetherNormalization",
         Version => "0.9", 
         Date => "17 January 2022",
         Authors => {
@@ -24,7 +24,7 @@ newPackage(
 
 export {
 --    "checkNoetherNormalization", -- TODO: get this to work?
-    "noetherForm",
+    "noetherNormalization",
     "noetherBasis",
     "noetherBasisMatrix",
     "inNoetherForm",
@@ -35,7 +35,7 @@ export {
     "NoetherInfo",
     "Remove"
     }
-export{"noetherNormalization","LimitList","RandomRange"}
+export{"noetherNormalizationData","LimitList","RandomRange"}
 ----------------------------------------------------------------
 -- The following 3 lines: probably should be in m2/enginering.m2?
 raw = value Core#"private dictionary"#"raw"
@@ -74,7 +74,7 @@ setNoetherInfo(Ring, Ring) := (B, KB) -> (
 noetherInfo = method()
 noetherInfo Ring := MutableHashTable => (R) -> (
     if not R.?NoetherInfo
-    then error "expected a ring or field created with `noetherForm`";
+    then error "expected a ring or field created with `noetherNormalization`";
     R.NoetherInfo
     )
 
@@ -309,7 +309,7 @@ makeFrac Ring := Ring => (B) -> (
     KB
     )
 
-noetherForm = method(Options => {Remove => null, Variable => getSymbol "t"})
+noetherNormalization = method(Options => {Remove => null, Variable => getSymbol "t"})
 
 
 -- This workaround sets the inverse of the isomorphism phi, in the case
@@ -392,12 +392,12 @@ createCoefficientRing(Ring, List) := RingMap => opts -> (R, L) -> (
       BtoR
       )
 
-noetherForm Ring := Ring => opts -> R -> (
+noetherNormalization Ring := Ring => opts -> R -> (
     -- case 1: R is already in Noether form: finite over its coeff ring.
     --   In this case, set NoetherInfo, map to/from R is the identity
     -- case 2: not the case.
     --   Compute random linear forms (if not too low of characteristic).
-    --   make a list L of these, call noetherForm L.
+    --   make a list L of these, call noetherNormalization L.
 
     A := coefficientRing R;
     
@@ -410,15 +410,15 @@ noetherForm Ring := Ring => opts -> R -> (
     
     -- get the flattened coeff ring of R.
     -- use the flattened ring to get elements.    
-    (F, J, xv) := noetherNormalization R;
+    (F, J, xv) := noetherNormalizationData R;
     kk := coefficientRing R;
     t := opts.Variable;
     A = if #xv == 0 then kk else kk[t_0..t_(#xv-1)];
     phi := map(R,A,for x in xv list F^-1 x);
-    noetherForm phi
+    noetherNormalization phi
     )
 
-noetherForm List := Ring => opts -> L -> (
+noetherNormalization List := Ring => opts -> L -> (
     -- check that ring R of all elements is the same
     if #L === 0 then 
         error "expected non-empty list of ring elements";
@@ -428,10 +428,10 @@ noetherForm List := Ring => opts -> L -> (
     if not all(L, f -> ring f === R) then
         error "expected elements in the same ring";
     f := createCoefficientRing(R, L, Variable => opts.Variable);
-    noetherForm f
+    noetherNormalization f
     )
 
-noetherForm RingMap := Ring => opts -> f -> (
+noetherNormalization RingMap := Ring => opts -> f -> (
     if not isModuleFinite f then
         error "expected map or elements which make ring finite over the base";
     -- check that f is module finite
@@ -476,7 +476,7 @@ noetherForm RingMap := Ring => opts -> f -> (
 
 
 --=========================================================================--
--- initial comments: noetherNormalization takes an ideal I of a ring R
+-- initial comments: noetherNormalizationData takes an ideal I of a ring R
 -- over a field k such that the dimension of I in R is d (fix these
 -- symbols for all comments) and returns 1) a linear transformation
 -- that puts the ideal in Noether position and 2) the independent
@@ -578,7 +578,7 @@ randomSum = (U,V,k,rr) -> (
 
 -----------------------------------------------------------------------------
 
--- comments: noetherNormalization is the main method. An ideal I is
+-- comments: noetherNormalizationData is the main method. An ideal I is
 -- passed to it and its Groebner basis is immediately computed.  Next
 -- a random linear transformation is applied and we check to see if
 -- the ideal is in Noether position. We then check to see if the the
@@ -589,8 +589,8 @@ randomSum = (U,V,k,rr) -> (
 -- integrality is never witnessed then we apply another random linear
 -- transformation and start the process again. 
 
-noetherNormalization = method(Options => {Verbose => false, LimitList => {5,20,40,60,80,infinity}, RandomRange => 0})
-noetherNormalization(Ideal) := opts -> I -> (
+noetherNormalizationData = method(Options => {Verbose => false, LimitList => {5,20,40,60,80,infinity}, RandomRange => 0})
+noetherNormalizationData(Ideal) := opts -> I -> (
      A := ring I;
      (flatA,fAtoFlatA) := flattenRing A;
      fFlatAtoA := fAtoFlatA^-1;
@@ -632,10 +632,10 @@ noetherNormalization(Ideal) := opts -> I -> (
 	       if opts.Verbose then (<< "--trying with basis element limit: " << limitsequence_seqindex << endl;);
 	       fI := f I;
 	       G = gb(fI, BasisElementLimit => limitsequence_seqindex); 
-	       done = lastCheck(X,G,d);-- may want to define f I above, but this causes noetherNormalization to fail at the moment
+	       done = lastCheck(X,G,d);-- may want to define f I above, but this causes noetherNormalizationData to fail at the moment
      	       seqindex = seqindex + 1;
 	       );
-	  if counter == 5 then << "--warning: no good linear transformation found by noetherNormalization" <<endl;
+	  if counter == 5 then << "--warning: no good linear transformation found by noetherNormalizationData" <<endl;
 	  if done or counter == 5 then(
 	       ffinal := ffinverse*f*ff;
 	       ffinalInverse := ffinverse*finverse*ff;	     	  
@@ -651,9 +651,9 @@ noetherNormalization(Ideal) := opts -> I -> (
 
 -----------------------------------------------------------------------------
 
-noetherNormalization(QuotientRing) := noetherNormalization(PolynomialRing) := opts -> R -> (
+noetherNormalizationData(QuotientRing) := noetherNormalizationData(PolynomialRing) := opts -> R -> (
      if not isPolynomialRing ring ideal R then error "expected a quotient of a polynomial ring";
-     noetherNormalization(ideal R, Verbose => opts.Verbose)
+     noetherNormalizationData(ideal R, Verbose => opts.Verbose)
      );
 
 
@@ -664,7 +664,7 @@ beginDocumentation()
 
 doc ///
   Key
-    NoetherNormalForm
+    NoetherNormalization
   Headline
     code for Noether normal forms of affine rings
   Description
@@ -673,16 +673,16 @@ doc ///
 
 doc ///
   Key
-    noetherForm
-    (noetherForm, List)
-    (noetherForm, RingMap)
-    (noetherForm, Ring)
+    noetherNormalization
+    (noetherNormalization, List)
+    (noetherNormalization, RingMap)
+    (noetherNormalization, Ring)
   Headline
     create a polynomial ring in Noether normal form
   Usage
-    B = noetherForm phi
-    B = noetherForm xv
-    B = noetherForm R
+    B = noetherNormalization phi
+    B = noetherNormalization xv
+    B = noetherNormalization R
   Inputs
     phi:RingMap
       from a ring {\tt A} to a ring {\tt R}
@@ -707,7 +707,7 @@ doc ///
       A = kk[t]
       R = kk[x,y]/(y^4-x*y^3-(x^2+1)*y-x^6)
       phi = map(R,A,{R_0})
-      B = noetherForm phi
+      B = noetherNormalization phi
     Example
       kk = ZZ/101
       x = symbol x
@@ -715,7 +715,7 @@ doc ///
       R = kk[x,y,z]/(ideal(x*y, x*z, y*z))
       A = kk[t]
       phi = map(R,A,{R_0+R_1+R_2})
-      B = noetherForm phi
+      B = noetherNormalization phi
   Caveat
     The base field must currently be a finite field, or the rationals.
     Finiteness is not yet checked.
@@ -739,15 +739,15 @@ doc ///
     Example
       kk = ZZ/101
       R = kk[x,y,z]/(y^4-x*y^3-(x^2+1)*y-x^6, z^3-x*z-x)
-      B = noetherForm {x}
+      B = noetherNormalization {x}
       noetherBasis B
       noetherBasis frac B
       assert(multiplicationMap(y^3) == (multiplicationMap y)^3)
       trace(y^3) -- fails?
   Caveat
-    One must have created this ring with @TO noetherForm@.
+    One must have created this ring with @TO noetherNormalization@.
   SeeAlso
-    noetherForm
+    noetherNormalization
     (inNoetherForm, Ring)
     (noetherBasis, Ring)
     (multiplicationMap, RingElement)
@@ -772,7 +772,7 @@ doc ///
       S = QQ[a..d];
       I = monomialCurveIdeal(S, {1,3,4})
       R = S/I
-      B = noetherForm {a,d}
+      B = noetherNormalization {a,d}
       bas = noetherBasis B
       bas/ring
     Example
@@ -788,9 +788,9 @@ doc ///
       det oo
     Text
   Caveat
-    One must have created this ring with @TO noetherForm@.
+    One must have created this ring with @TO noetherNormalization@.
   SeeAlso
-    noetherForm
+    noetherNormalization
     (inNoetherForm, Ring)
     (noetherBasis, Ring)
     (trace, RingElement)
@@ -802,7 +802,7 @@ doc ///
     traceForm
     (traceForm, Ring)
   Headline
-    trace form matrix of ring created using noetherForm
+    trace form matrix of ring created using noetherNormalization
   Usage
     traceForm R
   Inputs
@@ -812,9 +812,9 @@ doc ///
   Description
     Text
   Caveat
-    One must have created this ring with @TO noetherForm@.
+    One must have created this ring with @TO noetherNormalization@.
   SeeAlso
-    noetherForm
+    noetherNormalization
     (inNoetherForm, Ring)
     (noetherBasis, Ring)
     (multiplicationMap, RingElement)
@@ -837,7 +837,7 @@ doc ///
       S = ZZ/101[a..d]
       I = monomialCurveIdeal(S, {1,3,4})
       R = S/I
-      B = noetherForm {a,d}
+      B = noetherNormalization {a,d}
       bas = noetherBasis B
       bas/trace
       bas = noetherBasis frac B
@@ -849,9 +849,9 @@ doc ///
       traceForm frac B
       traceForm B
   Caveat
-    One must have created this ring with @TO noetherForm@.
+    One must have created this ring with @TO noetherNormalization@.
   SeeAlso
-    noetherForm
+    noetherNormalization
     (inNoetherForm, Ring)
     (noetherBasis, Ring)
     (multiplicationMap, RingElement)
@@ -862,7 +862,7 @@ doc ///
     inNoetherForm
     (inNoetherForm, Ring)
   Headline
-    whether the ring was created using noetherForm
+    whether the ring was created using noetherNormalization
   Usage
     inNoetherForm R
   Inputs
@@ -872,10 +872,10 @@ doc ///
   Description
     Text
   Caveat
-    This function only checks whether the ring was created using @TO noetherForm@, not
+    This function only checks whether the ring was created using @TO noetherNormalization@, not
     whether it really is in Noether normal form
   SeeAlso
-    noetherForm
+    noetherNormalization
 ///
 -*
 document { 
@@ -891,19 +891,19 @@ document {
 *-
 doc ///
   Key
-    noetherNormalization
-    (noetherNormalization,Ideal)
-    (noetherNormalization,QuotientRing)
-    (noetherNormalization,PolynomialRing)
+    noetherNormalizationData
+    (noetherNormalizationData,Ideal)
+    (noetherNormalizationData,QuotientRing)
+    (noetherNormalizationData,PolynomialRing)
     LimitList
     RandomRange
-    [noetherNormalization,LimitList]
-    [noetherNormalization,RandomRange]
-    [noetherNormalization,Verbose]
+    [noetherNormalizationData,LimitList]
+    [noetherNormalizationData,RandomRange]
+    [noetherNormalizationData,Verbose]
   Headline
     data for Noether normalization
   Usage
-    (f,J,X) = noetherNormalization C
+    (f,J,X) = noetherNormalizationData C
   Inputs
     C:Ideal
       $I$ or @ofClass  QuotientRing@ $R/I$ where $R$ is a @ofClass PolynomialRing@ 
@@ -922,13 +922,13 @@ doc ///
       a list of variables which are algebraically independent in $R/J$
   Description
     Text
-      The computations performed in the routine {\tt noetherNormalization}
+      The computations performed in the routine {\tt noetherNormalizationData}
       use a random linear change of coordinates,
       hence one should expect the output to change each time the routine is executed.
     Example
       R = QQ[x_1..x_4];
       I = ideal(x_2^2+x_1*x_2+1, x_1*x_2*x_3*x_4+1);
-      (f,J,X) = noetherNormalization I
+      (f,J,X) = noetherNormalizationData I
     Text
       The next example shows how when we use the lexicographical ordering, 
       we can see the integrality of $R/f(I)$
@@ -936,28 +936,28 @@ doc ///
     Example
        R = QQ[x_1..x_5, MonomialOrder => Lex];
        I = ideal(x_2*x_1-x_5^3, x_5*x_1^3);
-       (f,J,X) = noetherNormalization I
+       (f,J,X) = noetherNormalizationData I
        transpose gens gb J
     Text
-      If {\tt noetherNormalization} is unable to place the ideal into 
+      If {\tt noetherNormalizationData} is unable to place the ideal into 
       the desired position after a few tries, the following warning is given.
     Example
       R = ZZ/2[a,b];
       I = ideal(a^2*b+a*b^2+1);
-      (f,J,X) = noetherNormalization I
+      (f,J,X) = noetherNormalizationData I
     Text
       Here is an example with the option {\tt Verbose => true}.
     Example
       R = QQ[x_1..x_4];
       I = ideal(x_2^2+x_1*x_2+1, x_1*x_2*x_3*x_4+1);
-      (f,J,X) = noetherNormalization(I, Verbose => true)
+      (f,J,X) = noetherNormalizationData(I, Verbose => true)
     Text
       The first number in the output above gives the number of
       linear transformations performed by the routine while attempting to
       place $I$ into the desired position.
       The second number tells which {\tt BasisElementLimit}
       was used when computing the (partial) Groebner basis.
-      By default, {\tt noetherNormalization} tries to use a partial
+      By default, {\tt noetherNormalizationData} tries to use a partial
       Groebner basis. It does this by sequentially computing a Groebner
       basis with the option {\tt BasisElementLimit}, set to
       predetermined values. The default values come from the following list:
@@ -966,7 +966,7 @@ doc ///
     Example
       R = QQ[x_1..x_4]; 
       I = ideal(x_2^2+x_1*x_2+1, x_1*x_2*x_3*x_4+1);
-      (f,J,X) = noetherNormalization(I,Verbose => true,LimitList => {5,10})
+      (f,J,X) = noetherNormalizationData(I,Verbose => true,LimitList => {5,10})
     Text
       To limit the randomness of the coefficients, use the option {\tt RandomRange}. 
       Here is an example where the coefficients of the linear transformation are 
@@ -974,7 +974,7 @@ doc ///
     Example
       R = QQ[x_1..x_4];
       I = ideal(x_2^2+x_1*x_2+1, x_1*x_2*x_3*x_4+1);
-      (f,J,X) = noetherNormalization(I,Verbose => true,RandomRange => 2)
+      (f,J,X) = noetherNormalizationData(I,Verbose => true,RandomRange => 2)
     Text
       The algorithms
       used are based on algorithms found in A. Logar's paper: {\it A
@@ -982,7 +982,7 @@ doc ///
       Proceedings 6th AAEEC, Lecture Notes in Computer Science 357,
       Springer, 1989, 259-273.
     Text
-      This symbol is provided by the package @TO "NoetherNormalForm"@
+      This symbol is provided by the package @TO "NoetherNormalization"@
   Caveat
   SeeAlso
 ///
@@ -991,22 +991,22 @@ doc ///
 TEST ///
 -*
   restart
-  debug needsPackage "NoetherNormalForm"
+  debug needsPackage "NoetherNormalization"
 *-
   kk = ZZ/101
   S = kk[a..d]
   I = monomialCurveIdeal(S, {1,2,3})
   R = S/I
-  phi1 = noetherForm R
+  phi1 = noetherNormalization R
   assert isModuleFinite phi1
-  B = noetherForm phi1
+  B = noetherNormalization phi1
   assert isModuleFinite B
   frac B
   g = B.NoetherInfo#"noether map"
   assert(g^-1 * g == 1)
   assert(g * g^-1 == 1)
   use R
-  phi2 = noetherForm {a,d}
+  phi2 = noetherNormalization {a,d}
   assert isModuleFinite phi2
   
   
@@ -1016,13 +1016,13 @@ TEST ///
 TEST ///
 -*
 restart
-debug needsPackage "NoetherNormalForm"
+debug needsPackage "NoetherNormalization"
 *-
-  -- Zero dimensional noetherForm...
+  -- Zero dimensional noetherNormalization...
 
   R = QQ[x,y]/(x^4-3, y^3-2);
   phi = map(R, QQ, {})
-  B = noetherForm phi
+  B = noetherNormalization phi
   
   assert inNoetherForm R
   assert(B === R)
@@ -1033,7 +1033,7 @@ debug needsPackage "NoetherNormalForm"
   R = kk[x,y]/(x^4-3, y^3-2);
   phi = map(R, kk, {})
   isWellDefined phi  -- ok
-  B = noetherForm R
+  B = noetherNormalization R
   assert(B === R)
   assert inNoetherForm R
   assert(# noetherBasis B == 12)
@@ -1053,7 +1053,7 @@ debug needsPackage "NoetherNormalForm"
   R = kk[x,y]/(x^4-2, y^5-2);
   phi = map(R, kk, {})
   isWellDefined phi  -- ok
-  B = noetherForm R
+  B = noetherNormalization R
   assert(B === R)
   assert(frac B === R)
   assert(x/y === - x * y^4)
@@ -1066,7 +1066,7 @@ debug needsPackage "NoetherNormalForm"
   kk = QQ
   R = kk[x,y]/(x^4-2, y^5-2);
   phi = map(R, kk, {})
-  B = noetherForm R
+  B = noetherNormalization R
   noetherBasis B
   traceForm B
   det oo
@@ -1081,40 +1081,40 @@ debug needsPackage "NoetherNormalForm"
 ///
 
 TEST ///
-  -- we test usage of noetherForm R, where R is a ring:
+  -- we test usage of noetherNormalization R, where R is a ring:
   -- here: if R is finite over its base, (and R.?frac is not set).
   --          in this case, we set the noether info, and set frac R too.
   -- if R is not finite over its base, we call the noether normalization code.
 -*  
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
 *-
   R = ZZ/101[x,y]/(x^2-y-1, y^3-x*y-3)
 
-  B = noetherForm R
+  B = noetherNormalization R
   noetherMap B -- FAILS: need to set this!
   A = coefficientRing B
   assert(coefficientRing frac B === frac A)
 ///
 
 TEST ///
-  -- we test usage of noetherForm R, where R is a ring:
+  -- we test usage of noetherNormalization R, where R is a ring:
   -- here: if R is finite over its base, (and R.?frac is not set).
   --          in this case, we set the noether info, and set frac R too.
   -- if R is not finite over its base, we call the noether normalization code.
 -*  
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
 *-
   R = ZZ/101[x,y]/(x*y^3-x^2-y*x)
-  B = noetherForm R
+  B = noetherNormalization R
   noetherMap B
   A = coefficientRing B
   assert(coefficientRing frac B === frac A)
 ///
 
 TEST ///
-  -- we test usage of noetherForm f, f a RingMap A --> R
+  -- we test usage of noetherNormalization f, f a RingMap A --> R
   -- case 1: f is the inclusion of A into R, where A is the coefficient ring of R, and B is finite over A
   --   in this case, return B, as in the previous case.
   -- In other cases, we set B = A[new vars]/I, where B is isomorphic to target of f.
@@ -1122,11 +1122,11 @@ TEST ///
   --   AND they map to same elements, then we use these names in A, and leave them out of B.
   --   any variables not mapping to themselves are given new names.
   
-  -- This function creates A and B, then calls noetherForm B (which sets frac B, and the noether info).
+  -- This function creates A and B, then calls noetherNormalization B (which sets frac B, and the noether info).
 ///
 
 TEST ///
-  -- we test usage of noetherForm List
+  -- we test usage of noetherNormalization List
   -- A will be a polynomial ring given by variables taken from the list: if an element of the list is a variable,
   --  then we use that name.  If not, we give it a new variable name.
 ///
@@ -1140,14 +1140,14 @@ TEST ///
   --installPackage "NoetherNormalization"
 A = QQ[x_1..x_4]
 I = ideal(x_1^2 + x_1*x_4+1,x_1*x_2*x_3*x_4+1)
-assert((noetherNormalization(I))_2=={x_4,x_3})
+assert((noetherNormalizationData(I))_2=={x_4,x_3})
 ///
 
 TEST ///
 --loadPackage "NoetherNormalization"
 R = QQ[x,y]
 I = ideal (y^2-x^2*(x+1))
-(F,J,xs) = noetherNormalization I
+(F,J,xs) = noetherNormalizationData I
 assert(F === map(R,R,{x, y}))
 assert(J == ideal(-x^3-x^2+y^2))
 assert(xs == {y})
@@ -1156,11 +1156,11 @@ assert(xs == {y})
 TEST ///
 -*
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
 *-
 -- Simple test
   R = ZZ/101[x,y]/(x^4-y^5-x*y^3)
-  B = noetherForm {x}
+  B = noetherNormalization {x}
   describe B
   f = noetherMap B
   g = f^-1
@@ -1176,20 +1176,20 @@ TEST ///
   assert(ring numerator 1_L === B) -- needs checking
   
 --  R = ZZ/101[x,y]/(x^4-y^5-x*y^7)
---  B = noetherForm {x} -- fails... actually, this is not finite over the base...
+--  B = noetherNormalization {x} -- fails... actually, this is not finite over the base...
 ///
 
 TEST ///
 -*
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
 *-
 -- Simple test
   S = ZZ/101[a..d]
   I = monomialCurveIdeal(S, {1,3,4})
   R = S/I
 
-  B = noetherForm {a,d}
+  B = noetherNormalization {a,d}
   describe B
   f = noetherMap B
   g = f^-1
@@ -1208,14 +1208,14 @@ TEST ///
 TEST ///
 -*
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
 *-
 -- Simple test
   S = ZZ/101[a..d]
   I = monomialCurveIdeal(S, {1,3,4})
   R = S/I
 
-  B = noetherForm({a+d,a+c+d}, Variable => {s,t})
+  B = noetherNormalization({a+d,a+c+d}, Variable => {s,t})
   describe B
   assert(#gens B === 2) -- make sure it removes 2 of the variables of a,b,c,d
 
@@ -1234,14 +1234,14 @@ TEST ///
 TEST ///
 -*
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
 *-
 -- Simple test
   S = ZZ/101[a..d]
   I = monomialCurveIdeal(S, {1,3,4})
   R = S/I
 
-  B = noetherForm({a, a+c+d}, Variable => {s,t})
+  B = noetherNormalization({a, a+c+d}, Variable => {s,t})
   assert(#gens B === 2) -- make sure it removes 2 of the variables of a,b,c,d
   use coefficientRing B
   assert(gens coefficientRing B === {a,s})
@@ -1263,7 +1263,7 @@ TEST ///
 TEST ///
 -*
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
 *-
 -- Test to make sure that degrees in R don't mess up what happens in B.
 -- Currently: B is set to have the standard grading.  How should we really handle this?
@@ -1273,12 +1273,12 @@ TEST ///
   I = sub(I, S)
   R = S/I
 
-  B = noetherForm {a,d}
+  B = noetherNormalization {a,d}
   degrees B
   degrees coefficientRing B
 
   use R  
-  B = noetherForm({a+d,a+c+d}, Variable => {s,t})
+  B = noetherNormalization({a+d,a+c+d}, Variable => {s,t})
   describe B
   assert(#gens B === 2) -- make sure it removes 2 of the variables of a,b,c,d
 
@@ -1297,7 +1297,7 @@ TEST ///
 TEST ///
 -*
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
 *-
 -- CURRENT PROBLEM: degrees are not preserved.
 -- Test: what if the original ring has a multi-grading?
@@ -1309,7 +1309,7 @@ TEST ///
   I = sub(I, S)
   R = S/I
 
-  B = noetherForm {a,d}
+  B = noetherNormalization {a,d}
   degrees B
   degrees coefficientRing B
 
@@ -1322,7 +1322,7 @@ TEST ///
   assert(flatten entries (f*g).matrix == generators(R, CoefficientRing => ZZ/101))
 
   use R  
-  B = noetherForm({a+d,a+c+d}, Variable => {s,t})
+  B = noetherNormalization({a+d,a+c+d}, Variable => {s,t})
   describe B
   assert(#gens B === 2) -- make sure it removes 2 of the variables of a,b,c,d
 
@@ -1345,7 +1345,7 @@ TEST ///
 TEST ///
 -*
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
 *-
 -- Test: what if the original ring is a tower of rings?
 -- CURRENT PROBLEM: original ring cannot be a tower.  Need to flatten it first.
@@ -1361,13 +1361,13 @@ TEST ///
   elems = flatten entries matrix{{a,d}}
   elems = (elems/fR) 
   assert all(elems, a -> ring a === flatR)
---TODO  B = noetherForm elems -- STILL FAILS...
+--TODO  B = noetherNormalization elems -- STILL FAILS...
 
   -- Why does this work, but the above one fails?
   S = ZZ/101[a..d, MonomialOrder=>{2,Position=>Up,2}]
   I = monomialCurveIdeal(S, {1,3,4})
   R = S/I
-  B = noetherForm {a,d}
+  B = noetherNormalization {a,d}
 ///
 
 
@@ -1375,13 +1375,13 @@ TEST ///
 ///
 -*
   restart
-  debug needsPackage "NoetherNormalForm"
+  debug needsPackage "NoetherNormalization"
   S = ZZ/101[a..e]
   g = createCoefficientRing(S, {b+d, b+e})
   createRingPair g  
 
   restart
-  debug needsPackage "NoetherNormalForm"
+  debug needsPackage "NoetherNormalization"
   S = ZZ/101[a..e]
   g = createCoefficientRing(S, {b+d, b+e, c^3-d^3})
   F = createRingPair g  
@@ -1389,20 +1389,20 @@ TEST ///
 F*G
 G*F
 *-
-  -- working on noetherForm {list of polys"
+  -- working on noetherNormalization {list of polys"
   S = ZZ/101[a..d]
   I = monomialCurveIdeal(S, {1,3,4})
   R = S/I
-  B = noetherForm({a+b, a+d})
+  B = noetherNormalization({a+b, a+d})
   describe B  
 
   use R
-  B = noetherForm({a, d})
+  B = noetherNormalization({a, d})
   describe B  
   B.cache#"NoetherMap"
 
   use R
-  B = noetherForm({a, c+d})
+  B = noetherNormalization({a, c+d})
   describe B  
   F = B.cache#"NoetherMap"
   F(c)
@@ -1467,16 +1467,16 @@ G*F
   J = IT+ideal(s-(a+b), t-(c+d))
   radical ideal leadTerm gens gb J
 
-  use R; noetherForm {a,d}
-  use R; noetherForm {a,d+c}
-  use R; noetherForm {a+b,d+c} -- this one is NOT finite
-  use R; B = noetherForm {a+b,a+d}
+  use R; noetherNormalization {a,d}
+  use R; noetherNormalization {a,d+c}
+  use R; noetherNormalization {a+b,d+c} -- this one is NOT finite
+  use R; B = noetherNormalization {a+b,a+d}
   describe B
     
   
 
   describe ambient B
-  use R; noetherForm {a^2, d^2}
+  use R; noetherNormalization {a^2, d^2}
 
   B1 = ZZ/101[a, b, c, d, t_0, t_1, MonomialOrder=>{4, 2}]
   ideal(t_0 - (a+b), t_1 - (a+d)) + sub(I, B1)
@@ -1521,7 +1521,7 @@ TEST ///
   -- test-finiteOverCoefficientRing
 -*
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
 *-
   A = ZZ/101[t]  
   B = A[x,y]/(x^2-y*t, y^3)
@@ -1541,11 +1541,11 @@ TEST ///
 TEST ///
 -*
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
 *-
   kk = ZZ/101
   R = kk[x,y]/(y^4-x*y^3-(x^2+1)*y-x^6)
-  B = noetherForm {x}
+  B = noetherNormalization {x}
   L = frac B
   describe B
   describe L
@@ -1583,10 +1583,10 @@ TEST ///
   -- of makeFrac
 -*
   restart
-  debug needsPackage "NoetherNormalForm"
+  debug needsPackage "NoetherNormalization"
 *-
   -- teat of the internal function 'makeFrac'
-  debug needsPackage "NoetherNormalForm"
+  debug needsPackage "NoetherNormalization"
   kk = ZZ/101
   A = kk[x];
   B = A[y, Join => false]/(y^4-x*y^3-(x^2+1)*y-x^6)
@@ -1600,7 +1600,7 @@ TEST ///
 TEST ///
 -*
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
   
   test the following:
     1. singly graded case.
@@ -1618,7 +1618,7 @@ TEST ///
   R = kk[x,y]/(y^4-x*y^3-(x^2+1)*y-x^6)
   phi = map(R,A,{R_0})
   phi = map(R,A,{R_0^2})  
-  B = noetherForm phi
+  B = noetherNormalization phi
   describe B
   L = frac B
   describe L
@@ -1645,7 +1645,7 @@ TEST ///
 TEST ///
 -*
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
   
   test the following:
     1. singly graded case.
@@ -1659,7 +1659,7 @@ TEST ///
   I = ideal"a3-b2-c, bc-d, a2-b2-d2"
   R = S/I
 
-  B = noetherForm R
+  B = noetherNormalization R
   A = coefficientRing B  
   degrees B -- not good... multigradings!
   leadTerm ideal B
@@ -1671,7 +1671,7 @@ TEST ///
 TEST ///      
 -*
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
 *-
   kk = ZZ/101
   A = kk[s,t]
@@ -1679,7 +1679,7 @@ TEST ///
   I = monomialCurveIdeal(S, {1,3,4})
   R = S/I
   phi = map(R,A,{R_0, R_3})
-  B = noetherForm phi
+  B = noetherNormalization phi
   L = frac B
 describe B
 describe L
@@ -1709,7 +1709,7 @@ noetherBasis L
 --  R = ZZ[symbol x,y,z]/(x*y, x*z, y*z)  --??
   A = kk[t]
   phi = map(R,A,{R_0+R_1+R_2})
-  B = noetherForm phi
+  B = noetherNormalization phi
   L = frac B
   noetherBasis B
   noetherBasis L
@@ -1722,12 +1722,12 @@ TEST ///
   -- test of creation of Noether normal form from a list of variables in a ring.
 -*
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
 *-
 
   S = QQ[a..d]
   R = S/monomialCurveIdeal(S,{1,3,4})
-  B = noetherForm{a,d}
+  B = noetherNormalization{a,d}
   frac B
   coefficientRing B
   coefficientRing frac B
@@ -1775,29 +1775,29 @@ TEST ///
   traceForm L
 
   R = QQ[a..d]/(b^2-a, b*c-d)
-  assert try (B = noetherForm{a,d}; false) else true  
- -- noetherForm{a,d} should fail, as R is not finite over QQ[a,d]
+  assert try (B = noetherNormalization{a,d}; false) else true  
+ -- noetherNormalization{a,d} should fail, as R is not finite over QQ[a,d]
 ///
 
 TEST ///
 -*
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
 *-
 --  needsPackage "NoetherNormalization"
   kk = ZZ/101
   R = kk[x,y]/(x*y-1)
-  B = noetherForm R
+  B = noetherNormalization R
   describe B
   frac B
   A = kk[t]
   use R
   phi = map(R,A,{x+y})
 
-  noetherForm phi
-  noetherForm R
+  noetherNormalization phi
+  noetherNormalization R
     
-  (F, J, xv) = noetherNormalization R
+  (F, J, xv) = noetherNormalizationData R
   R' = (ambient R)/J
 
   G = map(R', R, sub(F.matrix, R'))
@@ -1808,14 +1808,14 @@ TEST ///
   for x in xv list G^-1 x
   A = kk[t]
   phi = map(R, A, for x in xv list G^-1 x)
-  noetherForm phi
+  noetherNormalization phi
 ///
 
 
 TEST ///
 -*
   restart
-  needsPackage "NoetherNormalForm"
+  needsPackage "NoetherNormalization"
 *-
   kk = ZZ/101
   R = kk[a,b,c,d]
@@ -1823,8 +1823,8 @@ TEST ///
   S = reesAlgebra I
   S = first flattenRing S
 
-  noetherNormalization S
-  B = noetherForm S
+  noetherNormalizationData S
+  B = noetherNormalization S
   assert (numgens coefficientRing B == 5)
   assert(radical ideal leadTerm ideal B == ideal gens ambient B)
 
@@ -1832,7 +1832,7 @@ TEST ///
   use S
   f = map(S,T,{w_0+w_2+b, w_3+a+c, w_1+w_2+d, a+b+d, w_2+c+d})
   assert isModuleFinite f
-  B = noetherForm f
+  B = noetherNormalization f
   assert isModuleFinite B
   assert(numgens coefficientRing B == 5)
   assert(radical ideal leadTerm ideal B == ideal gens ambient B)
@@ -1850,9 +1850,9 @@ TEST ///
 
 end----------------------------------------------------------
 restart
-load "NoetherNormalForm.m2"
+load "NoetherNormalization.m2"
 
-uninstallPackage "NoetherNormalForm"
+uninstallPackage "NoetherNormalization"
 restart
-installPackage "NoetherNormalForm"
-check NoetherNormalForm
+installPackage "NoetherNormalization"
+check NoetherNormalization

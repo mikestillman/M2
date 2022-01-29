@@ -1848,22 +1848,42 @@ TEST ///
 *-
 ///
 
---XXX
+-*
+  restart
+debug  needsPackage "NoetherNormalization"
+*-
 
 ///-- Joe's example
 
+
 n = 2;
-A = QQ[x_(1,1)..x_(n,n),y_(1,1)..y_(n,n),MonomialOrder => Lex]
+--A = QQ[x_(1,1)..x_(n,n),y_(1,1)..y_(n,n),MonomialOrder => Lex]
+--A = ZZ/32003[x_(1,1)..x_(n,n),y_(1,1)..y_(n,n),MonomialOrder => Lex]
+A = ZZ/32003[x_(1,1)..x_(n,n),y_(1,1)..y_(n,n)]
 X = transpose genericMatrix(A,n,n)
 Y = transpose genericMatrix(A,y_(1,1),n,n)
 bracket = ideal flatten entries (X*Y - Y*X)
-f = map(A,A,toList apply(0..(2*n^2-1), i -> sum(gens A)_{0..i}))
-f bracket
+--f = map(A,A,toList apply(0..(2*n^2-1), i -> sum(gens A)_{0..i}))
+--f bracket
+R = A/bracket
+elapsedTime B = noetherNormalization R
+ind =support first (independentSets bracket)
+fiber = gens ring bracket - set IS
+S = coefficientRing A[t_0..t_(#ind-1)]
 
-(f,J,j) = noetherNormalizationData(bracket,Verbose=>true,LimitSequence => {5,10})
+--HERE find sparse NN
+isModuleFinite map(R,S, ind)
+
+coefficientRing B
+noetherMap B
+transpose matrix oo
+independentSets bracket
+transpose generators ideal B
+netList (ideal B)_*
+(f,J,j) = noetherNormalizationData(bracket,Verbose=>true,LimitList => {5,10})
 transpose gens J
-
-
+independentSets bracket
+res bracket
 --Example 1
 clearAll
 A = QQ[x_1..x_3][x_4]

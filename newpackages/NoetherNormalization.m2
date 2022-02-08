@@ -1936,11 +1936,63 @@ gens R
 
 
 --Example 3 -- this one the indep vars are different
+-*
+restart
+debug  needsPackage "NoetherNormalization"
+*-
+TEST///
 R = QQ[x_5,x_4,x_3,x_2,x_1]
 I = ideal(x_1^3 + x_1*x_2, x_2^3-x_4+x_3, x_1^2*x_2+x_1*x_2^2)
-noetherNormalizationData(I,Verbose => true)
+A = R/I
+primaryDecomposition I
+decompose I
+B = noetherNormalization A
+J = ideal B
+pJ = primaryDecomposition J
+
+decompose J
+coefficientRing B
+netList J_*
+J' = ideal gens gb J
+netList J'_*
+
+L = frac B
+describe L
+--noetherNormalizationData(I,Verbose => true)
 f := (noetherNormalizationData(I))_1
 
+
+R = QQ[x,y,z]/(x*y,y^2-z)
+R = QQ[x,y,z]/(x*y, y^2)
+B = noetherNormalization R
+
+-*
+restart
+debug  needsPackage "NoetherNormalization"
+*-
+
+R = QQ[x,y]/(x*y,y^2)
+B = noetherNormalization {x}
+noetherMap B
+J = ideal B
+pJ = primaryDecomposition J
+J == radical J
+decompose J
+coefficientRing B
+netList J_*
+J' = ideal gens gb J
+netList J'_*
+noetherMap B
+L = frac B
+
+describe L
+
+-*
+restart
+debug  needsPackage "NoetherNormalization"
+*-
+R = QQ[x,y,z]/intersect(ideal x, ideal(y,z))
+///
 
 support (independentSets(I,Limit=>1))_0
 

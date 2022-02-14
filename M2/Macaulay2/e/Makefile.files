@@ -123,7 +123,6 @@ INTERFACE = \
 	aring-gf-flint \
 	aring-m2-gf \
 	aring-zzp \
-	aring-gf-givaro \
 	aring-zzp-ffpack \
 	aring \
 	schurSn \

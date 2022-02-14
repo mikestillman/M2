@@ -3,40 +3,22 @@ always:
 
 BRANCH := $(shell git branch --contains | grep '^\* ' | sed -e s=^..== -e s=/=.=g )
 
-#######################
-## cmake build files ##
-#######################
+#################################
+## cmake build files for macos ##
+#################################
 
-cmake-make-appleclang:
-	echo "git branch is " $(BRANCH)
-	mkdir -p builds.tmp/cmake-make-appleclang-$(BRANCH)
-	cd builds.tmp/cmake-make-appleclang-$(BRANCH); cmake \
-		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
-		-DCMAKE_INSTALL_PREFIX=`pwd`/installed \
-		-DBUILD_TESTING=on \
-		-DBUILD_DOCS=on \
-		../../../..
-
+# when tbb2021 support is merged in, change this to tbb@2021
 cmake-appleclang:
 	echo "git branch is " $(BRANCH)
 	mkdir -p builds.tmp/cmake-appleclang
 	cd builds.tmp/cmake-appleclang; cmake \
 		-GNinja \
 		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_PREFIX_PATH="`brew --prefix tbb@2020`;`brew --prefix`" \
+		-DCMAKE_INSTALL_PREFIX=`pwd`/installed \
+		-DBUILD_NATIVE=on \
 		-DBUILD_TESTING=on \
 		-DBUILD_DOCS=on \
-		../../../..
-#		-DLINTING=on
-
-cmake-appleclang-tbb:
-	echo "git branch is " $(BRANCH)
-	mkdir -p builds.tmp/cmake-appleclang-tbb
-	cd builds.tmp/cmake-appleclang-tbb; cmake \
-		-GNinja \
-		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
-		-DBUILD_TESTING=on \
-		-DBUILD_DOCS=on \
-		-DWITH_TBB=on \
 		../../../..
 #		-DLINTING=on
 
@@ -45,22 +27,28 @@ cmake-debug-appleclang:
 	cd builds.tmp/cmake-debug-appleclang; cmake \
 		-GNinja \
 		-DCMAKE_BUILD_TYPE=Debug \
-		-DBUILD_TESTING=on \
-		-DBUILD_DOCS=on \
-		../../../..
-
-cmake-profile-appleclang:
-	echo "git branch is " $(BRANCH)
-	mkdir -p builds.tmp/cmake-profile-appleclang
-	cd builds.tmp/cmake-profile-appleclang; cmake \
-		-GNinja \
-		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
-		-DPROFILING=on \
+		-DCMAKE_PREFIX_PATH="`brew --prefix tbb@2020`;`brew --prefix`" \
+		-DCMAKE_INSTALL_PREFIX=`pwd`/installed-debug \
+		-DBUILD_NATIVE=on \
 		-DBUILD_TESTING=on \
 		-DBUILD_DOCS=on \
 		../../../..
 #		-DLINTING=on
 
+cmake-profile-appleclang:
+	mkdir -p builds.tmp/cmake-profile-appleclang
+	cd builds.tmp/cmake-profile-appleclang; cmake \
+		-GNinja \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_PREFIX_PATH="`brew --prefix tbb@2020`;`brew --prefix`" \
+		-DCMAKE_INSTALL_PREFIX=`pwd`/installed-profile \
+		-DBUILD_NATIVE=on \
+		-DBUILD_TESTING=on \
+		-DBUILD_DOCS=on \
+		../../../..
+#		-DLINTING=on
+
+# this one still needs to be modified for M1
 cmake-latestclang:
 	mkdir -p builds.tmp/cmake-latestclang
 	cd builds.tmp/cmake-latestclang; LIBRARY_PATH=`/usr/local/opt/llvm/bin/llvm-config --libdir` cmake \
@@ -72,6 +60,7 @@ cmake-latestclang:
 		-DBUILD_DOCS=on \
 		../../../..
 
+# this one still needs to be modified for M1
 cmake-debug-latestclang:
 	mkdir -p builds.tmp/cmake-debug-latestclang
 	cd builds.tmp/cmake-debug-latestclang; cmake \
@@ -83,6 +72,7 @@ cmake-debug-latestclang:
 		-DBUILD_DOCS=on \
 		../../../..
 
+# this one still needs to be modified for M1, tbb
 cmake-gcc9:
 	mkdir -p builds.tmp/cmake-gcc9
 	cd builds.tmp/cmake-gcc9; cmake \
@@ -94,6 +84,7 @@ cmake-gcc9:
 		-DBUILD_DOCS=on \
 		../../../..
 
+# this one still needs to be modified for M1, tbb
 ubuntu-cmake-gcc:
 	mkdir -p builds.tmp/ubuntu-cmake-gcc
 	cd builds.tmp/ubuntu-cmake-gcc; cmake \
@@ -115,6 +106,7 @@ ubuntu-cmake-gcc:
 #  check-packages
 # ctest
 
+# this one still needs to be modified for M1, tbb
 cmake-debug-gcc9:
 	mkdir -p builds.tmp/cmake-debug-gcc9
 	cd builds.tmp/cmake-debug-gcc9; cmake \
@@ -126,6 +118,7 @@ cmake-debug-gcc9:
 		-DBUILD_DOCS=on \
 		../../../..
 
+# does this even work?
 xcode:
 	mkdir -p builds.tmp/xcode
 	cd builds.tmp/xcode; cmake \
@@ -142,6 +135,30 @@ xcode:
 # Some possibly useful configure options
 # 		--build=x86_64-apple-darwin
 #       --enable-build-libraries="flint ntl"
+
+# change to tbb@2021 once ncEngine has been merged in.
+arm64-appleclang : always
+	mkdir -p builds.tmp/arm64-appleclang
+	cd builds.tmp/arm64-appleclang; ../../../../configure \
+		CPPFLAGS="-I`brew --prefix tbb@2020`/include -I`brew --prefix`/include" \
+		LDFLAGS="-L`brew --prefix tbb@2020`/lib -L`brew --prefix`/lib" \
+	    --with-boost-regex=boost_regex \
+		--prefix="`pwd`/installed" \
+		--disable-strip \
+		--enable-download
+
+debug-arm64-appleclang : always
+	mkdir -p builds.tmp/debug-arm64-appleclang
+	cd builds.tmp/debug-arm64-appleclang; ../../../../configure \
+		CPPFLAGS="-I`brew --prefix tbb@2020`/include -I`brew --prefix`/include" \
+		LDFLAGS="-L`brew --prefix tbb@2020`/lib -L`brew --prefix`/lib" \
+	    --with-boost-regex=boost_regex \
+		--prefix="`pwd`/installed" \
+		--disable-strip \
+		--enable-debug \
+		--enable-memdebug \
+		--disable-optimize \
+		--enable-download
 
 darwin64-appleclang : always
 	mkdir -p builds.tmp/darwin64-appleclang

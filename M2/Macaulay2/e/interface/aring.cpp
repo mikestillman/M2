@@ -4,7 +4,6 @@
 #include <utility>
 #include <vector>
 
-#include "aring-gf-givaro.hpp"
 #include "aring-gf-flint-big.hpp"
 #include "aring-gf-flint.hpp"
 #include "aring-glue.hpp"
@@ -140,6 +139,7 @@ const Ring /* or null */ *rawARingGaloisFieldFlintZech(const RingElement *f)
 /// of Givaro::GFqDom in ARingGFGivaro?
 ///@todo return Macaulay Galois field in some cases.
 
+// TODO: remove this function during givaro removal
 const Ring /* or null */ *rawARingGaloisField(int prime, int dimension)
 {
   if (dimension < 0)
@@ -178,8 +178,12 @@ const Ring /* or null */ *rawARingGaloisField(int prime, int dimension)
           ERROR("maximum modulus = %f\n", M2::ARingZZpFFPACK::getMaxModulus());
           return 0;
         }
+      #if 0
       M2::ARingGFGivaro *A = new M2::ARingGFGivaro(prime, dimension);
       return M2::ConcreteRing<M2::ARingGFGivaro>::create(A);
+      #endif
+      ERROR("calling rawARingGaloisField with no longer allowed values, givaro is no longer available");
+      return nullptr;
 #else
       ERROR("add --enable-fflas-ffpack --enable-givaro when building M2");
       return 0;
@@ -191,6 +195,8 @@ const Ring /* or null */ *rawARingGaloisField(int prime, int dimension)
   }
 }
 
+#if 0
+// TODO: remove this function during givaro removal
 const Ring /* or null */ *rawARingGaloisFieldFromQuotient(const RingElement *a)
 {
   // Check that the ring R of f is a polynomial ring in one var over a ZZ/p
@@ -248,7 +254,11 @@ const Ring /* or null */ *rawARingGaloisFieldFromQuotient(const RingElement *a)
       return NULL;
   }
 }
+#endif
 
+
+#if 0
+// TODO: remove this function during givaro removal
 M2_arrayintOrNull rawARingGFPolynomial(const Ring *R)
 {
 #if 1
@@ -266,7 +276,10 @@ M2_arrayintOrNull rawARingGFPolynomial(const Ring *R)
   return 0;
 #endif
 }
+#endif
 
+#if 0
+// TODO: remove this function during givaro removal
 M2_arrayintOrNull rawARingGFCoefficients(const RingElement *f)
 {
 #if 1
@@ -286,6 +299,7 @@ M2_arrayintOrNull rawARingGFCoefficients(const RingElement *f)
   return 0;
 #endif
 }
+#endif
 
 const Ring /* or null */ *rawARingTower1(const Ring *K, M2_ArrayString names)
 {

@@ -10,6 +10,9 @@
 
 #include <iostream>
 
+#include "polyring.hpp"
+class RingMap;
+
 class GF;
 class PolynomialRing;
 class RingElement;

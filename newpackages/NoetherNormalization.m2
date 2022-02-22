@@ -1992,6 +1992,22 @@ restart
 debug  needsPackage "NoetherNormalization"
 *-
 R = QQ[x,y,z]/intersect(ideal x, ideal(y,z))
+B = noetherNormalization {x+y,z}
+
+noetherMap B
+J = ideal B
+pJ = primaryDecomposition J
+J == radical J
+decompose J
+coefficientRing B
+netList J_*
+J' = ideal gens gb J
+netList J'_*
+noetherMap B
+L = frac B
+0==HH_1 koszul matrix{{x,z}}
+describe L
+
 ///
 
 support (independentSets(I,Limit=>1))_0

@@ -33,7 +33,8 @@ export {
     "noetherMap",
     -- keys used:
     "NoetherInfo",
-    "Remove"
+    "Remove",
+    "CheckDomain"
     }
 export{"noetherNormalizationData","LimitList","RandomRange"}
 ----------------------------------------------------------------
@@ -309,7 +310,7 @@ makeFrac Ring := Ring => (B) -> (
     KB
     )
 
-noetherNormalization = method(Options => {Remove => null, Variable => getSymbol "t"})
+noetherNormalization = method(Options => {Remove => null, Variable => getSymbol "t", CheckDomain => false})
 
 
 -- This workaround sets the inverse of the isomorphism phi, in the case
@@ -666,7 +667,7 @@ doc ///
   Key
     NoetherNormalization
   Headline
-    code for Noether normal forms of affine rings
+    code for Noether normal forms of affine domains
   Description
     Text
 ///
@@ -677,6 +678,9 @@ doc ///
     (noetherNormalization, List)
     (noetherNormalization, RingMap)
     (noetherNormalization, Ring)
+    [noetherNormalization, CheckDomain]
+    [noetherNormalization, Variable]
+    [noetherNormalization, Remove]
   Headline
     create a polynomial ring in Noether normal form
   Usage
@@ -689,10 +693,16 @@ doc ///
     xv:List
       of variables in an affine ring {\tt R} over which {\tt R} is finite
     R:Ring
-      an affine equidimensional and reduced ring
+      an affine domain
+    CheckDomain => Boolean
+      if true then returns an error if R is not a domain
+    Variable => String
+      name of new indexed variables
+    Remove => Boolean
+      whether to remove extraneous existing variables
   Outputs
     B:Ring
-      isomorphic to B, but of the form {\tt A[new variables]/(ideal)}.
+      isomorphic to R, but of the form {\tt A[new variables]/(ideal)}.
   Consequences
     Item
       The following fields are set in {\tt R}:
@@ -702,12 +712,28 @@ doc ///
       The following fields are set in {\tt L = frac B}:
   Description
     Text
+     The program creates a new ring, B, isomorphic to R, and a polynomial ring A
+     such that A = coefficientRing B and B is module finite over A. Thus
+     B = A[variables from R]/I. 
+     
+     In the form noetherNormalization phi, A is the source of phi.
+     Otherwise, A is created. Its variables may be some of the variable of R,
+     and new indexed variables corresponding to linear combinations of variables of R.
+     
+     The fraction field of B is represented as a finite extension of the fraction 
+     field of A, a useful simplification.
+
+     
     Example
       kk = ZZ/101
       A = kk[t]
       R = kk[x,y]/(y^4-x*y^3-(x^2+1)*y-x^6)
       phi = map(R,A,{R_0})
       B = noetherNormalization phi
+    Text
+     In case the ring R is reduced, this program does produce a Noether normalization B,
+     but L = frac B may not be a field, and computations in L may be erroneous.
+     This is why we have aimed at the case when R is a domain.
     Example
       kk = ZZ/101
       x = symbol x
@@ -716,10 +742,32 @@ doc ///
       A = kk[t]
       phi = map(R,A,{R_0+R_1+R_2})
       B = noetherNormalization phi
+      L = frac B
+      use L 
+      1/y -- note that the returned answer 0 is incorrect.
+    Example
+      kk = ZZ/101
+      R = kk[a,b,c]/(a*b,a*c)
+      B = noetherNormalization (R, Variable => s)
+      A = coefficientRing B
+      noetherMap B
+      frac B
+      gens A
+      
   Caveat
     The base field must currently be a finite field, or the rationals.
-    Finiteness is not yet checked.
+
+    The input ring must be a domain, which may be checked by setting CheckDomain => true
+    (the default is CheckDomain => false to avoid the expense of the procedure.)
+
+    The routine noetherNormalization R fails if it does not find dim R 
+    linear forms such that R is finite over the ring they generate.
+    
+    
   SeeAlso
+   noetherBasis
+   noetherMap
+   
 ///
 
 doc ///

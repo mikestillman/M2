@@ -672,6 +672,16 @@ doc ///
     Text
 ///
 
+///
+  Consequences
+    Item
+      The following fields are set in {\tt R}:
+    Item
+      The following fields are set in {\tt B}:
+    Item
+      The following fields are set in {\tt L = frac B}:
+///
+
 doc ///
   Key
     noetherNormalization
@@ -703,18 +713,14 @@ doc ///
   Outputs
     B:Ring
       isomorphic to R, but of the form {\tt A[new variables]/(ideal)}.
-  Consequences
-    Item
-      The following fields are set in {\tt R}:
-    Item
-      The following fields are set in {\tt B}:
-    Item
-      The following fields are set in {\tt L = frac B}:
   Description
     Text
-     The program creates a new ring, B, isomorphic to R, and a polynomial ring A
-     such that A = coefficientRing B and B is module finite over A. Thus
-     B = A[variables from R]/I. 
+     A Noether normalization of a domain R is an injective ring map f from a polynomial
+     ring A to R such that R becomes (module-)finite over A.
+      
+     It is convenient to have an isomorphic copy B of $R$ such that A = coefficientRing B.
+     The program also creates such a ring B. It can be obtained as noetherRing R,
+     and an isomorphism $B\to R$ can be obtained as noetherMap B or noetherMap R.
      
      In the form noetherNormalization phi, A is the source of phi.
      Otherwise, A is created. Its variables may be some of the variable of R,
@@ -722,8 +728,38 @@ doc ///
      
      The fraction field of B is represented as a finite extension of the fraction 
      field of A, a useful simplification.
-
+     One advantage of having a noether normalization is that it allows the construction
+     of the fraction field of R to be put in a form that is more convenient for
+     certain computations.
      
+
+    Example
+      C = QQ[x,y]/(y^2 - x^2*(x-1))
+      f = noetherNormalization C -- map from poly ring A to C
+      A = source f
+      C === target f
+      B = noetherRing C 
+      noetherBasis B
+      A === coefficientRing B
+      g = noetherMap B
+      source g === B
+      target g === C
+      h = g^(-1)
+      L = frac B
+      noetherBasis L
+      frac A === coefficientRing L
+      --Booleans:
+      isNoetherRing B
+      hasNoetherRing C
+      isNoethered C
+      
+      B = noetherRing (C, {x})
+      B = noetherRing (map(C,QQ[t],{x})
+      noetherMap B
+      coefficientRing B
+      describe B
+      use C
+      noetherNormalization (C, {x})
     Example
       kk = ZZ/101
       A = kk[t]
@@ -767,6 +803,7 @@ doc ///
   SeeAlso
    noetherBasis
    noetherMap
+   traceForm
    
 ///
 

@@ -16,7 +16,7 @@ newPackage(
             HomePage => "http://www.math.cornell.edu/~mike"}},
     Headline => "fractional ideals given a domain, possibly in Noether normal position",
     PackageExports => {
-        "NoetherNormalForm",
+        "NoetherNormalization",
         "Elimination", -- for discriminant.
         "IntegralClosure" -- for Index, Verbosity
         },
@@ -44,7 +44,7 @@ export {
     }
 
 exportMutable {
-    "traveLevel"
+    "traceLevel"
     }
 
 -- The following is currently needed in fractionalRingPresentation
@@ -678,7 +678,7 @@ integralClosureDenominator = method()
 
 tragerAlgorithm = method()
 tragerAlgorithm(FractionalRing, RingElement) := (F, Q) -> (
-    --R: ring generated via noetherForm in TraceForm.m2
+    --R: ring generated via noetherNormalization in TraceForm.m2
     --Q: element of the coefficient field of R in the conductor of R
     R := ring F;
     K := coefficientRing R;
@@ -951,12 +951,12 @@ TEST ///
 
   -- test 1: just find monic equations for elements in a Noether ring
   R = QQ[x,y]/(x^4-3, y^3-2)
-  B = noetherForm R
+  B = noetherNormalization R
   getIntegralEquation(x+y, QQ[t]) -- fails
   getIntegralEquation(x+y, 1_R, QQ[t]) -- fails
 
   R = QQ[x,y,z]/(x^4-3, y^3-2)
-  noetherForm R
+  B = noetherNormalization R
   getIntegralEquation(x+y, B[t]) -- gives trivial equation
   F = getIntegralEquation(x+y, (coefficientRing B)[t])
   assert(leadCoefficient F == 1)
@@ -995,7 +995,7 @@ TEST ///
   S = QQ[a..d]
   I = monomialCurveIdeal(S, {1,3,4})
   A = S/I
-  R = noetherForm {a,d}
+  R = noetherNormalization {a,d}
   
   kk = coefficientRing R
   assert(ring a === kk)
@@ -1048,7 +1048,7 @@ TEST ///  -- test of basics of fractional ideals for Noether position
   I = sub(I, {t => t+z})
   R = S/I
   
-  B = noetherForm{w,t}
+  B = noetherNormalization{w,t}
   L = frac B
   A = coefficientRing B
   KA = frac A
@@ -1095,7 +1095,7 @@ codim I == length res I -- perfect ideal
 --  elapsedTime integralClosureDenominator(A, z*t)
 --  elapsedTime integralClosureDenominator(A, {t,z}) -- FAILS right now.
     
-  R = noetherForm{w,t}
+  R = noetherNormalization{w,t}
   traceForm R
   factor det traceForm R
   elapsedTime J1 = integralClosureDenominator(A, w)
@@ -1163,7 +1163,7 @@ TEST ///
   singF = intersect decompose(ideal F + ideal jacobian ideal F)
   see trim oo
   use A
-  R = noetherForm {v}
+  R = noetherNormalization {v}
   singF = decompose(ideal F + ideal jacobian ideal F)
   singF = sub(intersect singF, R)
   Q = (ideal selectInSubring(1,gens gb singF))_0
@@ -1187,7 +1187,7 @@ TEST ///
   I = ideal"y20+y13x+x4y5+x3(x+1)2"
   R = S/I
   elapsedTime integralClosure R -- 1.96 sec
-  B = noetherForm {y}
+  B = noetherNormalization {y}
   disc B
   elapsedTime integralClosureDenominator(R, y) -- SLOW...
 ///
@@ -1210,11 +1210,11 @@ end--
 restart
 uninstallAllPackages()
 
-uninstallPackage "NoetherNormalForm" 
+uninstallPackage "NoetherNormalization" 
 uninstallPackage "FractionalIdeals" -- no doc yet, but loads.
 
 restart
-installPackage "NoetherNormalForm" 
+installPackage "NoetherNormalization" 
 installPackage "FractionalIdeals" -- no doc yet, but loads.
 
 restart
@@ -1239,7 +1239,7 @@ viewHelp FractionalIdeals
   I = ideal(u^3-v^4)
   R = S/I
 
-  B = noetherForm({v})
+  B = noetherNormalization({v})
   -- Basically, 4 rings get created:
   L = frac B
   B === ring numerator 1_L
@@ -1281,7 +1281,7 @@ ringFromFractions(oo, Variable => getSymbol "w")
 fractionalRingPresentation R'
 minimalPresentation oo
 
-A = noetherForm {x}
+A = noetherNormalization {x}
 debug FractionalIdeals
 inNoetherForm A
 
@@ -1291,7 +1291,7 @@ fractions F
 oo/value
 
 use R
-A = noetherForm {y}
+A = noetherNormalization {y}
 inNoetherForm A
 
 use coefficientRing A

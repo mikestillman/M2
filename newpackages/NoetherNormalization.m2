@@ -1901,7 +1901,8 @@ TEST ///
 debug  needsPackage "NoetherNormalization"
 *-
 
-///-- Joe's example
+///
+  -- Joe's example
 
 
 n = 2;
@@ -1979,7 +1980,7 @@ dim I
 sort gens R
 gens R
 
-
+///
 
 
 
@@ -2013,12 +2014,24 @@ f := (noetherNormalizationData(I))_1
 R = QQ[x,y,z]/(x*y,y^2-z)
 R = QQ[x,y,z]/(x*y, y^2)
 B = noetherNormalization R
+///
 
+
+///
 -*
 restart
 debug  needsPackage "NoetherNormalization"
 *-
 
+-- MES Note:
+--   MES: Check the math here too...
+--   For which f.g. k-algebras R does noetherNormalization produce useful answers?
+--    a. R = domain: this is the main case.  All should work here.
+--    b. R = unmixed radical ideal.  Even though `frac B` is not a field,
+--         we should be inverting the correc things.
+--    c. R = unmixed ideal, with primary components.  Does `frac B` produce something usable?
+--    d. R = not unmixed: should always give an error, as the ring shold not be
+--          finite over a polynomial ring with dim R number of variables?
 R = QQ[x,y]/(x*y,y^2)
 B = noetherNormalization {x}
 noetherMap B
@@ -2034,7 +2047,9 @@ noetherMap B
 L = frac B
 
 describe L
+///
 
+///
 -*
 restart
 debug  needsPackage "NoetherNormalization"
@@ -2056,7 +2071,6 @@ L = frac B
 0==HH_1 koszul matrix{{x,z}}
 describe L
 
-///
 
 support (independentSets(I,Limit=>1))_0
 

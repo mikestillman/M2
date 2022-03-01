@@ -24,13 +24,18 @@ newPackage(
 
 export {
 --    "checkNoetherNormalization", -- TODO: get this to work?
+    "inNoetherForm", -- remove?
+    "isNoetherRing",
+    "hasNoetherRing",
+    "noetherMap",
+    "noetherRing",
     "noetherNormalization",
+
     "noetherBasis",
     "noetherBasisMatrix",
-    "inNoetherForm",
     "multiplicationMap",
     "traceForm",
-    "noetherMap",
+    
     -- keys used:
     "NoetherInfo",
     "Remove",
@@ -44,10 +49,29 @@ rawIsField = value Core#"private dictionary"#"rawIsField"
 isField EngineRing := R -> (R.?isField and R.isField) or rawIsField raw R
 ----------------------------------------------------------------
 
+noetherNormalization = method(Options => {
+        Remove => null, 
+        Variable => getSymbol "t", 
+        CheckDomain => false
+        })
+
 --inNoetherForm
 -- this function isn't used locally, instead the internal function `noetherInfo` is used.
 inNoetherForm = method()
 inNoetherForm Ring := Boolean => (R) -> R.?NoetherInfo
+
+noetherRing = method(Options => options noetherNormalization)
+noetherRing Ring := Ring => opts -> R -> (
+    if not R.?noetherRing then 
+        noetherNormalization(R, opts); -- this will set R.noetherRing
+    R.noetherRing    
+    )
+
+hasNoetherRing = method()
+hasNoetherRing Ring := Boolean => R -> R.?noetherRing
+
+isNoetherRing = method()
+isNoetherRing Ring := Boolean => (B) -> B.?NoetherInfo and B.NoetherInfo#"ring" === B
 
 -- private routine
 -- NoetherInfo (placed into both B, frac B):
@@ -81,6 +105,7 @@ noetherInfo Ring := MutableHashTable => (R) -> (
 
 noetherMap = method()
 noetherMap Ring := Ring => (B) -> (
+    if B.?noetherRing then B = B.noetherRing;
     NI := noetherInfo B;
     NI#"noether map"
     )
@@ -310,7 +335,6 @@ makeFrac Ring := Ring => (B) -> (
     KB
     )
 
-noetherNormalization = method(Options => {Remove => null, Variable => getSymbol "t", CheckDomain => false})
 
 
 -- This workaround sets the inverse of the isomorphism phi, in the case
@@ -393,7 +417,7 @@ createCoefficientRing(Ring, List) := RingMap => opts -> (R, L) -> (
       BtoR
       )
 
-noetherNormalization Ring := Ring => opts -> R -> (
+noetherNormalization Ring := RingMap => opts -> R -> (
     -- case 1: R is already in Noether form: finite over its coeff ring.
     --   In this case, set NoetherInfo, map to/from R is the identity
     -- case 2: not the case.
@@ -406,7 +430,8 @@ noetherNormalization Ring := Ring => opts -> R -> (
 	KR := makeFrac R; -- do this?
 	setNoetherInfo(R,KR);
 	R.NoetherInfo#"noether map" = map(R,R);
-	return R
+        R.noetherRing = R;
+	return map(R,A)
         );
     
     -- get the flattened coeff ring of R.
@@ -419,20 +444,19 @@ noetherNormalization Ring := Ring => opts -> R -> (
     noetherNormalization phi
     )
 
-noetherNormalization List := Ring => opts -> L -> (
+noetherNormalization(Ring, List) := RingMap => opts -> (R, L) -> (
     -- check that ring R of all elements is the same
     if #L === 0 then 
         error "expected non-empty list of ring elements";
     if any(L, f -> not instance(f, RingElement)) then 
         error "expected non-empty list of ring elements";
-    R := ring L_0;
     if not all(L, f -> ring f === R) then
         error "expected elements in the same ring";
     f := createCoefficientRing(R, L, Variable => opts.Variable);
     noetherNormalization f
     )
 
-noetherNormalization RingMap := Ring => opts -> f -> (
+noetherNormalization RingMap := RingMap => opts -> f -> (
     if not isModuleFinite f then
         error "expected map or elements which make ring finite over the base";
     -- check that f is module finite
@@ -457,9 +481,19 @@ noetherNormalization RingMap := Ring => opts -> f -> (
     GR.cache.inverse = FR;
     FR.cache.inverse = GR;
     B.NoetherInfo#"noether map" = FR; -- stash the map B --> R, but the other can be obtained via 'inverse'
-    B
+    R.noetherRing = B;
+    f
     )
 
+noetherRing(Ring, List) := Ring => opts -> (R, L) -> (
+    noetherNormalization(R, L, opts);
+    noetherRing R
+    )
+
+noetherRing RingMap := Ring => opts -> f -> (
+    noetherNormalization(f, opts);
+    noetherRing target f
+    )
 
 --Code from old NoetherNormalization package
 -- The algorithm given here is based on A. Logar's algorithm as given
@@ -685,7 +719,7 @@ doc ///
 doc ///
   Key
     noetherNormalization
-    (noetherNormalization, List)
+    (noetherNormalization, Ring, List)
     (noetherNormalization, RingMap)
     (noetherNormalization, Ring)
     [noetherNormalization, CheckDomain]
@@ -694,16 +728,16 @@ doc ///
   Headline
     create a polynomial ring in Noether normal form
   Usage
-    B = noetherNormalization phi
-    B = noetherNormalization xv
-    B = noetherNormalization R
+    f = noetherNormalization phi
+    f = noetherNormalization(R, xv)
+    f = noetherNormalization R
   Inputs
     phi:RingMap
       from a ring {\tt A} to a ring {\tt R}
-    xv:List
-      of variables in an affine ring {\tt R} over which {\tt R} is finite
     R:Ring
       an affine domain
+    xv:List
+      of variables in an affine ring {\tt R} over which {\tt R} is finite
     CheckDomain => Boolean
       if true then returns an error if R is not a domain
     Variable => String
@@ -711,19 +745,21 @@ doc ///
     Remove => Boolean
       whether to remove extraneous existing variables
   Outputs
-    B:Ring
-      isomorphic to R, but of the form {\tt A[new variables]/(ideal)}.
+    f:RingMap
+      an injective ring map from a polynomial ring $A$ to the ring $R$, such that
+      $R$ is module finite over $A$
   Description
     Text
      A Noether normalization of a domain R is an injective ring map f from a polynomial
      ring A to R such that R becomes (module-)finite over A.
       
      It is convenient to have an isomorphic copy B of $R$ such that A = coefficientRing B.
-     The program also creates such a ring B. It can be obtained as noetherRing R,
-     and an isomorphism $B\to R$ can be obtained as noetherMap B or noetherMap R.
+     The program also creates such a ring B. It can be obtained as {\tt noetherRing R},
+     and an isomorphism $B\to R$ can be obtained as {\tt noetherMap B} or 
+     {\tt noetherMap R}.
      
-     In the form noetherNormalization phi, A is the source of phi.
-     Otherwise, A is created. Its variables may be some of the variable of R,
+     In the form {\tt noetherNormalization phi}, A is the source of phi.
+     Otherwise, A is created. Its variables may be some of the variables of R,
      and new indexed variables corresponding to linear combinations of variables of R.
      
      The fraction field of B is represented as a finite extension of the fraction 
@@ -750,8 +786,76 @@ doc ///
       frac A === coefficientRing L
       --Booleans:
       isNoetherRing B
+      B === noetherRing C
       hasNoetherRing C
-      isNoethered C
+      --isNoethered C
+    Example
+      S = ZZ/32003[a..d]
+      I = monomialCurveIdeal(S, {1,3,4})
+      R = S/I
+      f = noetherNormalization R -- map from poly ring A to C
+      A = source f
+      R === target f
+      B = noetherRing R
+      noetherBasis B
+      A === coefficientRing B
+      g = noetherMap B
+      source g === B
+      target g === R
+      h = g^(-1)
+      L = frac B
+      noetherBasis L
+      frac A === coefficientRing L
+      --Booleans:
+      isNoetherRing B
+      B === noetherRing R
+      hasNoetherRing R
+
+    Example
+      S = ZZ/32003[a..d]
+      I = monomialCurveIdeal(S, {1,3,4})
+      R = S/I
+      f = noetherNormalization(R, {a, d})
+      A = source f
+      R === target f
+      B = noetherRing R
+      noetherBasis B
+      A === coefficientRing B
+      g = noetherMap B
+      source g === B
+      target g === R
+      h = g^(-1)
+      L = frac B
+      noetherBasis L
+      frac A === coefficientRing L
+      --Booleans:
+      isNoetherRing B
+      B === noetherRing R
+      hasNoetherRing R
+
+    Example
+      S = ZZ/32003[a..d]
+      I = monomialCurveIdeal(S, {1,3,4})
+      R = S/I
+      f = noetherNormalization(R, {a^2, d^2-a})
+      A = source f
+      R === target f
+      B = noetherRing R
+      noetherBasis B
+      A === coefficientRing B
+      g = noetherMap B
+      source g === B
+      target g === R
+      h = g^(-1)
+      L = frac B
+      noetherBasis L
+      frac A === coefficientRing L
+      --Booleans:
+      isNoetherRing B
+      B === noetherRing R
+      hasNoetherRing R
+
+
       
       B = noetherRing (C, {x})
       B = noetherRing (map(C,QQ[t],{x})
@@ -765,7 +869,8 @@ doc ///
       A = kk[t]
       R = kk[x,y]/(y^4-x*y^3-(x^2+1)*y-x^6)
       phi = map(R,A,{R_0})
-      B = noetherNormalization phi
+      phi === noetherNormalization phi
+      B = noetherRing R
     Text
      In case the ring R is reduced, this program does produce a Noether normalization B,
      but L = frac B may not be a field, and computations in L may be erroneous.
@@ -777,14 +882,14 @@ doc ///
       R = kk[x,y,z]/(ideal(x*y, x*z, y*z))
       A = kk[t]
       phi = map(R,A,{R_0+R_1+R_2})
-      B = noetherNormalization phi
+      B = noetherRing phi
       L = frac B
       use L 
       1/y -- note that the returned answer 0 is incorrect.
     Example
       kk = ZZ/101
       R = kk[a,b,c]/(a*b,a*c)
-      B = noetherNormalization (R, Variable => s)
+      B = noetherRing (R, Variable => s)
       A = coefficientRing B
       noetherMap B
       frac B
@@ -801,10 +906,10 @@ doc ///
     
     
   SeeAlso
-   noetherBasis
-   noetherMap
-   traceForm
-   
+   noetherRing
+   (noetherBasis, Ring)
+   (noetherMap, Ring)
+   (traceForm, Ring)
 ///
 
 doc ///
@@ -824,9 +929,11 @@ doc ///
     Example
       kk = ZZ/101
       R = kk[x,y,z]/(y^4-x*y^3-(x^2+1)*y-x^6, z^3-x*z-x)
-      B = noetherNormalization {x}
+      f = noetherNormalization(R, {x})
+      B = noetherRing R
       noetherBasis B
       noetherBasis frac B
+      use frac B
       assert(multiplicationMap(y^3) == (multiplicationMap y)^3)
       trace(y^3) -- fails?
   Caveat
@@ -857,7 +964,11 @@ doc ///
       S = QQ[a..d];
       I = monomialCurveIdeal(S, {1,3,4})
       R = S/I
-      B = noetherNormalization {a,d}
+      use R
+      noetherNormalization(R, {a,d})
+      use R
+      B = noetherRing(R, {a, d})
+      describe B
       bas = noetherBasis B
       bas/ring
     Example
@@ -922,7 +1033,7 @@ doc ///
       S = ZZ/101[a..d]
       I = monomialCurveIdeal(S, {1,3,4})
       R = S/I
-      B = noetherNormalization {a,d}
+      B = noetherNormalization(R, {a, d})
       bas = noetherBasis B
       bas/trace
       bas = noetherBasis frac B
@@ -1082,19 +1193,25 @@ TEST ///
   S = kk[a..d]
   I = monomialCurveIdeal(S, {1,2,3})
   R = S/I
+  B = noetherRing R
   phi1 = noetherNormalization R
   assert isModuleFinite phi1
-  B = noetherNormalization phi1
+  B = noetherRing R
   assert isModuleFinite B
   frac B
   g = B.NoetherInfo#"noether map"
   assert(g^-1 * g == 1)
   assert(g * g^-1 == 1)
+
   use R
-  phi2 = noetherNormalization {a,d}
+  phi2 = noetherNormalization(R, {a,d})
   assert isModuleFinite phi2
-  
-  
+  noetherRing R
+  B = noetherRing R
+  frac noetherRing R
+  use coefficientRing B
+  use B
+  1/(d+b)
 ///
 
 
@@ -1138,7 +1255,8 @@ debug needsPackage "NoetherNormalization"
   R = kk[x,y]/(x^4-2, y^5-2);
   phi = map(R, kk, {})
   isWellDefined phi  -- ok
-  B = noetherNormalization R
+  f = noetherNormalization R
+  B = noetherRing R
   assert(B === R)
   assert(frac B === R)
   assert(x/y === - x * y^4)
@@ -1151,7 +1269,7 @@ debug needsPackage "NoetherNormalization"
   kk = QQ
   R = kk[x,y]/(x^4-2, y^5-2);
   phi = map(R, kk, {})
-  B = noetherNormalization R
+  B = noetherRing R
   noetherBasis B
   traceForm B
   det oo
@@ -1482,12 +1600,12 @@ G*F
   describe B  
 
   use R
-  B = noetherNormalization({a, d})
+  B = noetherNormalization(R, {a, d})
   describe B  
   B.cache#"NoetherMap"
 
   use R
-  B = noetherNormalization({a, c+d})
+  B = noetherNormalization(R, {a, c+d})
   describe B  
   F = B.cache#"NoetherMap"
   F(c)

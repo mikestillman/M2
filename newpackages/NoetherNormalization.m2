@@ -789,6 +789,7 @@ doc ///
       B === noetherRing C
       hasNoetherRing C
       --isNoethered C
+
     Example
       S = ZZ/32003[a..d]
       I = monomialCurveIdeal(S, {1,3,4})
@@ -855,15 +856,6 @@ doc ///
       B === noetherRing R
       hasNoetherRing R
 
-
-      
-      B = noetherRing (C, {x})
-      B = noetherRing (map(C,QQ[t],{x})
-      noetherMap B
-      coefficientRing B
-      describe B
-      use C
-      noetherNormalization (C, {x})
     Example
       kk = ZZ/101
       A = kk[t]
@@ -935,7 +927,7 @@ doc ///
       noetherBasis frac B
       use frac B
       assert(multiplicationMap(y^3) == (multiplicationMap y)^3)
-      trace(y^3) -- fails?
+      trace(y^3)
   Caveat
     One must have created this ring with @TO noetherNormalization@.
   SeeAlso
@@ -1033,7 +1025,7 @@ doc ///
       S = ZZ/101[a..d]
       I = monomialCurveIdeal(S, {1,3,4})
       R = S/I
-      B = noetherNormalization(R, {a, d})
+      B = noetherRing(R, {a, d})
       bas = noetherBasis B
       bas/trace
       bas = noetherBasis frac B
@@ -1224,7 +1216,7 @@ debug needsPackage "NoetherNormalization"
 
   R = QQ[x,y]/(x^4-3, y^3-2);
   phi = map(R, QQ, {})
-  B = noetherNormalization phi
+  B = noetherRing phi
   
   assert inNoetherForm R
   assert(B === R)
@@ -1235,7 +1227,7 @@ debug needsPackage "NoetherNormalization"
   R = kk[x,y]/(x^4-3, y^3-2);
   phi = map(R, kk, {})
   isWellDefined phi  -- ok
-  B = noetherNormalization R
+  B = noetherRing R
   assert(B === R)
   assert inNoetherForm R
   assert(# noetherBasis B == 12)
@@ -1294,7 +1286,7 @@ TEST ///
 *-
   R = ZZ/101[x,y]/(x^2-y-1, y^3-x*y-3)
 
-  B = noetherNormalization R
+  B = noetherRing R
   noetherMap B -- FAILS: need to set this!
   A = coefficientRing B
   assert(coefficientRing frac B === frac A)
@@ -1310,7 +1302,7 @@ TEST ///
   needsPackage "NoetherNormalization"
 *-
   R = ZZ/101[x,y]/(x*y^3-x^2-y*x)
-  B = noetherNormalization R
+  B = noetherRing R
   noetherMap B
   A = coefficientRing B
   assert(coefficientRing frac B === frac A)
@@ -1363,7 +1355,7 @@ TEST ///
 *-
 -- Simple test
   R = ZZ/101[x,y]/(x^4-y^5-x*y^3)
-  B = noetherNormalization {x}
+  B = noetherRing(R, {x})
   describe B
   f = noetherMap B
   g = f^-1
@@ -1379,7 +1371,7 @@ TEST ///
   assert(ring numerator 1_L === B) -- needs checking
   
 --  R = ZZ/101[x,y]/(x^4-y^5-x*y^7)
---  B = noetherNormalization {x} -- fails... actually, this is not finite over the base...
+--  B = noetherRing (R, {x}) -- fails... actually, this is not finite over the base...
 ///
 
 TEST ///
@@ -1392,7 +1384,7 @@ TEST ///
   I = monomialCurveIdeal(S, {1,3,4})
   R = S/I
 
-  B = noetherNormalization {a,d}
+  B = noetherRing(R, {a,d})
   describe B
   f = noetherMap B
   g = f^-1
@@ -1418,7 +1410,7 @@ TEST ///
   I = monomialCurveIdeal(S, {1,3,4})
   R = S/I
 
-  B = noetherNormalization({a+d,a+c+d}, Variable => {s,t})
+  B = noetherRing(R, {a+d,a+c+d}, Variable => {s,t})
   describe B
   assert(#gens B === 2) -- make sure it removes 2 of the variables of a,b,c,d
 
@@ -1444,7 +1436,7 @@ TEST ///
   I = monomialCurveIdeal(S, {1,3,4})
   R = S/I
 
-  B = noetherNormalization({a, a+c+d}, Variable => {s,t})
+  B = noetherRing(R, {a, a+c+d}, Variable => {s,t})
   assert(#gens B === 2) -- make sure it removes 2 of the variables of a,b,c,d
   use coefficientRing B
   assert(gens coefficientRing B === {a,s})
@@ -1476,12 +1468,12 @@ TEST ///
   I = sub(I, S)
   R = S/I
 
-  B = noetherNormalization {a,d}
+  B = noetherRing(R, {a,d})
   degrees B
   degrees coefficientRing B
 
   use R  
-  B = noetherNormalization({a+d,a+c+d}, Variable => {s,t})
+  B = noetherRing(R, {a+d,a+c+d}, Variable => {s,t})
   describe B
   assert(#gens B === 2) -- make sure it removes 2 of the variables of a,b,c,d
 
@@ -1512,7 +1504,7 @@ TEST ///
   I = sub(I, S)
   R = S/I
 
-  B = noetherNormalization {a,d}
+  B = noetherRing(R, {a,d})
   degrees B
   degrees coefficientRing B
 
@@ -1525,7 +1517,7 @@ TEST ///
   assert(flatten entries (f*g).matrix == generators(R, CoefficientRing => ZZ/101))
 
   use R  
-  B = noetherNormalization({a+d,a+c+d}, Variable => {s,t})
+  B = noetherRing(R, {a+d,a+c+d}, Variable => {s,t})
   describe B
   assert(#gens B === 2) -- make sure it removes 2 of the variables of a,b,c,d
 
@@ -1564,13 +1556,13 @@ TEST ///
   elems = flatten entries matrix{{a,d}}
   elems = (elems/fR) 
   assert all(elems, a -> ring a === flatR)
---TODO  B = noetherNormalization elems -- STILL FAILS...
+--TODO  B = noetherRing elems -- STILL FAILS...
 
   -- Why does this work, but the above one fails?
   S = ZZ/101[a..d, MonomialOrder=>{2,Position=>Up,2}]
   I = monomialCurveIdeal(S, {1,3,4})
   R = S/I
-  B = noetherNormalization {a,d}
+  B = noetherRing(R, {a,d})
 ///
 
 
@@ -1592,20 +1584,20 @@ TEST ///
 F*G
 G*F
 *-
-  -- working on noetherNormalization {list of polys"
+  -- working on noetherRing {list of polys"
   S = ZZ/101[a..d]
   I = monomialCurveIdeal(S, {1,3,4})
   R = S/I
-  B = noetherNormalization({a+b, a+d})
+  B = noetherRing(R, {a+b, a+d})
   describe B  
 
   use R
-  B = noetherNormalization(R, {a, d})
+  B = noetherRing(R, {a, d})
   describe B  
   B.cache#"NoetherMap"
 
   use R
-  B = noetherNormalization(R, {a, c+d})
+  B = noetherRing(R, {a, c+d})
   describe B  
   F = B.cache#"NoetherMap"
   F(c)
@@ -1670,16 +1662,16 @@ G*F
   J = IT+ideal(s-(a+b), t-(c+d))
   radical ideal leadTerm gens gb J
 
-  use R; noetherNormalization {a,d}
-  use R; noetherNormalization {a,d+c}
-  use R; noetherNormalization {a+b,d+c} -- this one is NOT finite
-  use R; B = noetherNormalization {a+b,a+d}
+  use R; noetherRing(R, {a,d})
+  use R; noetherRing(R, {a,d+c})
+  use R; noetherRing(R, {a+b,d+c}) -- this one is NOT finite
+  use R; B = noetherRing(R, {a+b,a+d})
   describe B
     
   
 
   describe ambient B
-  use R; noetherNormalization {a^2, d^2}
+  use R; noetherRing(R, {a^2, d^2})
 
   B1 = ZZ/101[a, b, c, d, t_0, t_1, MonomialOrder=>{4, 2}]
   ideal(t_0 - (a+b), t_1 - (a+d)) + sub(I, B1)
@@ -1748,7 +1740,7 @@ TEST ///
 *-
   kk = ZZ/101
   R = kk[x,y]/(y^4-x*y^3-(x^2+1)*y-x^6)
-  B = noetherNormalization {x}
+  B = noetherRing(R, {x})
   L = frac B
   describe B
   describe L
@@ -1821,7 +1813,7 @@ TEST ///
   R = kk[x,y]/(y^4-x*y^3-(x^2+1)*y-x^6)
   phi = map(R,A,{R_0})
   phi = map(R,A,{R_0^2})  
-  B = noetherNormalization phi
+  B = noetherRing phi
   describe B
   L = frac B
   describe L
@@ -1862,7 +1854,7 @@ TEST ///
   I = ideal"a3-b2-c, bc-d, a2-b2-d2"
   R = S/I
 
-  B = noetherNormalization R
+  B = noetherRing R
   A = coefficientRing B  
   degrees B -- not good... multigradings!
   leadTerm ideal B
@@ -1882,7 +1874,7 @@ TEST ///
   I = monomialCurveIdeal(S, {1,3,4})
   R = S/I
   phi = map(R,A,{R_0, R_3})
-  B = noetherNormalization phi
+  B = noetherRing phi
   L = frac B
 describe B
 describe L
@@ -1912,7 +1904,7 @@ noetherBasis L
 --  R = ZZ[symbol x,y,z]/(x*y, x*z, y*z)  --??
   A = kk[t]
   phi = map(R,A,{R_0+R_1+R_2})
-  B = noetherNormalization phi
+  B = noetherRing phi
   L = frac B
   noetherBasis B
   noetherBasis L
@@ -1930,7 +1922,7 @@ TEST ///
 
   S = QQ[a..d]
   R = S/monomialCurveIdeal(S,{1,3,4})
-  B = noetherNormalization{a,d}
+  B = noetherRing(R,{a,d})
   frac B
   coefficientRing B
   coefficientRing frac B
@@ -1978,8 +1970,8 @@ TEST ///
   traceForm L
 
   R = QQ[a..d]/(b^2-a, b*c-d)
-  assert try (B = noetherNormalization{a,d}; false) else true  
- -- noetherNormalization{a,d} should fail, as R is not finite over QQ[a,d]
+  assert try (B = noetherRing(R,{a,d}); false) else true  
+ -- noetherRing(R, {a,d}) should fail, as R is not finite over QQ[a,d]
 ///
 
 TEST ///
@@ -1990,15 +1982,15 @@ TEST ///
 --  needsPackage "NoetherNormalization"
   kk = ZZ/101
   R = kk[x,y]/(x*y-1)
-  B = noetherNormalization R
+  B = noetherRing R
   describe B
   frac B
   A = kk[t]
   use R
   phi = map(R,A,{x+y})
 
-  noetherNormalization phi
-  noetherNormalization R
+  noetherRing phi
+  noetherRing R
     
   (F, J, xv) = noetherNormalizationData R
   R' = (ambient R)/J
@@ -2011,7 +2003,7 @@ TEST ///
   for x in xv list G^-1 x
   A = kk[t]
   phi = map(R, A, for x in xv list G^-1 x)
-  noetherNormalization phi
+  noetherRing phi
 ///
 
 
@@ -2026,8 +2018,9 @@ TEST ///
   S = reesAlgebra I
   S = first flattenRing S
 
-  noetherNormalizationData S
-  B = noetherNormalization S
+elapsedTime  noetherNormalizationData S
+elapsedTime noetherNormalization S
+elapsedTime  B = noetherRing S
   assert (numgens coefficientRing B == 5)
   assert(radical ideal leadTerm ideal B == ideal gens ambient B)
 
@@ -2035,7 +2028,7 @@ TEST ///
   use S
   f = map(S,T,{w_0+w_2+b, w_3+a+c, w_1+w_2+d, a+b+d, w_2+c+d})
   assert isModuleFinite f
-  B = noetherNormalization f
+  B = noetherRing f
   assert isModuleFinite B
   assert(numgens coefficientRing B == 5)
   assert(radical ideal leadTerm ideal B == ideal gens ambient B)
@@ -2043,8 +2036,38 @@ TEST ///
 -- We found this system of parameters as follows:
 -- This code is not run automatically as the first line takes too much space
 -*
-  elapsedTime sss = subsets(ss = (subsets(gens S, 3)/sum),5);
-  #sss
+
+linForms = (n,S) ->(
+  G := gens S;
+  sum\subsets(gens S, n)
+  )
+
+linForms(3,S)
+
+findParams = (S,T,L,maxTries) ->(
+  for i from 0 to maxTries do(
+      u := apply(numgens T, j-> L_(random(#L)));
+      f := map(S,T,u);
+      if isModuleFinite f then 
+      (print i; return f);
+))
+
+findParams = (S,T,L,maxTries) ->(
+  for i from 0 to maxTries do(
+      u := apply(numgens T, j-> (
+              ell := random(#L);	      
+	      L_ell_(random(#(L_ell)))));
+      f := map(S,T,u);
+      if isModuleFinite f then 
+      (print i; return f);
+))
+
+findParams(S,T,{linForms(3,S)},100)
+L = for b from 1 to 4 list linForms(b,S)
+findParams(S,T,L,100)
+
+tally oo
+
   i = 0
   f = map(S,T,sss_0)
   while not isModuleFinite f do (i= random (#sss); f =  map(S,T,sss_i);print i)
@@ -2070,7 +2093,7 @@ bracket = ideal flatten entries (X*Y - Y*X)
 --f = map(A,A,toList apply(0..(2*n^2-1), i -> sum(gens A)_{0..i}))
 --f bracket
 R = A/bracket
-elapsedTime B = noetherNormalization R
+elapsedTime B = noetherRing R
 ind =support first (independentSets bracket)
 fiber = gens ring bracket - set IS
 S = coefficientRing A[t_0..t_(#ind-1)]
@@ -2150,7 +2173,7 @@ I = ideal(x_1^3 + x_1*x_2, x_2^3-x_4+x_3, x_1^2*x_2+x_1*x_2^2)
 A = R/I
 primaryDecomposition I
 decompose I
-B = noetherNormalization A
+B = noetherRing A
 J = ideal B
 pJ = primaryDecomposition J
 
@@ -2168,7 +2191,7 @@ f := (noetherNormalizationData(I))_1
 
 R = QQ[x,y,z]/(x*y,y^2-z)
 R = QQ[x,y,z]/(x*y, y^2)
-B = noetherNormalization R
+B = noetherRing R
 ///
 
 
@@ -2188,7 +2211,7 @@ debug  needsPackage "NoetherNormalization"
 --    d. R = not unmixed: should always give an error, as the ring shold not be
 --          finite over a polynomial ring with dim R number of variables?
 R = QQ[x,y]/(x*y,y^2)
-B = noetherNormalization {x}
+B = noetherRing(R, {x})
 noetherMap B
 J = ideal B
 pJ = primaryDecomposition J
@@ -2210,7 +2233,7 @@ restart
 debug  needsPackage "NoetherNormalization"
 *-
 R = QQ[x,y,z]/intersect(ideal x, ideal(y,z))
-B = noetherNormalization {x+y,z}
+B = noetherRing(R, {x+y,z})
 
 noetherMap B
 J = ideal B

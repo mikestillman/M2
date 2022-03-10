@@ -35,11 +35,12 @@ export {
     "noetherBasisMatrix",
     "multiplicationMap",
     "traceForm",
-    
+    "homogeneousLinearParameters",    
     -- keys used:
     "NoetherInfo",
     "Remove",
-    "CheckDomain"
+    "CheckDomain",
+    "MaxTries"
     }
 export{"noetherNormalizationData","LimitList","RandomRange"}
 ----------------------------------------------------------------
@@ -693,8 +694,91 @@ noetherNormalizationData(QuotientRing) := noetherNormalizationData(PolynomialRin
 
 
 --=========================================================================--
+homogeneousLinearParameters = method(Options =>{Prefix =>{}})
+homogeneousLinearParameters Ring := List => o -> S -> (
+    if not isHomogeneous S then error "not appropriate function";
+    if #unique degrees S>1 then error "need all vars of same degree";
+    --we'd like to use a heft vector making all degrees equal
+    --we're assuming that its a flattened ring.
+    prefix := o.Prefix;
+    d := dim S;
+    restvars := gens S - set prefix;
+    i := 1;
+    L :=   sum\subsets(restvars, i);
+    while i <= #restvars and #prefix < d do(
+	  for s in L do(
+	      if codim ideal (p' := append(prefix, s)) > # prefix then prefix = p';
+	      if #prefix == d then return prefix
+	   );
+        i = i+1; 
+        L = sum\subsets(restvars, i);
+	);
+    prefix
+    )
+homogeneousLinearParameters(Ring, List) := List => o -> (S,Candidates) ->
+    for P in Candidates list homogeneousLinearParameters(S, Prefix => P)
+
+candidateParameters = method()
+candidateParameters Ring := List => S ->(
+    candidates := findParameters1 S;
+    homogeneousLinearParameters(S, candidates)
+    )
+findParameters1 = method(Options => {MaxTries => 5})
+findParameters1 Ring := List => o -> S ->(
+    --find beginning of a NN for S
+    L := gens S;
+    d := dim S;
+    ss := elapsedTime subsets L;
+    ns := #ss;
+    tries := 0;
+    sss := while tries < o.MaxTries list(
+	s := ss_(random(ns));
+	if #s > d or codim ideal s =!= #s then continue;
+	tries = tries+1;
+	s
+	);
+    m := max (sss/(s -> #s));
+    select(sss, s -> #s ===m)
+    )
+///
+restart
+debug loadPackage "NoetherNormalization"
+  kk = ZZ/101
+  R = kk[a,b,c,d]
+  I = ideal"a2,ab,cd,d2"
+  S = reesAlgebra I
+  S = first flattenRing S
+  T = newRing(S, Degrees => {numgens S:1})
+isHomogeneous T
+degrees S
+findParameters1 T
+homogeneousLinearParameters T
+netList candidateParameters T
+///
+///
+restart
+debug loadPackage "NoetherNormalization"
+  kk = ZZ/101
+  n = 5
+  R = kk[vars(0..2*n-1)]
+  m = genericMatrix(R,a,2,n)
+  I = minors(2,m)
+  S = reesAlgebra I
+  S = first flattenRing S
+  T = newRing(S, Degrees => {numgens S:1})
+isHomogeneous T
+degrees S
+elapsedTime findParameters1 (T, MaxTries => 100)
+homogeneousLinearParameters T
+elapsedTime netList (pp= candidateParameters T)
+#pp
+p = pp_0
+p = elapsedTime homogeneousLinearParameters T
+tally (pp/(p ->sum (size\p)))
 
 
+--elapsedTime noetherNormalizationData T
+///
 beginDocumentation()
 
 doc ///
@@ -2044,33 +2128,9 @@ linForms = (n,S) ->(
 
 linForms(3,S)
 
-findParams1 = S ->(
-    --find beginning of a NN for S
-    L := gens S;
-    d := dim S;
-    ss := subsets L;
-    sss := select(ss, s -> #s <= d and codim ideal s == #s);
-    m := max (sss/(s -> #s));
-    select(sss, s -> #s ===m)
-    )
 
 fP = findParams1 S
 
-findMoreParams = (S,prefix) -> (
-    d := dim S;
-    restvars := gens S - set prefix;
-    i := 2;
-    L :=   sum\subsets(restvars, i);
-    while i <= #restvars and #prefix < d do(
-	  for s in L do(
-	      if codim ideal (p' := append(prefix, s)) > # prefix then prefix = p';
-	      if #prefix == d then return prefix
-	   );
-        i = i+1; 
-        L = sum\subsets(restvars, i);
-	);
-    prefix
-    )
 P = findMoreParams (S, fP_0)
 P = findMoreParams (S, fP_1)
 P = findMoreParams (S, fP_2)

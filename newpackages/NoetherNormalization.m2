@@ -725,9 +725,34 @@ candidateParameters Ring := List => S ->(
     )
 findParameters1 = method(Options => {MaxTries => 5})
 findParameters1 Ring := List => o -> S ->(
-    --find beginning of a NN for S
+    -- find beginning of a NN for S
+    -- consisting of variables.
     L := gens S;
     d := dim S;
+    ss := elapsedTime subsets L;
+    ns := #ss;
+    tries := 0;
+    sss := while tries < o.MaxTries list(
+	s := ss_(random(ns));
+	if #s > d or codim ideal s =!= #s then continue;
+	tries = tries+1;
+	s
+	);
+    m := max (sss/(s -> #s));
+    select(sss, s -> #s ===m)
+    )
+
+findIndeterminantParameters = method(Options => {MaxTries => 5})
+findIndeterminantParameters Ring := List => o -> S ->(
+    -- find beginning of a NN for S
+    -- consisting of variables.
+    L := gens S;
+    d := dim S;
+    sz := 1;
+    while sz <= d do (
+        -- TODO
+        );
+    -- REMOVE:
     ss := elapsedTime subsets L;
     ns := #ss;
     tries := 0;
@@ -778,6 +803,52 @@ tally (pp/(p ->sum (size\p)))
 
 
 --elapsedTime noetherNormalizationData T
+
+-- first try one element
+goodL = for x in gens T list (
+    if codim ideal x =!= 1 then continue else x
+    )
+-- in this example, these are all the variables.
+elapsedTime L2 = subsets(goodL, 2);
+elapsedTime M2 = for x in L2 list (
+    if codim ideal x =!= 2 then continue else x
+    );
+elapsedTime bad2 = for x in L2 list (
+    if codim ideal x === 2 then continue else x
+    );
+elapsedTime L3 = subsets(goodL, 3);
+elapsedTime M3 = for x in L3 list (
+    if codim ideal x =!= #x then continue else x
+    );
+
+elapsedTime L4 = subsets(goodL, 4);
+elapsedTime M4 = for x in L4 list (
+    if codim ideal x =!= #x then continue else x
+    );
+
+elapsedTime L5 = subsets(goodL, 5);
+elapsedTime M5 = for x in L5 list (
+    if codim ideal x =!= #x then continue else x
+    );
+
+elapsedTime L6 = subsets(goodL, 6);
+elapsedTime M6 = for x in L6 list (
+    if codim ideal x =!= #x then continue else x
+    );
+-- nothing here.  Time to move up to sums of 2 variables.
+
+L2s = (subsets(gens T, 2))/sum;
+count = 0;
+elapsedTime M6 = flatten for x in M5 list (
+    count = count + 1;
+    << "." << flush;
+    if count % 100 == 0 then << endl;
+    for y in L2s list (
+        xy := append(x, y);
+        if codim ideal xy =!= #xy then continue else xy
+        )    
+    );
+
 ///
 beginDocumentation()
 
@@ -2270,6 +2341,352 @@ R = QQ[x,y,z]/(x*y,y^2-z)
 R = QQ[x,y,z]/(x*y, y^2)
 B = noetherRing R
 ///
+
+
+--------------------------------------------------------------
+-- Examples from Singular's noether.lib ----------------------
+--------------------------------------------------------------
+SLOW = method()
+SLOW String := s -> null
+TOOSLOW = method()
+TOOSLOW String := s -> null
+
+TEST ///
+-* -- Singular code from noether.lib
+  LIB "noether.lib";
+  LIB "mregular.lib";
+  ring r=0,(X,Y,a,b),dp;
+  poly f=X^8+a*Y^4-Y;
+  poly g=Y^8+b*X^4-X;
+  poly h=diff(f,X)*diff(g,Y)-diff(f,Y)*diff(g,X);
+  ideal i=f,g,h;
+  
+  NoetherPosition(i);
+  NPos(i);
+*-
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+*-
+  kk = ZZ/32003 -- kk = QQ is original...
+  R1 = kk[X,Y,a,b]
+  f = X^8+a*Y^4-Y;
+  g = Y^8+b*X^4-X;
+  h = diff(X,f)*diff(Y,g)-diff(Y,f)*diff(X,g)
+  I = ideal(f,g,h);
+  R = R1/I  
+--  elapsedTime noetherNormalization R -- takes too long...
+///
+--------------------------------------------------------------
+TEST ///
+-*
+  LIB "noether.lib";
+  LIB "mregular.lib";
+  ring r=0,(x,y,z,a,b),dp;
+  ideal i=2*y^2*(y^2+x^2)+(b^2-3*a^2)*y^2-2*b*y^2*(x+y)+2*a^2*b*(y+x)-a^2*x^2+a^2*(a^2-b^2),4*y^3+4*y*(y^2+x^2)-2*b*y^2-4*b*y*(y+x)+2*(b^2-3*a^2)*y+2*a^2*b,4*x*y^2-2*b*y^2-2*a^2*x+2*a^2*b;
+  NPos(i); // -- so so sop
+  NoetherPosition(i); // so so sop
+*-
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+*-
+  kk = QQ
+  R1 = kk[x,y,z,a,b];
+  I = ideal(2*y^2*(y^2+x^2)+(b^2-3*a^2)*y^2-2*b*y^2*(x+y)+2*a^2*b*(y+x)-a^2*x^2+a^2*(a^2-b^2),4*y^3+4*y*(y^2+x^2)-2*b*y^2-4*b*y*(y+x)+2*(b^2-3*a^2)*y+2*a^2*b,4*x*y^2-2*b*y^2-2*a^2*x+2*a^2*b);
+  assert isHomogeneous I
+  R = R1/I  
+  elapsedTime noetherNormalization R  -- poor sop, better to use integer randoms?
+
+  -- the following should be cleaned and made into tests
+  findParameters1 R
+  homogeneousLinearParameters R
+  B = noetherRing(R, homogeneousLinearParameters R)
+  L = frac B
+  netList candidateParameters R
+///
+--------------------------------------------------------------
+TEST ///
+-*
+  LIB "noether.lib";
+  LIB "mregular.lib";
+  ring r=0,(t,a,b,c,d),dp;
+  ideal i=b4-a3d, ab3-a3c, bc4-ac3d-bcd3+ad4, c6-bc3d2-c3d3+bd5, ac5-b2c3d-ac2d3+b2d4, a2c4-a3d3+b3d3-a2cd3, b3c3-a3d3, ab2c3-a3cd2+b3cd2-ab2d3, a2bc3-a3c2d+b3c2d-a2bd3, a3c3-a3bd2, a4c2-a3b2d;
+  NPos(i); // 
+  NoetherPosition(i); // so so sop
+*-
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+*-
+  kk = QQ
+  R1 = kk[t,a,b,c,d];
+  I = ideal"b4-a3d, ab3-a3c, bc4-ac3d-bcd3+ad4, c6-bc3d2-c3d3+bd5, ac5-b2c3d-ac2d3+b2d4, a2c4-a3d3+b3d3-a2cd3, b3c3-a3d3, ab2c3-a3cd2+b3cd2-ab2d3, a2bc3-a3c2d+b3c2d-a2bd3, a3c3-a3bd2, a4c2-a3b2d";
+  assert isHomogeneous I  
+  dim I
+  R = R1/I
+  noetherNormalization R
+  findParameters1 R -- good one
+  B = noetherRing(R, first oo)
+  see ideal gens gb ideal B
+  gens B
+  L = frac B
+  ideal L
+///
+--------------------------------------------------------------
+TEST ///
+-*
+  LIB "noether.lib";
+  LIB "mregular.lib";
+  ring r=0,(a,b,c,d,e),dp;
+  ideal i=6*b4*c3+21*b4*c2*d+15b4cd2+9b4d3-8b2c2e-28b2cde+36b2d2e-144b2c-648b2d-120, 9b4c4+30b4c3d+39b4c2d2+18b4cd3-24b2c3e-16b2c2de+16b2cd2e+24b2d3e-432b2c2-720b2cd-432b2d2+16c2e2-32cde2+16d2e2+576ce-576de-240c+5184,-15b2c3e+15b2c2de-81b2c2+216b2cd-162b2d2+40c2e2-80cde2+40d2e2+1008ce-1008de+5184, -4b2c2+4b2cd-3b2d2+22ce-22de+261;
+  NPos(i); // 
+  NoetherPosition(i); // so so sop
+*-
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+*-
+  kk = QQ
+  R1 = kk[a,b,c,d,e];
+  I = ideal"6b4c3+21b4c2d+15b4cd2+9b4d3-8b2c2e-28b2cde+36b2d2e-144b2c-648b2d-120, 9b4c4+30b4c3d+39b4c2d2+18b4cd3-24b2c3e-16b2c2de+16b2cd2e+24b2d3e-432b2c2-720b2cd-432b2d2+16c2e2-32cde2+16d2e2+576ce-576de-240c+5184,-15b2c3e+15b2c2de-81b2c2+216b2cd-162b2d2+40c2e2-80cde2+40d2e2+1008ce-1008de+5184, -4b2c2+4b2cd-3b2d2+22ce-22de+261"
+  R = R1/I
+  f = noetherNormalization R;
+///
+--------------------------------------------------------------
+TEST ///
+  -- really hard one, apparently...
+-*
+  LIB "noether.lib";
+  LIB "mregular.lib";
+  ring r=0,(c,b,d,p,q),dp;
+  ideal i=2*(b-1)^2+2*(q-p*q+p^2)+c^2*(q-1)^2-2*b*q+2*c*d*(1-q)*(q-p)+2*b*p*q*d*(d-c)+b^2*d^2*(1-2*p)+2*b*d^2*(p-q)+2*b*d*c*(p-1)+2*b*p*q*(c+1)+(b^2-2*b)*p^2*d^2+2*b^2*p^2+4*b*(1-b)*p+d^2*(p-q)^2,d*(2*p+1)*(q-p)+c*(p+2)*(1-q)+b*(b-2)*d+b*(1-2*b)*p*d+b*c*(q+p-p*q-1)+b*(b+1)*p^2*d, -b^2*(p-1)^2+2*p*(p-q)-2*(q-1),b^2+4*(p-q*q)+3*c^2*(q-1)*(q-1)-3*d^2*(p-q)^2+3*b^2*d^2*(p-1)^2+b^2*p*(p-2)+6*b*d*c*(p+q+q*p-1);
+
+  NPos(i); // seems to take some time...
+  NoetherPosition(i); // seems to take some time...
+*-
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+*-
+  kk = ZZ/101
+  R1 = kk[c,b,d,p,q];
+  I = ideal(2*(b-1)^2+2*(q-p*q+p^2)+c^2*(q-1)^2-2*b*q+2*c*d*(1-q)*(q-p)+2*b*p*q*d*(d-c)+b^2*d^2*(1-2*p)+2*b*d^2*(p-q)+2*b*d*c*(p-1)+2*b*p*q*(c+1)+(b^2-2*b)*p^2*d^2+2*b^2*p^2+4*b*(1-b)*p+d^2*(p-q)^2,d*(2*p+1)*(q-p)+c*(p+2)*(1-q)+b*(b-2)*d+b*(1-2*b)*p*d+b*c*(q+p-p*q-1)+b*(b+1)*p^2*d, -b^2*(p-1)^2+2*p*(p-q)-2*(q-1),b^2+4*(p-q*q)+3*c^2*(q-1)*(q-1)-3*d^2*(p-q)^2+3*b^2*d^2*(p-1)^2+b^2*p*(p-2)+6*b*d*c*(p+q+q*p-1));
+///
+--------------------------------------------------------------
+TEST ///
+-*
+  LIB "noether.lib";
+  LIB "mregular.lib";
+  ring r=0,(a,b,c,d,e,f),dp;
+  ideal i=2adef+3be2f-cef2,4ad2f+5bdef+cdf2,2abdf+3b2ef-bcf2,4a2df+5abef+acf2,4ad2e+3bde2+7cdef, 2acde+3bce2-c2ef, 4abde+3b2e2-4acdf+2bcef-c2f2, 4a2de+3abe2+7acef, 4acd2+5bcde+c2df, 4abd2+3b2de+7bcdf, 16a2d2-9b2e2+32acdf-18bcef+7c2f2, 2abcd+3b2ce-bc2f, 4a2cd+5abce+ac2f, 4a2bd+3ab2e+7abcf, abc2f-cdef2, ab2cf-bdef2, 2a2bcf+3be2f2-cef3, ab3f-3bdf3, 2a2b2f-4adf3+3bef3-cf4, a3bf+4aef3, 3ac3e-cde3, 3b2c2e-bc3f+2cd2ef, abc2e-cde2f, 6a2c2e-4ade3-3be4+ce3f, 3b3ce-b2c2f+2bd2ef, 2a2bce+3be3f-ce2f2, 3a3ce+4ae3f, 4bc3d+cd3e, 4ac3d-3bc3e-2cd2e2+c4f, 8b2c2d-4ad4-3bd3e-cd3f, 4b3cd+3bd3f, 4ab3d+3b4e-b3cf-6bd2f2, 4a4d+3a3be+a3cf-8ae2f2;
+  NPos(i); // immediate.
+  NoetherPosition(i); // immediate.
+*-
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+*-
+  kk = QQ
+  kk = ZZ/101
+  R1 = QQ[a,b,c,d,e,f]
+  I = ideal"2adef+3be2f-cef2,4ad2f+5bdef+cdf2,2abdf+3b2ef-bcf2,4a2df+5abef+acf2,4ad2e+3bde2+7cdef, 2acde+3bce2-c2ef, 4abde+3b2e2-4acdf+2bcef-c2f2, 4a2de+3abe2+7acef, 4acd2+5bcde+c2df, 4abd2+3b2de+7bcdf, 16a2d2-9b2e2+32acdf-18bcef+7c2f2, 2abcd+3b2ce-bc2f, 4a2cd+5abce+ac2f, 4a2bd+3ab2e+7abcf, abc2f-cdef2, ab2cf-bdef2, 2a2bcf+3be2f2-cef3, ab3f-3bdf3, 2a2b2f-4adf3+3bef3-cf4, a3bf+4aef3, 3ac3e-cde3, 3b2c2e-bc3f+2cd2ef, abc2e-cde2f, 6a2c2e-4ade3-3be4+ce3f, 3b3ce-b2c2f+2bd2ef, 2a2bce+3be3f-ce2f2, 3a3ce+4ae3f, 4bc3d+cd3e, 4ac3d-3bc3e-2cd2e2+c4f, 8b2c2d-4ad4-3bd3e-cd3f, 4b3cd+3bd3f, 4ab3d+3b4e-b3cf-6bd2f2, 4a4d+3a3be+a3cf-8ae2f2";
+  assert isHomogeneous I
+  R = R1/I
+  f = noetherNormalization R; -- really slow... even in char. p
+  
+  sop = homogeneousLinearParameters R -- quick quick, gives a seemingly nice sop?
+  dim R === 3
+  B = noetherRing(R, sop) -- this takes a while...  note that NPos and NoetherPosition aren't nec computing resulting ideals...
+///
+--------------------------------------------------------------
+TEST ///
+-*
+  LIB "noether.lib";
+  LIB "mregular.lib";
+  ring r=0,(x,y,z,t,u,v,w),dp;
+  ideal i=2tw+2wy-wz,2uw2-10vw2+20w3-7tu+35tv-70tw, 6tw2+2w2y-2w2z-21t2-7ty+7tz, 2v3-4uvw-5v2w+6uw2+7vw2-15w3-42vy, 6tw+9wy+2vz-3wz-21x, 9uw3-45vw3+135w4+14tv2-70tuw+196tvw-602tw2-14v2z+28uwz+14vwz-28w2z+147ux-735vx+2205wx-294ty+98tz+294yz-98z2, 36tw3+6w3y-9w3z-168t2w-14v2x+28uwx+14vwx-28w2x-28twy+42twz+588tx+392xy-245xz, 2uvw-6v2w-uw2+13vw2-5w3-28tw+14wy, u2w-3uvw+5uw2-28tw+14wy, tuw+tvw-11tw2-2vwy+8w2y+uwz-3vwz+5w2z-21wx, 5tuw-17tvw+33tw2-7uwy+22vwy-39w2y-2uwz+6vwz-10w2z+63wx, 20t2w-12uwx+30vwx-15w2x-10twy-8twz+4wyz, 4t2w-6uwx+12vwx-6w2x+2twy-2wy2-2twz+wyz, 8twx+8wxy-4wxz;
+  NPos(i);
+  NoetherPosition(i);
+*-
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+*-
+  kk = QQ
+  R1 = kk[x,y,z,t,u,v,w];
+  I = ideal"2tw+2wy-wz,2uw2-10vw2+20w3-7tu+35tv-70tw, 6tw2+2w2y-2w2z-21t2-7ty+7tz, 2v3-4uvw-5v2w+6uw2+7vw2-15w3-42vy, 6tw+9wy+2vz-3wz-21x, 9uw3-45vw3+135w4+14tv2-70tuw+196tvw-602tw2-14v2z+28uwz+14vwz-28w2z+147ux-735vx+2205wx-294ty+98tz+294yz-98z2, 36tw3+6w3y-9w3z-168t2w-14v2x+28uwx+14vwx-28w2x-28twy+42twz+588tx+392xy-245xz, 2uvw-6v2w-uw2+13vw2-5w3-28tw+14wy, u2w-3uvw+5uw2-28tw+14wy, tuw+tvw-11tw2-2vwy+8w2y+uwz-3vwz+5w2z-21wx, 5tuw-17tvw+33tw2-7uwy+22vwy-39w2y-2uwz+6vwz-10w2z+63wx, 20t2w-12uwx+30vwx-15w2x-10twy-8twz+4wyz, 4t2w-6uwx+12vwx-6w2x+2twy-2wy2-2twz+wyz, 8twx+8wxy-4wxz";
+  assert not isHomogeneous I
+///
+--------------------------------------------------------------
+TEST ///
+-*
+  LIB "noether.lib";
+  LIB "mregular.lib";
+  ring r=0,(a,b,c,d,x,w,u,v),dp;
+  ideal i=a+b+c+d,u+v+w+x, 3ab+3ac+3bc+3ad+3bd+3cd+2,bu+cu+du+av+cv+dv+aw+bw+dw+ax+bx+cx,bcu+bdu+cdu+acv+adv+cdv+abw+adw+bdw+abx+acx+bcx,abc+abd+acd+bcd,bcdu+acdv+abdw+abcx;
+  NPos(i);
+  NoetherPosition(i);
+*-
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+*-
+  kk = QQ
+  R1 = kk[a,b,c,d,x,w,u,v];
+  I = ideal"a+b+c+d,u+v+w+x, 3ab+3ac+3bc+3ad+3bd+3cd+2,bu+cu+du+av+cv+dv+aw+bw+dw+ax+bx+cx,bcu+bdu+cdu+acv+adv+cdv+abw+adw+bdw+abx+acx+bcx,abc+abd+acd+bcd,bcdu+acdv+abdw+abcx";
+  R = R1/I
+///
+--------------------------------------------------------------
+TEST ///
+-- I think: this is the 2x2 permanents of 3x3.  Why the funny variable names?
+-*
+  LIB "noether.lib";
+  LIB "mregular.lib";
+  ring r=0,(b,x,y,z,s,t,u,v,w),dp;
+  ideal i=su+bv, tu+bw,tv+sw,sx+by,tx+bz,ty+sz,vx+uy,wx+uz,wy+vz;
+  NPos(i);
+  NoetherPosition(i);
+*-
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+*-
+  kk = QQ
+  kk = ZZ/32003
+  R1 = kk[b,x,y,z,s,t,u,v,w];
+  I = ideal"su+bv, tu+bw,tv+sw,sx+by,tx+bz,ty+sz,vx+uy,wx+uz,wy+vz";
+  R = R1/I
+  noetherNormalization R -- really bad and slow
+  homogeneousLinearParameters R
+///
+--------------------------------------------------------------
+TEST ///
+-*
+  LIB "noether.lib";
+  LIB "mregular.lib";
+  ring r=0,(t,a,b,c,d,e,f,g,h),dp;
+  ideal i=a+c+d-e-h,2df+2cg+2eh-2h2-h-1,3df2+3cg2-3eh2+3h3+3h2-e+4h, 6bdg-6eh2+6h3-3eh+6h2-e+4h, 4df3+4cg3+4eh3-4h4-6h3+4eh-10h2-h-1, 8bdfg+8eh3-8h4+4eh2-12h3+4eh-14h2-3h-1, 12bdg2+12eh3-12h4+12eh2-18h3+8eh-14h2-h-1, -24eh3+24h4-24eh2+36h3-8eh+26h2+7h+1;
+  NPos(i);
+  NoetherPosition(i);
+*-
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+*-
+  kk = QQ
+///
+--------------------------------------------------------------
+TEST ///
+-*
+  LIB "noether.lib";
+  LIB "mregular.lib";
+  ring r=0,(a,b,c,d,e,f,g,h,k,l),dp;
+  ideal i=f2h-1,ek2-1,g2l-1, 2ef2g2hk2+f2g2h2k2+2ef2g2k2l+2f2g2hk2l+f2g2k2l2+ck2, 2e2fg2hk2+2efg2h2k2+2e2fg2k2l+4efg2hk2l+2fg2h2k2l+2efg2k2l2+2fg2hk2l2+2bfh, 2e2f2ghk2+2ef2gh2k2+2e2f2gk2l+4ef2ghk2l+2f2gh2k2l+2ef2gk2l2+2f2ghk2l2+2dgl, e2f2g2k2+2ef2g2hk2+2ef2g2k2l+2f2g2hk2l+f2g2k2l2+bf2, 2e2f2g2hk+2ef2g2h2k+2e2f2g2kl+4ef2g2hkl+2f2g2h2kl+2ef2g2kl2+2f2g2hkl2+2cek, e2f2g2k2+2ef2g2hk2+f2g2h2k2+2ef2g2k2l+2f2g2hk2l+dg2, -e2f2g2hk2-ef2g2h2k2-e2f2g2k2l-2ef2g2hk2l-f2g2h2k2l-ef2g2k2l2-f2g2hk2l2+a2;
+  NPos(i);
+  NoetherPosition(i);
+*-
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+*-
+  kk = QQ
+  R1 = kk[t,a,b,c,d,e,f,g,h];
+  I = ideal"a+c+d-e-h,2df+2cg+2eh-2h2-h-1,3df2+3cg2-3eh2+3h3+3h2-e+4h, 6bdg-6eh2+6h3-3eh+6h2-e+4h, 4df3+4cg3+4eh3-4h4-6h3+4eh-10h2-h-1, 8bdfg+8eh3-8h4+4eh2-12h3+4eh-14h2-3h-1, 12bdg2+12eh3-12h4+12eh2-18h3+8eh-14h2-h-1, -24eh3+24h4-24eh2+36h3-8eh+26h2+7h+1";
+  R = R1/I
+  --  noetherNormalization R
+///
+--------------------------------------------------------------
+TEST ///
+-*
+  LIB "noether.lib";
+  LIB "mregular.lib";
+  ring r=0,(b,c,d,e,f,g,h,j,k,l),dp;
+  ideal i=-k9+9k8l-36k7l2+84k6l3-126k5l4+126k4l5-84k3l6+36k2l7-9kl8+l9, -bk8+8bk7l+k8l-28bk6l2-8k7l2+56bk5l3+28k6l3-70bk4l4-56k5l4+56bk3l5+70k4l5-28bk2l6-56k3l6+8bkl7+28k2l7-bl8-8kl8+l9, ck7-7ck6l-k7l+21ck5l2+7k6l2-35ck4l3-21k5l3+35ck3l4+35k4l4-21ck2l5-35k3l5+7ckl6+21k2l6-cl7-7kl7+l8, -dk6+6dk5l+k6l-15dk4l2-6k5l2+20dk3l3+15k4l3-15dk2l4-20k3l4+6dkl5+15k2l5-dl6-6kl6+l7, ek5-5ek4l-k5l+10ek3l2+5k4l2-10ek2l3-10k3l3+5ekl4+10k2l4-el5-5kl5+l6, -fk4+4fk3l+k4l-6fk2l2-4k3l2+4fkl3+6k2l3-fl4-4kl4+l5, gk3-3gk2l-k3l+3gkl2+3k2l2-gl3-3kl3+l4, -hk2+2hkl+k2l-hl2-2kl2+l3, jk-jl-kl+l2;
+  NPos(i);
+  NoetherPosition(i); // much worse that NPos
+*-
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+*-
+  kk = QQ
+  R1 = kk[b,c,d,e,f,g,h,j,k,l];
+  I = ideal"-k9+9k8l-36k7l2+84k6l3-126k5l4+126k4l5-84k3l6+36k2l7-9kl8+l9, -bk8+8bk7l+k8l-28bk6l2-8k7l2+56bk5l3+28k6l3-70bk4l4-56k5l4+56bk3l5+70k4l5-28bk2l6-56k3l6+8bkl7+28k2l7-bl8-8kl8+l9, ck7-7ck6l-k7l+21ck5l2+7k6l2-35ck4l3-21k5l3+35ck3l4+35k4l4-21ck2l5-35k3l5+7ckl6+21k2l6-cl7-7kl7+l8, -dk6+6dk5l+k6l-15dk4l2-6k5l2+20dk3l3+15k4l3-15dk2l4-20k3l4+6dkl5+15k2l5-dl6-6kl6+l7, ek5-5ek4l-k5l+10ek3l2+5k4l2-10ek2l3-10k3l3+5ekl4+10k2l4-el5-5kl5+l6, -fk4+4fk3l+k4l-6fk2l2-4k3l2+4fkl3+6k2l3-fl4-4kl4+l5, gk3-3gk2l-k3l+3gkl2+3k2l2-gl3-3kl3+l4, -hk2+2hkl+k2l-hl2-2kl2+l3, jk-jl-kl+l2";
+  R = R1/I
+  see I
+  assert isHomogeneous I
+  homogeneousLinearParameters R
+///
+--------------------------------------------------------------
+TEST ///
+-*
+  LIB "noether.lib";
+  LIB "mregular.lib";
+  ring r=0,x(0..10),dp;
+  ideal i=x(1)*x(0),x(1)*x(2),x(2)*x(3),x(3)*x(4),x(4)*x(5),x(5)*x(6),x(6)*x(7),x(7)*x(8),x(8)*x(9),x(9)*x(10),x(10)*x(0);
+  NPos(i);
+  NoetherPosition(i);
+*-
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+*-
+  kk = QQ
+  R1 = kk[x_0..x_10];
+  I = ideal(x_1*x_0,x_1*x_2,x_2*x_3,x_3*x_4,x_4*x_5,x_5*x_6,x_6*x_7,x_7*x_8,x_8*x_9,x_9*x_10,x_10*x_0);
+  R = R1/I
+  assert isHomogeneous I
+  homogeneousLinearParameters R
+///
+--------------------------------------------------------------
+TEST ///
+-*
+  LIB "noether.lib";
+  LIB "mregular.lib";
+  ring r=0,(a,b,c,d,e,f,g,h,j,k,l,m,n,o,p,q,s),dp;
+  ideal i=ag,gj+am+np+q,bl,nq,bg+bk+al+lo+lp+b+c,ag+ak+jl+bm+bn+go+ko+gp+kp+lq+a+d+f+h+o+p,gj+jk+am+an+mo+no+mp+np+gq+kq+e+j+q+s-1,jm+jn+mq+nq,jn+mq+2nq,gj+am+2an+no+np+2gq+kq+q+s,2ag+ak+bn+go+gp+lq+a+d,bg+al, an+gq, 2jm+jn+mq, gj+jk+am+mo+2mp+np+e+2j+q, jl+bm+gp+kp+a+f+o+2p,lp+b,jn+mq,gp+a;
+  NPos(i);
+  NoetherPosition(i);
+*-
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+*-
+  kk = QQ
+  R = QQ[a,b,c,d,e,f,g,h,j,k,l,m,n,o,p,q,s]
+  I = ideal"ag,gj+am+np+q,bl,nq,bg+bk+al+lo+lp+b+c,ag+ak+jl+bm+bn+go+ko+gp+kp+lq+a+d+f+h+o+p,gj+jk+am+an+mo+no+mp+np+gq+kq+e+j+q+s-1,jm+jn+mq+nq,jn+mq+2nq,gj+am+2an+no+np+2gq+kq+q+s,2ag+ak+bn+go+gp+lq+a+d,bg+al, an+gq, 2jm+jn+mq, gj+jk+am+mo+2mp+np+e+2j+q, jl+bm+gp+kp+a+f+o+2p,lp+b,jn+mq,gp+a"
+  see I
+  R = R/I
+  -- FIXME
+  --elapsedTIme noetherNormalization R; -- takes too long currently...
+///
+--------------------------------------------------------------
+TOOSLOW ///
+-- doesn't seem to run in Singular either.
+-*
+  LIB "noether.lib";
+  LIB "mregular.lib";
+  ring r=0,(a,b,c,d,e,f,g,h,v,w,k,l,m,n,o,p,q,s,t,u),dp;
+  ideal i=af+bg+ch+dv+ew-1/2, a2f+b2g+c2h+d2v+e2w-1/3,tdw+agk+ahl+bhm+avn+bvo+cvp+awq+bwu+cws-1/6, a3f+b3g+c3h+d3v+e3w-1/4, tdew+abgk+achl+bchm+advn+bdvo+cdvp+aewq+bewu+cews-1/8, td2w+a2gk+a2hl+b2hm+a2vn+b2vo+c2vp+a2wq+b2wu+c2ws-1/12, ahkm+tawn+tbwo+avko+tcwp+avlp+bvmp+awku+awls+bwms-1/24, a4f+b4g+c4h+d4v+e4w-1/5, tde2w+ab2gk+ac2hl+bc2hm+ad2vn+bd2vo+cd2vp+ae2wq+be2wu+ce2ws-1/10, td2ew+a2bgk+a2chl+b2chm+a2dvn+b2dvo+c2dvp+a2ewq+b2ewu+c2ews-1/15,achkm+taewn+tbewo+advko+tcewp+advlp+bdvmp+aewku+aewls+bewms-1/30,t2d2w+a2gk2+a2hl2+2abhlm+b2hm2+a2vn2+2abvno+b2vo2+2acvnp+2bcvop+c2vp2+2tadwq+a2wq2+2tbdwu+2abwqu+b2wu2+2tcdws+2acwqs+2bcwus+c2ws2-1/20,td3w+a3gk+a3hl+b3hm+a3vn+b3vo+c3vp+a3wq+b3wu+c3ws-1/20,abhkm+tadwn+tbdwo+abvko+tcdwp+acvlp+bcvmp+abwku+acwls+bcwms-1/40,a2hkm+ta2wn+tb2wo+a2vko+tc2wp+a2vlp+b2vmp+a2wku+a2wls+b2wms-1/60,tawko+tawlp+tbwmp+avkmp+awkms-1/20;
+  NPos(i);
+  NoetherPosition(i);
+*-
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+*-
+  kk = QQ
+  R1 = kk[a,b,c,d,e,f,g,h,v,w,k,l,m,n,o,p,q,s,t,u];
+  I = ideal"af+bg+ch+dv+ew-1/2, a2f+b2g+c2h+d2v+e2w-1/3,tdw+agk+ahl+bhm+avn+bvo+cvp+awq+bwu+cws-1/6, a3f+b3g+c3h+d3v+e3w-1/4, tdew+abgk+achl+bchm+advn+bdvo+cdvp+aewq+bewu+cews-1/8, td2w+a2gk+a2hl+b2hm+a2vn+b2vo+c2vp+a2wq+b2wu+c2ws-1/12, ahkm+tawn+tbwo+avko+tcwp+avlp+bvmp+awku+awls+bwms-1/24, a4f+b4g+c4h+d4v+e4w-1/5, tde2w+ab2gk+ac2hl+bc2hm+ad2vn+bd2vo+cd2vp+ae2wq+be2wu+ce2ws-1/10, td2ew+a2bgk+a2chl+b2chm+a2dvn+b2dvo+c2dvp+a2ewq+b2ewu+c2ews-1/15,achkm+taewn+tbewo+advko+tcewp+advlp+bdvmp+aewku+aewls+bewms-1/30,t2d2w+a2gk2+a2hl2+2abhlm+b2hm2+a2vn2+2abvno+b2vo2+2acvnp+2bcvop+c2vp2+2tadwq+a2wq2+2tbdwu+2abwqu+b2wu2+2tcdws+2acwqs+2bcwus+c2ws2-1/20,td3w+a3gk+a3hl+b3hm+a3vn+b3vo+c3vp+a3wq+b3wu+c3ws-1/20,abhkm+tadwn+tbdwo+abvko+tcdwp+acvlp+bcvmp+abwku+acwls+bcwms-1/40,a2hkm+ta2wn+tb2wo+a2vko+tc2wp+a2vlp+b2vmp+a2wku+a2wls+b2wms-1/60,tawko+tawlp+tbwmp+avkmp+awkms-1/20";
+  R = R1/I -- already hard, as the GB of I isn't easy.
+///
+--------------------------------------------------------------
+-- End of examples from Singular, noether.lib ----------------
+--------------------------------------------------------------
+
+
+
 
 
 ///

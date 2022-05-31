@@ -227,14 +227,14 @@ Description
    arithmeticGenus I
    sectionalGenus I
    minimalBetti I
-   K = canonicalModule I
-   H = S^1/I**S^{1}
+   K = canonicalModule I;
+   H = S^1/I**S^{1};
    intersectionMatrix(I,{H,K})
 Acknowledgement
 Contributors
 References
 Caveat
- Though these are supposed be examples in characterist 0, they are actually computed in characteristic p.
+ Though these are supposed be examples in characteristic 0, they are actually computed in characteristic p.
  This was done in Macaulay classic, and seemed necessary because of limitations in speed, and because
  the adjunction of roots of unity was not possible there.
 SeeAlso
@@ -340,20 +340,23 @@ P = readExampleFile "P4Surfaces.txt";
 --P = surfacesP4;
 I = example("ab.d10.g6", P)
 elapsedTime K=canonicalModule(I); -- 0.0499788 seconds elapsed
-elapsedTime K=canonicalModule(I, UseColon =>false); -- 0.091749 seconds elapsed
-elapsedTime K=canonicalModule(I, UseExt => true); -- 0.091749 seconds elapsed
+elapsedTime K=canonicalModule(I, Strategy => Ext); -- 0.091749 seconds elapsed
+elapsedTime K=canonicalModule(I, Strategy => Colon); -- 0.091749 seconds elapsed
 
 I = example("ell.d12.g14.ssue", P);
 elapsedTime K=canonicalModule(I);  -- 0.597377 seconds elapsed
-elapsedTime K=canonicalModule(I, UseColon =>false);  -- 1.33254 seconds elapsed
-elapsedTime K=canonicalModule(I, UseExt => true); -- too long
+elapsedTime K=canonicalModule(I, Strategy => Colon);  -- 1.33254 seconds elapsed
+elapsedTime K=canonicalModule(I, Strategy => Ext); -- too long
 
 I = example("k3.d11.g11.ss1",P);
-elapsedTime K=canonicalModule(I);  -- 3.08853 seconds elapsed
-elapsedTime K=canonicalModule(I, UseColon =>false); --too long
-elapsedTime K=canonicalModule(I, UseExt => true); --too long
+elapsedTime K=canonicalModule(I);  -- 1.56 seconds elapsed
+elapsedTime K=canonicalModule(I, Strategy => Colon);  -- 1.56 seconds elapsed
+elapsedTime K=canonicalModule(I, Strategy => Ext); -- too long
 
 I = example("k3.d11.g11.ss3",P);
+elapsedTime K=canonicalModule(I, Strategy => Colon);  -- 
+elapsedTime K=canonicalModule(I, Strategy => Ext); -- 
+
 elapsedTime K=canonicalModule(I);  -- 0.571776 seconds elapsed
 elapsedTime K=canonicalModule(I, UseColon =>false);  -- 3.49462 seconds elapsed
 elapsedTime K=canonicalModule(I, UseExt => true); 

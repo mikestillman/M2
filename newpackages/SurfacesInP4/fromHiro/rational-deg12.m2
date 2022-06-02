@@ -206,7 +206,7 @@ time idealX1=firstAdjoint(idealX);
 
 
 -- Tangent space 
-
+needsPackage "Truncations"
 symExt=(m,E) -> (
      ev:=map (E,ring m, vars E);
      mt:=transpose jacobian m;

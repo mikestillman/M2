@@ -77,6 +77,7 @@ checkRationalNormalCurve=(mat)->(
 -- B:2E(2) \oplus 2E(1)->3E with 60 unknowns 
 -- whose linear part is B_1:
 
+use T
 mt = map(T^{2:-1},T^{2:-3},{{e_3,e_1-e_4+e_0-e_3},{e_4,e_1-e_4-e_0+e_3}})
 
 equationsOfParameters=(num)->(

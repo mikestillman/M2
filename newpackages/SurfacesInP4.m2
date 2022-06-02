@@ -436,10 +436,23 @@ analyzeExample = k -> (
     H = S^1/I**S^{1};
      {k,deg,g}
 )
-elapsedTime intersectionMatrix(I,{H,K})}
+elapsedTime intersectionMatrix(I,{H,K})
 k = "biellitic.d10.g6"
 analyzeExample k
 intersectionProduct(I,H,H)
 intersectionProduct(I,H,K)
 intersectionProduct(I,K,K)
 minimalBetti K
+
+I = example("rat.d11.g11.ssue", P)
+sectionalGenus I
+
+I = example("bordiga.d6.g3", P)
+betti res I
+
+I = example("castelnuovo.d5.g2", P)
+betti res I
+
+I = example("veronese.d4.g0", P)
+betti res I
+

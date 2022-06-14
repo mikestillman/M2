@@ -401,7 +401,7 @@ viewHelp
 needsPackage "SurfacesInP4"
 P = readExampleFile "P4Surfaces.txt";
 names P
-
+netList names P
 Ilist = for s in names P list s => elapsedTime example(s,P);
 
 I = last Ilist_4;
@@ -456,3 +456,12 @@ betti res I
 I = example("veronese.d4.g0", P)
 betti res I
 
+I = example("ab.d15.g21", P)
+betti res I
+I5 = ideal submatrixByDegrees(gens I, 0, 5)
+codim I5
+degree I5
+I5 : I
+saturate I5 == I5
+saturate I5 == I -- true
+betti res oo

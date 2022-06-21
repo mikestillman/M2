@@ -27,7 +27,8 @@ export {
     "intersectionMatrix",
     "surfaceInvariants",
     "Distrust",
-    "surfacesInP4"
+    "surfacesInP4",
+    "Genus"
     }
 
 --SurfacesInP4#"source directory"|"SurfacesInP4/P4Surfaces.txt"
@@ -198,6 +199,27 @@ surfaceInvariants Ideal := opts -> I -> (
        );
      )
 
+surfacesInP4 = method(Options => {Degree=>null,Genus =>null, Type =>null})
+surfacesInP4 HashTable := List => o -> (P) -> (
+    N := names P;
+    if o.Degree =!= null then N = select(N, k ->(	
+	    R := regex("\\.d([0-9]+)\\.",k);
+            if R =!= null and #R > 1 then(
+               deg := value substring(R#1,k);
+    	       deg == o.Degree) 
+	    else false));
+
+    if o.Genus =!= null then N = select(N, k ->(
+        R := regex("\\.g([0-9]+)",k);
+        if R =!= null and #R > 1 then(
+           g :=  value substring(R#1,k);
+           g == o.Genus)
+        else false));
+
+    if o#Type =!= null then N = select(N, k->(
+	        match(o#Type, k)));
+    N)
+
 --surfacesP4 = readExampleFile "./SurfacesInP4/P4Surfaces.txt"
 
 -* Documentation section *-
@@ -241,6 +263,7 @@ Caveat
  the adjunction of roots of unity was not possible there.
 SeeAlso
 ///
+
 doc ///
 Key
  surfacesInP4
@@ -256,20 +279,22 @@ Inputs
  P:HashTable
  Degree => ZZ
  Genus => ZZ
- Type => String
-  one of "rat", "ab","k3","enr","ell","bielliptic"
+ "Type" => String
+   one of "rat", "ab","k3","enr","ell","bielliptic"
 Outputs
  L:List
 Description
   Text
    selects surfaces of given degree, sectional genus, type   
   Example
-   readExampleFile "P4Surfaces.txt"
-   
+   P = readExampleFile "P4Surfaces.txt";
+   netList surfacesInP4(P, Type => "rat", Degree => 10)
 SeeAlso
  names
 ///
 
+ -- Type => String
+ --   one of "rat", "ab","k3","enr","ell","bielliptic"
 
 
 -* Test section *-
@@ -395,26 +420,6 @@ euler oo
 res o60
 ///
 
-surfacesInP4 = method(Options => {Degree=>null,Genus =>null, Type =>null})
-surfacesInP4 HashTable := List => o -> (P) -> (
-    N := names P;
-    if o.Degree =!= null then N = select(N, k ->(	
-	    R := regex("\\.d([0-9]+)\\.",k);
-            if R =!= null and #R > 1 then(
-               deg := value substring(R#1,k);
-    	       deg == o.Degree) 
-	    else false));
-
-    if o.Genus =!= null then N = select(N, k ->(
-        R = regex("\\.g([0-9]+)",k);
-        if R =!= null and #R > 1 then(
-           g :=  value substring(R#1,k);
-           g == o.Genus)
-        else false));
-
-    if o#Type =!= null then N = select(N, k->(
-	        match(o#Type, k)));
-    N)
 
 end--
 -* Development section *-

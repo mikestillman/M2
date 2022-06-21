@@ -12,6 +12,8 @@ degree Number := i -> {}
 conjugate Number := identity
 toExternalString Number := simpleToString
 floor Number := x -> floor0(x)
+floor Constant := floor0 @@ numeric
+ceiling Constant :=
 ceiling Number := x -> - floor(-x)
 
 -----------------------------------------------------------------------------
@@ -43,7 +45,6 @@ ZZ.random = opts -> ZZ -> rawRandomZZ opts.Height
 texMath ZZ := toString
 
 gcd = method(Binary => true)
-gcd List := x -> gcd toSequence x
 installMethod(gcd, () -> 0)
 gcd(ZZ,ZZ) := ZZ => gcd0
 gcd(ZZ,QQ) := QQ => (x,y) -> gcd(x * denominator y, numerator y) / denominator y
@@ -53,7 +54,6 @@ gcd(QQ,QQ) := QQ => (x,y) -> (
      gcd(numerator (x * d), numerator (y * d)) / d)
 
 lcm = method(Binary => true)
-lcm List := x -> lcm toSequence x
 lcm(ZZ,ZZ) := (f,g) -> abs f * (abs g // gcd(f,g))
 lcm(ZZ,QQ) := (f,g) -> abs f * (abs g / gcd(f,g))
 lcm(QQ,ZZ) := (f,g) -> abs f * (abs g / gcd(f,g))

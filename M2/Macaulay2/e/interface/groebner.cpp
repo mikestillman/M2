@@ -27,9 +27,6 @@
 #include "interrupted.hpp"
 #include "schreyer-resolution/res-f4-computation.hpp"
 
-#include "mathicgb/mathicgb.h"
-#include "matrix-stream.hpp"
-
 class FreeModule;
 struct MonomialOrdering;
 struct MutableMatrix;
@@ -637,6 +634,35 @@ Matrix /* or null */ *rawSubduction(int numparts, const Matrix *M,
   }
 }
 
+Matrix /* or null */ *rawSubduction1(int numparts,
+                                       const Ring *rawT,
+                                       const Ring *rawS,
+                                       const Matrix *m,
+                                       const RingMap *inclusionAmbient,
+                                       const RingMap *fullSubstitution,
+                                       const RingMap *substitutionInclusion,
+                                       Computation *rawGBI,
+                                       Computation *rawGBReductionIdeal)
+{
+    try
+    {
+        GBComputation *gbReductionIdeal = rawGBReductionIdeal->cast_to_GBComputation();
+        GBComputation *gbI = rawGBI->cast_to_GBComputation();
+        if ((gbReductionIdeal == 0) || (gbI == 0))
+        {
+            ERROR("expected a Groebner basis computation");
+            return 0;
+        }
+        return sagbi::subduct1(numparts, rawT, rawS, m, inclusionAmbient, fullSubstitution, substitutionInclusion, gbI, gbReductionIdeal);
+    } catch (const exc::engine_error& e)
+    {
+        ERROR(e.what());
+        return NULL;
+    }
+}
+
+#include "mathicgb.h"
+#include "matrix-stream.hpp"
 void rawDisplayMatrixStream(const Matrix *inputMatrix)
 {
   const Ring *R = inputMatrix->get_ring();
@@ -879,7 +905,9 @@ const Matrix* rawNCGroebnerBasisTwoSided(const Matrix* input, int maxdeg, int st
       bool isParallel = strategy & 32;
       if (isF4)
         {
-          NCF4 G(A->freeAlgebra(), elems, maxdeg, strategy, isParallel);
+          int numthreads = M2_numTBBThreads; // settable from front end.
+          std::cout << "Using numthreads = " << numthreads << std::endl;
+          NCF4 G(A->freeAlgebra(), elems, maxdeg, strategy, (isParallel ? numthreads : 1));
           G.compute(maxdeg); // this argument is actually the soft degree limit
           auto result = copyPolyVector(A, G.currentValue());
           return polyListToMatrix(A, result, 1, result.size()); // consumes the Poly's in result

@@ -26,7 +26,8 @@ export {
     "intersectionProduct",
     "intersectionMatrix",
     "surfaceInvariants",
-    "Distrust"
+    "Distrust",
+    "surfacesInP4"
     }
 
 --SurfacesInP4#"source directory"|"SurfacesInP4/P4Surfaces.txt"
@@ -202,6 +203,7 @@ surfaceInvariants Ideal := opts -> I -> (
 -* Documentation section *-
 beginDocumentation()
 
+
 doc///
 Key
   SurfacesInP4
@@ -239,27 +241,36 @@ Caveat
  the adjunction of roots of unity was not possible there.
 SeeAlso
 ///
-
-///
+doc ///
 Key
+ surfacesInP4
+ (surfacesInP4, HashTable)
+ [surfacesInP4, Degree]
+ [surfacesInP4, Genus]
+ [surfacesInP4, Type]  
 Headline
+ selects surfaces of given degree, sectional genus, type
 Usage
+ L = surfacesInP4 P
 Inputs
+ P:HashTable
+ Degree => ZZ
+ Genus => ZZ
+ Type => String
+  one of "rat", "ab","k3","enr","ell","bielliptic"
 Outputs
-Consequences
-  Item
+ L:List
 Description
   Text
+   selects surfaces of given degree, sectional genus, type   
   Example
-  CannedExample
-  Code
-  Pre
-ExampleFiles
-Contributors
-References
-Caveat
+   readExampleFile "P4Surfaces.txt"
+   
 SeeAlso
+ names
 ///
+
+
 
 -* Test section *-
 ///
@@ -384,6 +395,26 @@ euler oo
 res o60
 ///
 
+surfacesInP4 = method(Options => {Degree=>null,Genus =>null, Type =>null})
+surfacesInP4 HashTable := List => o -> (P) -> (
+    N := names P;
+    if o.Degree =!= null then N = select(N, k ->(	
+	    R := regex("\\.d([0-9]+)\\.",k);
+            if R =!= null and #R > 1 then(
+               deg := value substring(R#1,k);
+    	       deg == o.Degree) 
+	    else false));
+
+    if o.Genus =!= null then N = select(N, k ->(
+        R = regex("\\.g([0-9]+)",k);
+        if R =!= null and #R > 1 then(
+           g :=  value substring(R#1,k);
+           g == o.Genus)
+        else false));
+
+    if o#Type =!= null then N = select(N, k->(
+	        match(o#Type, k)));
+    N)
 
 end--
 -* Development section *-
@@ -401,6 +432,12 @@ viewHelp
 needsPackage "SurfacesInP4"
 P = readExampleFile "P4Surfaces.txt";
 names P
+surfacesInP4 (P, Degree=>19)
+surfacesInP4 (P, Genus=>5)
+surfacesInP4 (P, Type=>"ab")
+surfacesInP4 (P, Type=>"ab", Genus => 21)
+
+
 netList names P
 Ilist = for s in names P list s => elapsedTime example(s,P);
 
@@ -450,13 +487,20 @@ sectionalGenus I
 I = example("bordiga.d6.g3", P)
 betti res I
 
-I = example("castelnuovo.d5.g2", P)
+I = example("ell.d12.g13", P)
+betti res I
+I = example("ell.d12.g13", P)
+betti res I
+
+
+I = example("rat.d5.g2.castelnuovo", P)
 betti res I
 
 I = example("veronese.d4.g0", P)
 betti res I
 
 I = example("ab.d15.g21", P)
+gens ring I
 betti res I
 I5 = ideal submatrixByDegrees(gens I, 0, 5)
 codim I5
@@ -465,3 +509,4 @@ I5 : I
 saturate I5 == I5
 saturate I5 == I -- true
 betti res oo
+

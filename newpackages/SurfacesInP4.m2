@@ -1,3 +1,13 @@
+--
+-- second constructions:
+-- add in rat.d12.g13.N-six-secants.abo-ranestad N = 1,2,...? infinity?
+-- (from 2nd construction, N = 113..117.  First construction gives one of these)
+-- 1 more example of Abo: elliptic surface, d=12, g=13 (need code from Hiro)
+-- 1 conic bundle, deg=8 conic bundle over elliptic curve (M2 book has this example)
+-- HC examples: rational, degree 11, sectinoalGenus?
+-- Frank's examples of rational surfaces of degree 11? Double check if we have these?
+-- Sorin and Kristian wrote a paper about surfaces of degree 10.
+
 newPackage("SurfacesInP4",
     Authors => {{Name => "David Eisenbud", 
                  Email => "de@msri.org", 
@@ -442,7 +452,9 @@ surfacesInP4 (P, Genus=>5)
 surfacesInP4 (P, Type=>"ab")
 surfacesInP4 (P, Type=>"ab", Genus => 21)
 
-
+last surfacesInP4(P, Degree => 11)
+I = example(oo, P)
+minimalBetti I
 netList names P
 Ilist = for s in names P list s => elapsedTime example(s,P);
 

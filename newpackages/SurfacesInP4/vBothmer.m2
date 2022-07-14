@@ -48,6 +48,7 @@ betti res coker gens Isurface
 codim Isurface -- codim = 2
 degree Isurface -- degree = 11
 genera Isurface -- genera = {0,11,10}
+sectionalGenus Isurface == 11
 
 -- check smoothness
 J = jacobian Isurface;

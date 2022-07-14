@@ -310,6 +310,7 @@ randomSmoothSurface=(num)->(
      i:=0;
      isSmooth:=false;
      while not isSmooth do (
+         << "i = " << i << endl;
            eq:=equationsOfParameters(num);
            mor:=substitution(substitute(eq#0,T),eq#1);
            par:=parameters(substitute(eq#0,T));
@@ -443,4 +444,29 @@ use T
 mt = map(T^{2:-1},T^{2:-3},{{e_3,e_1-e_4+e_0-e_3},{e_4,e_1-e_4-e_0+e_3}})
 
 N = 117 -- 113 <= N <= 117
-randomSmoothSurface N
+elapsedTime randomSmoothSurface N
+elapsedTime I117 = randomSmoothSurface 117; -- infinity many 6-secants?
+  minimalBetti I117
+  Iquintics = ideal select(I117_*, f -> first degree f == 5);
+  Iquintics : I117
+  degree oo, codim oo
+elapsedTime I116 = randomSmoothSurface 116; -- has 1 6-secant
+  minimalBetti I116
+  Iquintics = ideal select(I116_*, f -> first degree f == 5);
+  Iquintics : I116
+  degree oo, codim oo
+elapsedTime I115 = randomSmoothSurface 115; -- has 2 6-secants
+  minimalBetti I115
+  Iquintics = ideal select(I115_*, f -> first degree f == 5);
+  Iquintics : I115
+  degree oo, codim oo
+
+
+  
+R = ring I115  
+phi = map(R, R, for i from 1 to 5 list random(1, R))
+inI = monomialIdeal phi I115
+isBorel inI
+o64
+minimalBetti o64
+see o64

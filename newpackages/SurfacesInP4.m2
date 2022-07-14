@@ -377,6 +377,9 @@ elapsedTime c = codim ideal leadTerm gbsingI;
 ///
 
 TEST ///
+-- This test shows some timing differences between different algorithms for canonical sheaves.
+-- In general, the Ext method appears not good...
+-- But the Divisor package also seems to not work (perhaps it is using Ext?)
 -*
   restart
   needsPackage "SurfacesInP4"
@@ -389,47 +392,44 @@ elapsedTime K=canonicalModule(I); -- 0.0499788 seconds elapsed
 elapsedTime K=canonicalModule(I, Strategy => Ext); -- 0.091749 seconds elapsed
 elapsedTime K=canonicalModule(I, Strategy => Colon); -- 0.091749 seconds elapsed
 
-I = example("ell.d12.g14.ssue", P);
+I = example("ell.d12.g14.infty-sixsecants", P);
 elapsedTime K=canonicalModule(I);  -- 0.597377 seconds elapsed
 elapsedTime K=canonicalModule(I, Strategy => Colon);  -- 1.33254 seconds elapsed
-elapsedTime K=canonicalModule(I, Strategy => Ext); -- too long
+--elapsedTime K=canonicalModule(I, Strategy => Ext); -- too long
 
-I = example("k3.d11.g11.ss1",P);
+I = example("k3.d11.g11.1-sixsecant",P);
 elapsedTime K=canonicalModule(I);  -- 1.56 seconds elapsed
 elapsedTime K=canonicalModule(I, Strategy => Colon);  -- 1.56 seconds elapsed
-elapsedTime K=canonicalModule(I, Strategy => Ext); -- too long
+--elapsedTime K=canonicalModule(I, Strategy => Ext); -- too long
 
-I = example("k3.d11.g11.ss3",P);
+I = example("k3.d11.g11.3-sixsecants",P);
 elapsedTime K=canonicalModule(I, Strategy => Colon);  -- 
-elapsedTime K=canonicalModule(I, Strategy => Ext); -- 
-
-elapsedTime K=canonicalModule(I);  -- 0.571776 seconds elapsed
-elapsedTime K=canonicalModule(I, UseColon =>false);  -- 3.49462 seconds elapsed
-elapsedTime K=canonicalModule(I, UseExt => true); 
+elapsedTime K=canonicalModule(I);  -- 0.571776 seconds elapsed 
+--elapsedTime K=canonicalModule(I, Strategy => Ext); -- 
 
 I = example("rat.d10.g8",P);
 elapsedTime K=canonicalModule(I, Strategy => Colon);  -- 0.392106 seconds elapsed
-elapsedTime K=canonicalModule(I, UseColon =>false); 
-elapsedTime K=canonicalModule(I, UseExt => true); 
+--elapsedTime K=canonicalModule(I, Strategy => Ext); 
 
+-- The following code does not seem to work quickly.
+-*
+  debug needsPackage "Divisor"
+  R = (ring I)/I
+  elapsedTime K = canonicalDivisor(R, IsGraded=>true);
+  K
+  elapsedTime KM = divisorToModule K
+  euler oo
+  euler(KM ** KM)
 
-debug needsPackage "Divisor"
-R = (ring I)/I
-elapsedTime K = canonicalDivisor(R, IsGraded=>true);
-K
-elapsedTime KM = divisorToModule K
-euler oo
-euler(KM ** KM)
-
-CI = ideal(I_0, I_1)
-codim CI
-S^{first degree CI_0 + first degree CI_1 - 5} ** (prune Hom(S^1/I, S^1/CI))
-euler oo
-Ext^2(S^1/I, S^{-5})
-euler oo
-res o60
+  CI = ideal(I_0, I_1)
+  codim CI
+  S^{first degree CI_0 + first degree CI_1 - 5} ** (prune Hom(S^1/I, S^1/CI))
+  euler oo
+  Ext^2(S^1/I, S^{-5})
+  euler oo
+  res o60
+*-
 ///
-
 
 end--
 -* Development section *-

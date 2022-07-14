@@ -29,7 +29,6 @@ export {
     "readExampleFile",
     "example",
     "names",
-    "surfacesP4",
     "sectionalGenus",
     "arithmeticGenus",
     "canonicalModule",
@@ -70,6 +69,8 @@ readExampleFile String := HashTable => name -> (
             for j from p+1 to pos#(i+1)-1 list N#j
         ))
     )
+
+surfaces = readExampleFile (SurfacesInP4#"source directory"|"SurfacesInP4/P4Surfaces.txt");
 
 example = method()
 example(String, HashTable) := (ind, exampleHash) -> (
@@ -208,7 +209,7 @@ surfaceInvariants Ideal := opts -> I -> (
        << "N6        = " << n6 << endl;
        );
      )
-
+-*
 surfacesInP4 = method(Options => {Degree=>null,Genus =>null, Type =>null})
 surfacesInP4 HashTable := List => o -> (P) -> (
     N := names P;
@@ -229,8 +230,30 @@ surfacesInP4 HashTable := List => o -> (P) -> (
     if o#Type =!= null then N = select(N, k->(
 	        match(o#Type, k)));
     N)
-
+*-
 --surfacesP4 = readExampleFile "./SurfacesInP4/P4Surfaces.txt"
+
+surfacesInP4 = method(Dispatch => Thing, Options => {Degree=>null,Genus =>null, Type =>null})
+surfacesInP4 Sequence := List => o -> P -> (
+--    N := names P;
+      N := names surfaces;
+    if o.Degree =!= null then N = select(N, k ->(	
+	    R := regex("\\.d([0-9]+)\\.",k);
+            if R =!= null and #R > 1 then(
+               deg := value substring(R#1,k);
+    	       deg == o.Degree) 
+	    else false));
+
+    if o.Genus =!= null then N = select(N, k ->(
+        R := regex("\\.g([0-9]+)",k);
+        if R =!= null and #R > 1 then(
+           g :=  value substring(R#1,k);
+           g == o.Genus)
+        else false));
+
+    if o#Type =!= null then N = select(N, k->(
+	        match(o#Type, k)));
+    N)
 
 -* Documentation section *-
 beginDocumentation()
@@ -274,7 +297,7 @@ Caveat
 SeeAlso
 ///
 
-doc ///
+ ///
 Key
  surfacesInP4
  (surfacesInP4, HashTable)
@@ -444,10 +467,10 @@ check "SurfacesInP4"
 viewHelp SurfacesInP4
 viewHelp
 
-needsPackage "SurfacesInP4"
-P = readExampleFile "P4Surfaces.txt";
-names P
-surfacesInP4 (P, Degree=>19)
+
+
+debug needsPackage "SurfacesInP4"
+keys surfaces
 surfacesInP4 (P, Genus=>5)
 surfacesInP4 (P, Type=>"ab")
 surfacesInP4 (P, Type=>"ab", Genus => 21)

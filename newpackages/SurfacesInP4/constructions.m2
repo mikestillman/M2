@@ -42,6 +42,10 @@
   fIX = res coker gens IX
   betti fIX
   surfaceInvariants IX
+
+  -- method 2  
+  IX = randomVanishingIdeal(R^{1} ++ R^2, (omega(R,4))^2)
+  betti res IX
 ///
 
 ///
@@ -163,6 +167,26 @@
   restart
   needsPackage "SurfacesInP4"
 *-
+  -- I believe this is a rat.d8.g6
+  R = ZZ/32003[x_1..x_5]
+  F = (omega(R,3))
+  G = R^{1, 0, 0, 0, 0}
+  
+  time IX = randomVanishingIdeal(G, F);
+  fIX = res coker gens IX
+  betti fIX
+  elapsedTime surfaceInvariants IX 
+  
+  surfacesInP4(Degree => 8, Genus => 6, Type => "rat")
+  I' = example first oo
+  assert(betti res I' == betti fIX)
+///
+
+///
+-*
+  restart
+  needsPackage "SurfacesInP4"
+*-
   -- I believe this is a k3.d8.g6
   R = ZZ/32003[x_1..x_5]
   F = R^{-2,-1,-1}
@@ -213,6 +237,25 @@
   elapsedTime surfaceInvariants IX 
   
   surfacesInP4(Degree => 9, Genus => 8, Type => "k3")
+  I' = example first oo
+  assert(betti res I' == betti fIX)
+///
+
+///
+-*
+  restart
+  needsPackage "SurfacesInP4"
+*-
+  -- I believe this is a rat.d9.g7
+  R = ZZ/32003[x_1..x_5]
+  F = (omega(R,1))^2 ++ R^3
+  G = omega(R,2) ++ omega(R,3)
+  time IX = randomVanishingIdeal(F, G);
+  fIX = res coker gens IX
+  betti fIX
+  elapsedTime surfaceInvariants IX 
+  
+  surfacesInP4(Degree => 9, Genus => 7, Type => "rat")
   I' = example first oo
   assert(betti res I' == betti fIX)
 ///

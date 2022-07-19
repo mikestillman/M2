@@ -507,6 +507,8 @@ keys surfaces
   assert(# surfacesInP4(Degree=>3) == 1)
   I = example first surfacesInP4(Degree=>3)
   betti res I
+  surfacesInP4()
+  surfaceInvariants example "ab.d10.g6"
 ///  
 
 /// 

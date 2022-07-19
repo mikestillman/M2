@@ -304,7 +304,10 @@
   restart
   needsPackage "SurfacesInP4"
 *-
+
   -- I believe this is a k3.d12.g14
+x = symbol x
+
   R = ZZ/32003[x_1..x_5]
   F = R^{-1} ++ (omega(R,3))^4
   G = (omega(R,2)) ^ 3

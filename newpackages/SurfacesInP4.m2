@@ -468,12 +468,13 @@ viewHelp SurfacesInP4
 viewHelp
 
 
-
+restart
 debug needsPackage "SurfacesInP4"
 keys surfaces
-surfacesInP4 (P, Genus=>5)
-surfacesInP4 (P, Type=>"ab")
-surfacesInP4 (P, Type=>"ab", Genus => 21)
+surfacesInP4 ( Genus=>5)
+surfacesInP4 (Type=>"ab")
+surfacesInP4 (Type=>"ab", Genus => 21)
+surfacesInP4()
 
 last surfacesInP4(P, Degree => 11)
 I = example(oo, P)

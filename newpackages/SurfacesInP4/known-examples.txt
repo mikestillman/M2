@@ -1,0 +1,102 @@
+Here is the list of all families of examples of smooth non geneeral type surfaces in P4.
+
+The following 3 are not part of this database, as they are not nondegenerate in P4.
+P2. (1 example)
+  P2 (rat)
+P3. (2 examples)
+  P1 x P1 (rat)
+  cubic surface (rat)
+  quartic surface (k3)
+
+Now consider only non-degenerate smooth surfaces in P4.
+Let's do it by degree.
+
+Degree 3. (1 example)
+  rat. cubic scroll. 2x2's of linear 2x3.  (d,g) = (3,0)
+
+Degree 4. (1 example, plus one CI)
+  rat. CI(2,2). del Pezzo surface of degree 4. NOT IN DATABASE
+  rat. projection of Veronese.
+  
+Degree 5. (2 total)
+  rat. 2x2s of 2x3 with degrees (112, 112) (Castelnuovo surface).
+  ruled.  scroll over elliptic curve.
+
+Degree 6. (1 total, plus one CI)
+  k3. CI(2,3).  NOT IN DATABASE
+  rat.d6.g3.bordiga. Bordiga surface. 3x3s of linear 3x4.
+
+Degree 7. (3 total)
+  -- {ell.d7.g6, k3.d7.g5, rat.d7.g4}
+  ell.d7.g6. 2x2s of 2x3 of degrees (1,1,3),(1,1,3).
+  k3.d7.g5.  2x2s of 2x3 of degrees (1,1,1),(2,2,2)
+  rat.d7.g4.  divisor on cubic surface. CHECK divisor class.
+  
+Degree 8. (4 total)
+  -- {ell.d8.g7, k3.d8.g6, rat.d8.g5, rat.d8.g6}
+  
+Degree 9. (5 total)
+  -- {ell.d9.g7, enr.d9.g6, k3.d9.g8, rat.d9.g6, rat.d9.g7}
+
+Degree 10. (10 total)
+  -- {ab.d10.g6, bielliptic.d10.g6, ell.d10.g9, ell.d10.g10, enr.d10.g8}
+  -- {k3.d10.g9.1quartic, k3.d10.g9.2quartics},
+  -- {rat.d10.g8, rat.d10.g9.1quartic, rat.d10.g9.2quartics}
+  -- The last two are 1/2 6-secants as well.
+
+Degree 11. (10 total)
+  -- {ell.d11.g12, enr.d11.g10}
+  -- {k3.d11.g11.0-sixsecants, k3.d11.g11.1-sixsecant, k3.d11.g11.2-sixsecants, 
+  --    k3.d11.g11.3-sixsecants, k3.d11.g12}
+  -- {rat.d11.g11.0-sixsecants, rat.d11.g11.1-sixsecant, rat.d11.g11.infty-sixsecants}
+  -- all of these are in original paper.
+
+Degree 12. (4 total)
+  -- {ell.d12.g13, ell.d12.g14.0-sixsecants, ell.d12.g14.infty-sixsecants, k3.d12.g14}
+  -- these are all in original paper.
+  
+Degree 13. (3 total)
+  -- {enr.d13.g16, enr.d13.g16.two, k3.d13.g16}
+  -- only one of the enriques surfaces is in the paper.
+  -- WHERE is the other one from?
+  
+Degree 14. (1 example)
+  -- {k3.d14.g19}
+  -- In the original paper.  
+  
+Degree 15. (3 examples)
+  -- {ab.d15.g21, ab.d15.g21.1quintic, bielliptic.d15.g21}
+  -- bielliptic is not in paper.
+  -- only one of the 2 abelian surfaces is in the paper.
+  -- WHERE is the other one from?
+
+------------------------------------------
+Other examples to add:
+
+Abo, Ranestad
+  -- rat.d12.g13 5 families, over ZZ/5.
+    
+HC vBothmer
+  -- rat.d11.g11.2-6secants.char2
+  
+Schreyer
+
+-- enr.d10.g6?  Is in a family with rat.d10.g6.  In the original paper (but not the preprint I have...)
+-- or enr. d=9, g=6, projection of Fano model (in the original paper).
+
+-- enr.d11.g10 (1 component) (pg = q = 0.  Schreyer 1996).  I *might* have M1 code?
+-- rat.d11.g10 (at least 3 components)(pg = q = 0.  Schreyer 1996).  I *might* have M1 code? not in the original paper, we think.
+
+Ask Sorin, look at his code, thesis.  Frank will try to san the thesis.
+
+-----------------------------------------------------------
+FIX:
+stupid behavior of random QQ, random ZZ.
+  prefer: use only integers.  Signed. Mean value zero. Uniform from -h..h.
+  allow other distributions.  Talk to Doug Torrance.
+
+Godeaux surfaces with pi_1(X) = 0.
+Problem: given a fibration of a surface, compute the pi_1(X).
+  Using homotopy continuation?
+  
+Algorithm for topology of 3-manifolds. Bartholdy.

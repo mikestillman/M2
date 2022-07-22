@@ -26,12 +26,6 @@ private:
   // Question: what is the format of a 0x0 matrix.
   // [[], [], [0]]
 
-  // Private initializer that sets sizes of the vectors, but does not initialize them?
-  SparseMatrixZZp(long nrows,
-                  long ncols,
-                  long nentries,
-                  const M2::ARingZZpFlint& F);
-
 public:
   long numRows() const { return mNumRows; }
   long numColumns() const { return mNumColumns; }
@@ -52,6 +46,18 @@ public:
   void denseDisplay(std::ostream& o) const;
 
   SparseMatrixZZp transpose() const;
+
+  static SparseMatrixZZp randomSparseMatrix(const M2::ARingZZpFlint& F,
+                                            long nrows,
+                                            long ncols,
+                                            float density);
+private:
+  // Private initializer that sets sizes of the vectors, but does not initialize them?
+  SparseMatrixZZp(long nrows,
+                  long ncols,
+                  long nentries,
+                  const M2::ARingZZpFlint& F
+                  );
 };
 
 class SparseMatrixZZpConstRowIterator

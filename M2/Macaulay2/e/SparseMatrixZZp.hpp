@@ -13,21 +13,6 @@ class SparseMatrixZZpConstRowIterator;
 class SparseMatrixZZp
 {
   friend class SparseMatrixZZpConstRowIterator;
-public:
-  long numRows() const { return mNumRows; }
-  long numColumns() const { return mNumColumns; }
-
-  SparseMatrixZZp(const M2::ARingZZpFlint& F,
-                  long nrows,
-                  long ncols,
-                  const std::vector<std::tuple<long,long,ZZpElement>>& triples);
-
-  SparseMatrixZZpConstRowIterator cbegin(int row) const;
-  SparseMatrixZZpConstRowIterator cend(int row) const;
-
-  void dump(std::ostream &o) const;
-
-  void denseDisplay(std::ostream& o) const;
 private:
   // Let e be the number of non-zero elements in the matrix
   const M2::ARingZZpFlint& mField;
@@ -40,6 +25,33 @@ private:
 
   // Question: what is the format of a 0x0 matrix.
   // [[], [], [0]]
+
+  // Private initializer that sets sizes of the vectors, but does not initialize them?
+  SparseMatrixZZp(long nrows,
+                  long ncols,
+                  long nentries,
+                  const M2::ARingZZpFlint& F);
+
+public:
+  long numRows() const { return mNumRows; }
+  long numColumns() const { return mNumColumns; }
+  long numNonZeros() const { return mColumns.size(); }
+  const M2::ARingZZpFlint& field() const {return mField; }
+
+  /// Constructor: from a set of triples, IN LEX ORDER, (r,c,element).
+  SparseMatrixZZp(const M2::ARingZZpFlint& F,
+                  long nrows,
+                  long ncols,
+                  const std::vector<std::tuple<long,long,ZZpElement>>& triples
+                  );
+
+  SparseMatrixZZpConstRowIterator cbegin(int row) const;
+  SparseMatrixZZpConstRowIterator cend(int row) const;
+
+  void dump(std::ostream &o) const;
+  void denseDisplay(std::ostream& o) const;
+
+  SparseMatrixZZp transpose() const;
 };
 
 class SparseMatrixZZpConstRowIterator

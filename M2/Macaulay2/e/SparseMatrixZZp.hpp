@@ -8,11 +8,64 @@
 
 using ZZpElement = M2::ARingZZpFlint::ElementType; // reallt just long.
 
-class SparseMatrixZZpConstRowIterator;
+class Permutation
+{
+  // bool: is identity.
+  // single std::vector<long>... possibly, or as a sparse set of operations.
+};
+
+template<typename Iter1, typename Iter2>
+class DiagonalIter
+{
+  // Assumption: both iterators should point to valid memory simultaneously
+  // even after each increment.
+private:
+  Iter1 mIter1;
+  Iter2 mIter2;
+  long mIndex;
+
+  using Value1 = decltype(* mIter1);
+  using Value2 = decltype(* mIter2);
+public:
+  DiagonalIter(Iter1 iter1, Iter2 iter2, long firstIndex = 0)
+    : mIter1(iter1),
+      mIter2(iter2),
+      mIndex(firstIndex)
+  {
+  }
+  
+  bool operator==(DiagonalIter j)
+  {
+    return (mIter1 == j.mIter1 and mIter2 == j.mIter2);
+  }
+
+  bool operator!=(DiagonalIter j)
+  {
+    return (mIter1 != j.mIter1 or mIter2 != j.mIter2);
+  }
+  
+  DiagonalIter operator++()
+  {
+    ++mIndex;
+    ++mIter1;
+    ++mIter2;
+    return *this;
+  }
+
+  // operator*: returns (column, (nonzero) entry at given row and this column)
+  long index()
+  {
+    return mIndex;
+  }
+  
+  std::pair<Value1, Value2> operator*()
+  {
+    return {*mIter1, *mIter2};
+  }
+};
 
 class SparseMatrixZZp
 {
-  friend class SparseMatrixZZpConstRowIterator;
 private:
   // Let e be the number of non-zero elements in the matrix
   const M2::ARingZZpFlint& mField;
@@ -39,14 +92,40 @@ public:
                   const std::vector<std::tuple<long,long,ZZpElement>>& triples
                   );
 
-  SparseMatrixZZpConstRowIterator cbegin(int row) const;
-  SparseMatrixZZpConstRowIterator cend(int row) const;
+  using RowIter = DiagonalIter<
+    decltype(mColumns.cbegin()),
+    decltype(mNonzeroElements.cbegin())
+    >;
+  
+  RowIter cbegin(int row) const;
+  RowIter cend(int row) const;
 
   void dump(std::ostream &o) const;
   void denseDisplay(std::ostream& o) const;
 
+  // read and write files.  Formats: triples.  compressed.
+
+  // Submatrices, windows?
+
+  // Permutations of rows and columns?
+  
+  // Basic operations. d, e dense vectors, x,y sparse (row) vectors, A,B sparse matrices, c field element
+  //  x, y should be allowed to be rows of a sparse matrix A (without creating separate vector).
+  //   d += c*x
+  //   d += e*A (dense e)
+  //   d += x*A (sparse x)
+
+  // for rank.
+  //   sparse PLUQ decomposition
+  //   
+
+  // Solve x*A = b, A upper triangular, A lower triangular, b dense, b sparse/
+  
+  // Operations
   SparseMatrixZZp transpose() const;
 
+  // What about: A+B, A-B, A += c*D, A*B, etc...
+  
   static SparseMatrixZZp randomSparseMatrix(const M2::ARingZZpFlint& F,
                                             long nrows,
                                             long ncols,
@@ -60,55 +139,15 @@ private:
                   );
 };
 
-class SparseMatrixZZpConstRowIterator
-{
-private:
-  const SparseMatrixZZp& mMatrix;
-  long mLoc;
-public:
-  SparseMatrixZZpConstRowIterator(const SparseMatrixZZp& A, long r)
-    : mMatrix(A),
-      mLoc(A.mRows[r])
-  {
-  }
-
-  SparseMatrixZZpConstRowIterator(const SparseMatrixZZp& A, long r, int this_is_the_end_constructor)
-    : mMatrix(A),
-      mLoc(A.mRows[r+1])
-  {
-  }
-
-  bool operator==(SparseMatrixZZpConstRowIterator j)
-  {
-    //TODO assert or test: same row, same matrix.
-    return(mLoc == j.mLoc);
-  }
-
-  bool operator!=(SparseMatrixZZpConstRowIterator j)
-  {
-    //TODO assert or test: same row, same matrix.
-    return(mLoc != j.mLoc);
-  }
-  
-  SparseMatrixZZpConstRowIterator operator++()
-  {
-    mLoc++;
-    return *this;
-  }
-
-  // operator*: returns (column, (nonzero) entry at given row and this column)
-  std::pair<long, ZZpElement> operator*()
-  {
-    return {mMatrix.mColumns[mLoc], mMatrix.mNonzeroElements[mLoc]};
-  }
-};
-
-inline SparseMatrixZZpConstRowIterator SparseMatrixZZp::cbegin(int row) const {
-  return SparseMatrixZZpConstRowIterator(*this, row);
+inline SparseMatrixZZp::RowIter SparseMatrixZZp::cbegin(int row) const {
+  return RowIter(mColumns.cbegin() + mRows[row],
+                 mNonzeroElements.cbegin() + mRows[row],
+                 mRows[row]);
 }
 
-inline SparseMatrixZZpConstRowIterator SparseMatrixZZp::cend(int row) const {
-  return SparseMatrixZZpConstRowIterator(*this, row, 0);
+inline SparseMatrixZZp::RowIter SparseMatrixZZp::cend(int row) const {
+  return RowIter(mColumns.cbegin() + mRows[row + 1],
+                 mNonzeroElements.cbegin() + mRows[row + 1]);
 }
 
 #if 0

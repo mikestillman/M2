@@ -111,7 +111,9 @@ void SparseMatrixZZp::denseDisplay(std::ostream& o) const
     }
 }
 
-/// Transpose a sparse matrix
+//////////////////////////////////////
+/// Transpose a sparse matrix ////////
+//////////////////////////////////////
 SparseMatrixZZp SparseMatrixZZp::transpose() const
 {
   // private internal initializer.  This does not initialize its data.
@@ -139,16 +141,26 @@ SparseMatrixZZp SparseMatrixZZp::transpose() const
 
   // Now we loop through all rows of original matrix, and for each column in that row
   // We will set the column index of the transposed element, and the entry itself.
+  // for (long r = 0; r < numRows(); ++r)
+  //   for (long ic = mRows[r]; ic < mRows[r+1]; ++ic)
+  //     {
+  //       long oldloc = ic;
+  //       long newloc = work[mColumns[ic]]++; // new location, and bump next location for this column
+  //       result.mNonzeroElements[newloc] = mNonzeroElements[oldloc];
+  //       //TODO: use field().set(...) instead...
+  //       result.mColumns[newloc] = r;
+  //     }
+
+  // RowIter version
   for (long r = 0; r < numRows(); ++r)
-    for (long ic = mRows[r]; ic < mRows[r+1]; ++ic)
+    for (auto ic = cbegin(r); ic != cend(r); ++ic)
       {
-        long oldloc = ic;
-        long newloc = work[mColumns[ic]]++; // new location, and bump next location for this column
-        result.mNonzeroElements[newloc] = mNonzeroElements[oldloc];
+        long newloc = work[(*ic).first]++; // new location, and bump next location for this column
+        result.mNonzeroElements[newloc] = (*ic).second;
         //TODO: use field().set(...) instead...
         result.mColumns[newloc] = r;
       }
-
+  
   delete[] work;
   return result;
 }
@@ -178,6 +190,18 @@ SparseMatrixZZp SparseMatrixZZp::randomSparseMatrix(const M2::ARingZZpFlint& F,
   std::cout << "time for constructor: " << seconds(t3-t2) << std::endl;
   return result;
 }
+
+/////////////////////////////////
+// axpy type functions //////////
+/////////////////////////////////
+
+// x: dense,
+// A[j] sparse row (iterator perhaps: pointer to list of entries, list of columns, and the number)
+// c: field element
+// Routine:
+//   x += c*A[j].  This is what we use in F4 algorithm alot... (give first, last?)
+//
+//
 
 // Local Variables:
 // indent-tabs-mode: nil

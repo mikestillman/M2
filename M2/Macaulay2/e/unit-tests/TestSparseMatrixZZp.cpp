@@ -101,18 +101,18 @@ TEST(SparseMatrixZZp, randomSparseMatrix)
 {
   M2:: ARingZZpFlint F(101);
   auto A = SparseMatrixZZp::randomSparseMatrix(F, 50, 60, .1);
-  A.denseDisplay(std::cout);
+  // A.denseDisplay(std::cout);
   auto B = A.transpose();
-  std::cout << "and its transpose is: " << std::endl;
-  B.denseDisplay(std::cout);
+  // std::cout << "and its transpose is: " << std::endl;
+  // B.denseDisplay(std::cout);
 }
 
-TEST(SparseMatrixZZp, bigRandomSparseMatrix)
-{
-  M2:: ARingZZpFlint F(101);
-  auto A = SparseMatrixZZp::randomSparseMatrix(F, 50000, 60000, .01);
-  std::cout << "and now lets work on the transpose" << std::endl;
-  auto t1 = now();
-  auto B = A.transpose();
-  std::cout << "transose time: " << seconds(now() - t1) << std::endl;
-}
+// TEST(SparseMatrixZZp, bigRandomSparseMatrix)
+// {
+//   M2:: ARingZZpFlint F(101);
+//   auto A = SparseMatrixZZp::randomSparseMatrix(F, 50000, 60000, .01);
+//   std::cout << "and now lets work on the transpose" << std::endl;
+//   auto t1 = now();
+//   auto B = A.transpose();
+//   std::cout << "transose time: " << seconds(now() - t1) << std::endl;
+// }

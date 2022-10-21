@@ -5,6 +5,7 @@
 #include <iomanip> // for std::setw
 #include <algorithm> // for std::sort
 #include <numeric> // for std::iota
+#include <string>
 // example format
 // . 1 . . 2 . 3
 // . . . 4 . . .
@@ -14,6 +15,44 @@
 // cols: [1 4 6 3 0 2 6 0]
 // rows: [0 3 4 7 8]
 
+void SparseMatrixZZp::initialize(long nrows,
+                                 long ncols,
+                                 const TriplesList& triples)
+{
+  mNumRows = nrows;
+  mNumColumns = ncols;
+
+  auto t1 = now();
+  std::vector<long> indices(triples.size()); // set the size of the vector.
+  std::iota(indices.begin(), indices.end(), 0); // fill it with 0..#triples-1
+  std::sort(indices.begin(), indices.end(), [&triples](long i, long j) {
+    auto i1 = std::get<0>(triples[i]);
+    auto i2 = std::get<1>(triples[i]);
+    auto j1 = std::get<0>(triples[j]);
+    auto j2 = std::get<1>(triples[j]);
+    return i1 < j1 or (i1 == j1 and i2 < j2);
+  });
+  std::cout << "sort time: " << seconds(now() - t1) << std::endl;
+
+  t1 = now();
+  long last_r = 0;
+  mRows.push_back(0);
+  for (auto t : indices)
+    {
+      long r = std::get<0>(triples[t]);
+      long c = std::get<1>(triples[t]);
+      long v = std::get<2>(triples[t]);
+      if (r > last_r) mRows.insert(mRows.end(), r-last_r, mColumns.size());
+      last_r = r;
+      mNonzeroElements.push_back(v);
+      mColumns.push_back(c);
+    }
+  mRows.insert(mRows.end(), nrows-last_r, mColumns.size());
+  mRows.push_back(mColumns.size());
+  std::cout << "construct time: " << seconds(now() - t1) << std::endl;
+}
+
+                                 
 SparseMatrixZZp::SparseMatrixZZp(long nrows,
                                  long ncols,
                                  long nentries,
@@ -30,44 +69,59 @@ SparseMatrixZZp::SparseMatrixZZp(long nrows,
 SparseMatrixZZp::SparseMatrixZZp(const M2::ARingZZpFlint& field,
                                  long nrows,
                                  long ncols,
-                                 const std::vector<std::tuple<long,long,ZZpElement>>& triples)
+                                 const TriplesList& triples)
                                  
-  : mField(field),
-    mNumRows(nrows),
-    mNumColumns(ncols)
+  : mField(field)
 {
-  // Assume for now that the data is in row major order: first row, then the second, etc.
+  initialize(nrows, ncols, triples);
+}
 
-  auto t1 = now();
-  std::vector<long> indices(triples.size()); // set the size of the vector.
-  std::iota(indices.begin(), indices.end(), 0); // fill it with 0..#triples-1
-  std::sort(indices.begin(), indices.end(), [&triples](long i, long j) {
-    auto i1 = std::get<0>(triples[i]);
-    auto i2 = std::get<1>(triples[i]);
-    auto j1 = std::get<0>(triples[j]);
-    auto j2 = std::get<1>(triples[j]);
-    return i1 < j1 or (i1 == j1 and i2 < j2);
-      });
-  std::cout << "sort time: " << seconds(now() - t1) << std::endl;
+std::pair<long, long> SparseMatrixZZp::sizesFromTriplesFile(std::istream& i)
+{
+  long nrows;
+  long ncols;
+  char notused;
+  i >> nrows >> ncols >> notused;
+  std::cout << "sizes: " << nrows << " " << ncols << std::endl;  
+  return std::make_pair(nrows, ncols);
+}
 
-  t1 = now();
-  // auto sorted_triples = triples;
-  // std::sort(sorted_triples.begin(), sorted_triples.end());
-  long last_r = 0;
-  mRows.push_back(0);
-  for (auto t : indices)
+auto SparseMatrixZZp::triplesFromFile(const M2::ARingZZpFlint& field, std::istream& i) -> TriplesList
+{
+  TriplesList t;
+  long rownum, colnum, val;
+  ZZpElement normalized_val;
+  field.init(normalized_val);
+  std::string str;
+  
+  while (true)
     {
-      long r = std::get<0>(triples[t]);
-      long c = std::get<1>(triples[t]);
-      long v = std::get<2>(triples[t]);
-      if (r > last_r) mRows.insert(mRows.end(), r-last_r, mColumns.size());
-      last_r = r;
-      mNonzeroElements.push_back(v);
-      mColumns.push_back(c);
+      i >> rownum >> colnum;
+      std::getline(i, str);
+
+      // str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](unsigned char ch) {
+      //   return !std::isspace(ch);
+      // }));
+      //      std::cout << "str = ." << str << "." << std::endl;
+
+      val = std::stol(str.c_str());
+      if (rownum == 0) break;
+      field.set_from_long(normalized_val, val);
+      t.push_back({rownum-1, colnum-1, normalized_val});
     }
-  mRows.insert(mRows.end(), nrows-last_r, mColumns.size());
-  mRows.push_back(mColumns.size());
-  std::cout << "construct time: " << seconds(now() - t1) << std::endl;
+
+  field.clear(normalized_val);
+  return t;
+}
+
+
+SparseMatrixZZp::SparseMatrixZZp(const M2::ARingZZpFlint& F,
+                                 std::istream& i)
+  : mField(F)
+{
+  auto sizes = sizesFromTriplesFile(i);
+  auto triples = triplesFromFile(F, i);
+  initialize(sizes.first, sizes.second, triples);
 }
 
 void SparseMatrixZZp::dump(std::ostream& o) const
@@ -139,19 +193,7 @@ SparseMatrixZZp SparseMatrixZZp::transpose() const
     }
   result.mRows[numColumns()] = sum;
 
-  // Now we loop through all rows of original matrix, and for each column in that row
-  // We will set the column index of the transposed element, and the entry itself.
-  // for (long r = 0; r < numRows(); ++r)
-  //   for (long ic = mRows[r]; ic < mRows[r+1]; ++ic)
-  //     {
-  //       long oldloc = ic;
-  //       long newloc = work[mColumns[ic]]++; // new location, and bump next location for this column
-  //       result.mNonzeroElements[newloc] = mNonzeroElements[oldloc];
-  //       //TODO: use field().set(...) instead...
-  //       result.mColumns[newloc] = r;
-  //     }
-
-  // RowIter version
+  // ConstRowIter version
   for (long r = 0; r < numRows(); ++r)
     for (auto ic = cbegin(r); ic != cend(r); ++ic)
       {

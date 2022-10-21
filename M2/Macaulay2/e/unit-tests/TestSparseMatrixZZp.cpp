@@ -2,6 +2,7 @@
 #include "timing.hpp"
 
 #include <iostream>
+#include <fstream>
 #include <gtest/gtest.h>
 
 TEST(SparseMatrixZZp, fromTriple)
@@ -24,6 +25,50 @@ TEST(SparseMatrixZZp, fromTriple)
     }
 
   A.denseDisplay(std::cout);
+}
+
+TEST(SparseMatrixZZp, fromTriplesFile)
+{
+  M2:: ARingZZpFlint F(101);
+  std::ifstream infile;
+  infile.open("sparsemat-1.txt");
+  if (not infile)
+    {
+      std::cout << "file not opened properly" << std::endl;
+      exit(1);
+    }
+  
+  SparseMatrixZZp A(F, infile);
+
+  infile.close();;
+
+  SparseMatrixZZp B(F, 5, 7, {{0,1,1}, {0,4,2}, {0,6,3},
+                           {1,3,4},
+                           {2,0,5}, {2,2,6}, {2,6,7},
+                           {4,0,8}});
+
+  A.denseDisplay(std::cout);
+  B.denseDisplay(std::cout);
+
+  // eventually: check that A == B.
+}
+
+TEST(SparseMatrixZZp, fromTriplesFile1)
+{
+  M2:: ARingZZpFlint F(101);
+  std::ifstream infile;
+  infile.open("/Users/mike/Downloads/10164x1740.sms");
+  if (not infile)
+    {
+      std::cout << "file not opened properly" << std::endl;
+      exit(1);
+    }
+  
+  SparseMatrixZZp A(F, infile);
+
+  infile.close();;
+
+  //  A.denseDisplay(std::cout);
 }
 
 TEST(SparseMatrixZZp, fromUnsortedTriple)

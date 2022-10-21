@@ -6,7 +6,7 @@
 #include <iostream>
 #include "aring-zzp-flint.hpp"
 
-using ZZpElement = M2::ARingZZpFlint::ElementType; // reallt just long.
+using ZZpElement = M2::ARingZZpFlint::ElementType; // really just long.
 
 class Permutation
 {
@@ -80,6 +80,13 @@ private:
   // [[], [], [0]]
 
 public:
+  using TriplesList = std::vector<std::tuple<long,long,ZZpElement>>; // each entry is (row index, column index, value).
+
+  using ConstRowIter = DiagonalIter<
+    decltype(mColumns.cbegin()),
+    decltype(mNonzeroElements.cbegin())
+    >;
+
   long numRows() const { return mNumRows; }
   long numColumns() const { return mNumColumns; }
   long numNonZeros() const { return mColumns.size(); }
@@ -89,21 +96,21 @@ public:
   SparseMatrixZZp(const M2::ARingZZpFlint& F,
                   long nrows,
                   long ncols,
-                  const std::vector<std::tuple<long,long,ZZpElement>>& triples
+                  const TriplesList& triples
                   );
 
-  using RowIter = DiagonalIter<
-    decltype(mColumns.cbegin()),
-    decltype(mNonzeroElements.cbegin())
-    >;
+  SparseMatrixZZp(const M2::ARingZZpFlint& F, std::istream& i); // i is in sms format (meaning TODO: what is this)
   
-  RowIter cbegin(int row) const;
-  RowIter cend(int row) const;
+  ConstRowIter cbegin(int row) const;
+  ConstRowIter cend(int row) const;
 
   void dump(std::ostream &o) const;
   void denseDisplay(std::ostream& o) const;
 
   // read and write files.  Formats: triples.  compressed.
+
+
+
 
   // Submatrices, windows?
 
@@ -114,6 +121,7 @@ public:
   //   d += c*x
   //   d += e*A (dense e)
   //   d += x*A (sparse x)
+  //  void rowUpdate(DenseRow& d, const FieldElement c, const SparseRow x);
 
   // for rank.
   //   sparse PLUQ decomposition
@@ -131,22 +139,40 @@ public:
                                             long ncols,
                                             float density);
 private:
+  // Fill in entire object except for the field.
+  // Assumption: each matrix element (i,j) must appear at most once, and the element must be non-zero.
+  void initialize(long nrows,
+                  long ncols,
+                  const TriplesList& triples);
+  
   // Private initializer that sets sizes of the vectors, but does not initialize them?
   SparseMatrixZZp(long nrows,
                   long ncols,
                   long nentries,
                   const M2::ARingZZpFlint& F
                   );
+
+  // The following assume that mField has been set, in order to read/copy field elements.
+  // Format of the file:
+  //  (line 1): numrows numcols unusedString
+  //  lines of the form:  i j val
+  //  ending with 0 0 0
+  // Notes: these are 1-indexed, val is a long
+  static std::pair<long, long> sizesFromTriplesFile(std::istream& i);
+  static TriplesList triplesFromFile(const M2::ARingZZpFlint& field, std::istream& i);
+  
+  // Are the i,j values in ascending lex order?  The field elements are not accessed.
+  static bool isOrdered(const TriplesList& triples);
 };
 
-inline SparseMatrixZZp::RowIter SparseMatrixZZp::cbegin(int row) const {
-  return RowIter(mColumns.cbegin() + mRows[row],
+inline SparseMatrixZZp::ConstRowIter SparseMatrixZZp::cbegin(int row) const {
+  return ConstRowIter(mColumns.cbegin() + mRows[row],
                  mNonzeroElements.cbegin() + mRows[row],
                  mRows[row]);
 }
 
-inline SparseMatrixZZp::RowIter SparseMatrixZZp::cend(int row) const {
-  return RowIter(mColumns.cbegin() + mRows[row + 1],
+inline SparseMatrixZZp::ConstRowIter SparseMatrixZZp::cend(int row) const {
+  return ConstRowIter(mColumns.cbegin() + mRows[row + 1],
                  mNonzeroElements.cbegin() + mRows[row + 1]);
 }
 

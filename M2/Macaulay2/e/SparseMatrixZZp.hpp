@@ -176,12 +176,15 @@ inline SparseMatrixZZp::ConstRowIter SparseMatrixZZp::cend(int row) const {
 // helper class for determining pivots
 class PivotHelper
 {
+
+  friend std::ostream& operator<<(std::ostream& buf, const PivotHelper& pivotHelper);
+    
 public:
   PivotHelper (int numcols) :
      mWhichRow(numcols) 
   {
      std::fill(mWhichRow.begin(), mWhichRow.end(), -1); // set -1 to all.
-  }  
+  }
 
   void addPivot(long row, long col)
   {
@@ -190,6 +193,13 @@ public:
      mWhichRow[col] = row;
   }
 
+  void findTrivialRowPivots(const SparseMatrixZZp& A);
+
+  void findTrivialColumnPivots(const SparseMatrixZZp& A);
+
+  void findPivots(const SparseMatrixZZp& A);
+  
+private:
   // the following two vectors will have same length, equal to numpivots
   std::vector<long> mPivotRows;
   std::vector<long> mPivotCols;
@@ -198,15 +208,13 @@ public:
   // pivot in that column.  If not -1, then the entry is the row that has
   // a pivot in this column.
   std::vector<int> mWhichRow;
+
+  // internal function to find the remaining pivots with greedy algorithm
+  void findRemainingPivotsGreedy(const SparseMatrixZZp& A);
+  
 };
 
-std::ostream& operator<<(std::ostream& buf, const PivotHelper& pivotHelper);
-
-void trivialRowPivots(const SparseMatrixZZp& A,
-                      PivotHelper& pivotHelper);
-
-void trivialColumnPivots(const SparseMatrixZZp& A,
-                         PivotHelper& pivotHelper);
+//std::ostream& operator<<(std::ostream& buf, const PivotHelper& pivotHelper);
 
 
 #if 0

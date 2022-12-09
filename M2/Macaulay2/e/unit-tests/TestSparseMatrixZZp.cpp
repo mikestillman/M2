@@ -36,9 +36,9 @@ TEST(SparseMatrixZZp, trivialPivotTest)
                            {2,0,5}, {2,2,6}, {2,6,7},
                            {4,0,8},{4,5,9}});
   PivotHelper pivotHelper(7);
-  trivialRowPivots(A,pivotHelper);
+  pivotHelper.findTrivialRowPivots(A);
   std::cout << pivotHelper << std::endl;
-  trivialColumnPivots(A,pivotHelper);
+  pivotHelper.findTrivialColumnPivots(A);
   std::cout << pivotHelper << std::endl;
 
   SparseMatrixZZp A2(F, 6, 9, {{0,0,1}, {0,2,2}, {0,5,3}, {0,6,4}, {0,8,5},
@@ -50,9 +50,9 @@ TEST(SparseMatrixZZp, trivialPivotTest)
   A2.denseDisplay(std::cout);
   
   PivotHelper pivotHelper2(9);
-  trivialRowPivots(A2,pivotHelper2);
+  pivotHelper2.findTrivialRowPivots(A2);
   std::cout << pivotHelper2 << std::endl;
-  trivialColumnPivots(A2,pivotHelper2);
+  pivotHelper2.findTrivialColumnPivots(A2);
   std::cout << pivotHelper2 << std::endl;
 
 }

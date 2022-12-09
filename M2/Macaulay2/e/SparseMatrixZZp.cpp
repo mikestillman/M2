@@ -241,35 +241,33 @@ SparseMatrixZZp SparseMatrixZZp::randomSparseMatrix(const M2::ARingZZpFlint& F,
    // find rest of the pivots using the recursive greedy algorithm (spasm sec 3.4)
 //}
 
-void trivialRowPivots(const SparseMatrixZZp& A,
-                      PivotHelper& pivotHelper)
+void PivotHelper::findTrivialRowPivots(const SparseMatrixZZp& A)
 {  
   // find trivial row pivots -- populates pivotHelper (should be empty beforehand)
-  assert(pivotHelper.mPivotRows.size() == 0);
+  assert(mPivotRows.size() == 0);
   for (auto r = 0; r < A.numRows(); ++r)
   {
      for (auto j = A.cbegin(r); j != A.cend(r); ++j)
      {
         long c = (*j).first;
-        if (pivotHelper.mWhichRow[c] == -1)
-           pivotHelper.addPivot(r,c);
+        if (mWhichRow[c] == -1)
+           addPivot(r,c);
         break;
      }
   }
 }
 
-void trivialColumnPivots(const SparseMatrixZZp& A,
-                         PivotHelper& pivotHelper)
+void PivotHelper::findTrivialColumnPivots(const SparseMatrixZZp& A)
 {  
   // find trivial column pivots, assuming trivial row pivots have been found are in pivotLocations
-  if (pivotHelper.mPivotRows.size() == 0) return;
+  if (mPivotRows.size() == 0) return;
 
   std::vector<bool> isObstructed(A.numColumns());
   std::fill(isObstructed.begin(), isObstructed.end(), false);
 
   // mark columns as obstructed based on pivot rows
   // this requires us to loop through *all* nonzero entries of pivot rows
-  for(auto i : pivotHelper.mPivotRows)
+  for(auto i : mPivotRows)
   {
      for(auto j = A.cbegin(i); j != A.cend(i); ++j)
      {
@@ -280,11 +278,11 @@ void trivialColumnPivots(const SparseMatrixZZp& A,
   // find those rows that have an entry in an unobstructed column
   
   long currentPivotIndex = 0;
-  long nRowPivots = pivotHelper.mPivotRows.size();
+  long nRowPivots = mPivotRows.size();
   for (auto r = 0; r < A.numRows(); ++r)
   {
      // determine if i is a pivot row
-     if (currentPivotIndex < nRowPivots && r == pivotHelper.mPivotRows[currentPivotIndex])
+     if (currentPivotIndex < nRowPivots && r == mPivotRows[currentPivotIndex])
      {
         currentPivotIndex++;
         continue;
@@ -297,7 +295,7 @@ void trivialColumnPivots(const SparseMatrixZZp& A,
         if (!isObstructed[c])
         {
            // found a new pivot!
-           pivotHelper.addPivot(r,c);
+           addPivot(r,c);
            nRowPivots++;
            while (j != A.cend(r))
            {
@@ -308,6 +306,22 @@ void trivialColumnPivots(const SparseMatrixZZp& A,
         }
      }
   }
+}
+
+void PivotHelper::findPivots(const SparseMatrixZZp& A)
+{
+   findTrivialRowPivots(A);
+   findTrivialColumnPivots(A);
+   // if we already have all the pivots, then return 
+   if (mPivotRows.size() == std::min(A.numRows(), A.numColumns())) return;
+
+   findRemainingPivotsGreedy(A);
+   return;
+}
+
+void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
+{
+   return;
 }
 
 std::ostream& operator<<(std::ostream& buf, const PivotHelper& pivotHelper)

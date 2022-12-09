@@ -5,13 +5,14 @@
 #include <fstream>
 #include <gtest/gtest.h>
 
+
 TEST(SparseMatrixZZp, fromTriple)
 {
   M2:: ARingZZpFlint F(101);
   SparseMatrixZZp A(F, 5, 7, {{0,1,1}, {0,4,2}, {0,6,3},
                            {1,3,4},
                            {2,0,5}, {2,2,6}, {2,6,7},
-                           {4,0,8}});
+                           {4,0,8},{4,5,9}});
   A.dump(std::cout);
   
   for (auto r=0; r < A.numRows(); ++r)
@@ -26,6 +27,36 @@ TEST(SparseMatrixZZp, fromTriple)
 
   A.denseDisplay(std::cout);
 }
+
+TEST(SparseMatrixZZp, trivialPivotTest)
+{
+  M2:: ARingZZpFlint F(101);
+  SparseMatrixZZp A(F, 5, 7, {{ 0,1,1}, {0,4,2}, {0,6,3},
+                           {1,3,4},
+                           {2,0,5}, {2,2,6}, {2,6,7},
+                           {4,0,8},{4,5,9}});
+  PivotHelper pivotHelper(7);
+  trivialRowPivots(A,pivotHelper);
+  std::cout << pivotHelper << std::endl;
+  trivialColumnPivots(A,pivotHelper);
+  std::cout << pivotHelper << std::endl;
+
+  SparseMatrixZZp A2(F, 6, 9, {{0,0,1}, {0,2,2}, {0,5,3}, {0,6,4}, {0,8,5},
+			      {1,1,1}, {1,2,2}, {1,3,3}, {1,5,4}, {1,7,5},
+			      {2,2,1}, {2,3,2}, {2,7,3}, {2,8,4},
+			      {3,1,1}, {3,2,2}, {3,4,3},
+			      {4,1,1}, {4,3,2}, {4,6,3}, {4,8,4},
+			      {5,0,1}, {5,2,2}, {5,4,3}, {5,5,4}, {5,7,5}, {5,8,6}});
+  A2.denseDisplay(std::cout);
+  
+  PivotHelper pivotHelper2(9);
+  trivialRowPivots(A2,pivotHelper2);
+  std::cout << pivotHelper2 << std::endl;
+  trivialColumnPivots(A2,pivotHelper2);
+  std::cout << pivotHelper2 << std::endl;
+
+}
+
 
 TEST(SparseMatrixZZp, fromTriplesFile)
 {

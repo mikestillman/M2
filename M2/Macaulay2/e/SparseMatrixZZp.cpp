@@ -233,50 +233,26 @@ SparseMatrixZZp SparseMatrixZZp::randomSparseMatrix(const M2::ARingZZpFlint& F,
   return result;
 }
 
-// helper class for determining pivots
-class PivotHelper
-{
-public:
-  PivotHelper (int numcols) :
-     mWhichRow(numcols) 
-  {
-     std::fill(mWhichRow.begin(), mWhichRow.end(), -1); // set -1 to all.
-  }  
-
-  // the following two vectors will have same length, equal to numpivots
-  std::vector<long> mPivotRows;
-  std::vector<long> mPivotCols;
-
-  // this vector is of length numcols and is initialized to -1 indicating no
-  // pivot in that column.  If not -1, then the entry is the row that has
-  // a pivot in this column.
-  std::vector<int> mWhichRow;
-};
-
-void pivotFinder(const SparseMatrixZZp& A,
-                 std::vector<std::pair<int>>& pivotLocations)
-{
+//void pivotFinder(const SparseMatrixZZp& A,
+//                 std::vector<std::pair<int,int>>& pivotLocations)
+//{
    // first find easy pivots corresponding to rows
    // first find easy pivots corresponding to cols
    // find rest of the pivots using the recursive greedy algorithm (spasm sec 3.4)
-}
+//}
 
 void trivialRowPivots(const SparseMatrixZZp& A,
                       PivotHelper& pivotHelper)
 {  
   // find trivial row pivots -- populates pivotHelper (should be empty beforehand)
   assert(pivotHelper.mPivotRows.size() == 0);
-  for (auto i = 0; i < A.numRows(); ++i)
+  for (auto r = 0; r < A.numRows(); ++r)
   {
-     for (auto j = A.cbegin(i); j != A.cend(i); ++j)
+     for (auto j = A.cbegin(r); j != A.cend(r); ++j)
      {
         long c = (*j).first;
         if (pivotHelper.mWhichRow[c] == -1)
-        {
-           pivotHelper.mPivotRows.push_back(i);
-           pivotHelper.mPivotRows.push_back(c);
-           pivotHelper.mWhichRow[c] = i;
-        }
+           pivotHelper.addPivot(r,c);
         break;
      }
   }
@@ -286,15 +262,70 @@ void trivialColumnPivots(const SparseMatrixZZp& A,
                          PivotHelper& pivotHelper)
 {  
   // find trivial column pivots, assuming trivial row pivots have been found are in pivotLocations
-  
+  if (pivotHelper.mPivotRows.size() == 0) return;
+
+  std::vector<bool> isObstructed(A.numColumns());
+  std::fill(isObstructed.begin(), isObstructed.end(), false);
+
   // mark columns as obstructed based on pivot rows
   // this requires us to loop through *all* nonzero entries of pivot rows
-  
-
+  for(auto i : pivotHelper.mPivotRows)
+  {
+     for(auto j = A.cbegin(i); j != A.cend(i); ++j)
+     {
+       isObstructed[(*j).first] = true;
+     }
+  }
 
   // find those rows that have an entry in an unobstructed column
   
+  long currentPivotIndex = 0;
+  long nRowPivots = pivotHelper.mPivotRows.size();
+  for (auto r = 0; r < A.numRows(); ++r)
+  {
+     // determine if i is a pivot row
+     if (currentPivotIndex < nRowPivots && r == pivotHelper.mPivotRows[currentPivotIndex])
+     {
+        currentPivotIndex++;
+        continue;
+     }
+
+     // is there an unobstructed column in row i?
+     for (auto j = A.cbegin(r); j != A.cend(r); ++j)
+     {
+        long c = (*j).first;
+        if (!isObstructed[c])
+        {
+           // found a new pivot!
+           pivotHelper.addPivot(r,c);
+           nRowPivots++;
+           while (j != A.cend(r))
+           {
+             isObstructed[(*j).first] = true;
+             ++j;
+           }
+           break;
+        }
+     }
+  }
 }
+
+std::ostream& operator<<(std::ostream& buf, const PivotHelper& pivotHelper)
+{
+  buf << "[";
+  for (auto i = 0; i < pivotHelper.mPivotRows.size(); ++i)
+  {
+    if (i != 0)
+      buf << ",";
+    buf << "(" << pivotHelper.mPivotRows[i]
+        << "," << pivotHelper.mPivotCols[i]
+        << ")";
+  }
+  buf << "]";
+  return buf;
+}
+
+#if 0
 
 void findUTPerms(const SparseMatrixZZp& A,
                  PivotHelper& pivotHelper,
@@ -327,12 +358,6 @@ void applyPermutations(SparseMatrixZZp& A,
 // column pivots (std::vector<int> of length = #cols, -1 as a sentinel meaning no pivot in that col
 // pivotLocations (std::vector<std::pair<int>>) (so we don't have to rebuilt it to do topological sort)
 
-0  2  1
-
-1  2  3
-0  0  1
-0  1  2
-  
 /////////////////////////////////
 // axpy type functions //////////
 /////////////////////////////////
@@ -345,7 +370,6 @@ void applyPermutations(SparseMatrixZZp& A,
 //
 //
 
-#if 0
 A = matrix{
     {1,0,1,0,0,1,1,0,1},
     {0,1,1,1,0,1,0,1,0},

@@ -173,6 +173,42 @@ inline SparseMatrixZZp::ConstRowIter SparseMatrixZZp::cend(int row) const {
                  mNonzeroElements.cbegin() + mRows[row + 1]);
 }
 
+// helper class for determining pivots
+class PivotHelper
+{
+public:
+  PivotHelper (int numcols) :
+     mWhichRow(numcols) 
+  {
+     std::fill(mWhichRow.begin(), mWhichRow.end(), -1); // set -1 to all.
+  }  
+
+  void addPivot(long row, long col)
+  {
+     mPivotRows.push_back(row);
+     mPivotCols.push_back(col);
+     mWhichRow[col] = row;
+  }
+
+  // the following two vectors will have same length, equal to numpivots
+  std::vector<long> mPivotRows;
+  std::vector<long> mPivotCols;
+
+  // this vector is of length numcols and is initialized to -1 indicating no
+  // pivot in that column.  If not -1, then the entry is the row that has
+  // a pivot in this column.
+  std::vector<int> mWhichRow;
+};
+
+std::ostream& operator<<(std::ostream& buf, const PivotHelper& pivotHelper);
+
+void trivialRowPivots(const SparseMatrixZZp& A,
+                      PivotHelper& pivotHelper);
+
+void trivialColumnPivots(const SparseMatrixZZp& A,
+                         PivotHelper& pivotHelper);
+
+
 #if 0
 
 class Permutation

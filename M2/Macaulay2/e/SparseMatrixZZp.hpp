@@ -109,16 +109,13 @@ public:
 
   // read and write files.  Formats: triples.  compressed.
 
-
-
-
   // Submatrices, windows?
 
   // Permutations of rows and columns?
   
   // Basic operations. d, e dense vectors, x,y sparse (row) vectors, A,B sparse matrices, c field element
   //  x, y should be allowed to be rows of a sparse matrix A (without creating separate vector).
-  //   d += c*x
+  //   d += c*x (scatter in spasm)
   //   d += e*A (dense e)
   //   d += x*A (sparse x)
   //  void rowUpdate(DenseRow& d, const FieldElement c, const SparseRow x);
@@ -213,7 +210,6 @@ private:
   std::vector<long> mRows; // 0..e-1
   std::vector<long> mColumns; // 0..e-1
 };
-
 
 namespace SparseMatrixOps
 {

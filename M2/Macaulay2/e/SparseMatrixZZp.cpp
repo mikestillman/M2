@@ -233,6 +233,106 @@ SparseMatrixZZp SparseMatrixZZp::randomSparseMatrix(const M2::ARingZZpFlint& F,
   return result;
 }
 
+// helper class for determining pivots
+class PivotHelper
+{
+public:
+  PivotHelper (int numcols) :
+     mWhichRow(numcols) 
+  {
+     std::fill(mWhichRow.begin(), mWhichRow.end(), -1); // set -1 to all.
+  }  
+
+  // the following two vectors will have same length, equal to numpivots
+  std::vector<long> mPivotRows;
+  std::vector<long> mPivotCols;
+
+  // this vector is of length numcols and is initialized to -1 indicating no
+  // pivot in that column.  If not -1, then the entry is the row that has
+  // a pivot in this column.
+  std::vector<int> mWhichRow;
+};
+
+void pivotFinder(const SparseMatrixZZp& A,
+                 std::vector<std::pair<int>>& pivotLocations)
+{
+   // first find easy pivots corresponding to rows
+   // first find easy pivots corresponding to cols
+   // find rest of the pivots using the recursive greedy algorithm (spasm sec 3.4)
+}
+
+void trivialRowPivots(const SparseMatrixZZp& A,
+                      PivotHelper& pivotHelper)
+{  
+  // find trivial row pivots -- populates pivotHelper (should be empty beforehand)
+  assert(pivotHelper.mPivotRows.size() == 0);
+  for (auto i = 0; i < A.numRows(); ++i)
+  {
+     for (auto j = A.cbegin(i); j != A.cend(i); ++j)
+     {
+        long c = (*j).first;
+        if (pivotHelper.mWhichRow[c] == -1)
+        {
+           pivotHelper.mPivotRows.push_back(i);
+           pivotHelper.mPivotRows.push_back(c);
+           pivotHelper.mWhichRow[c] = i;
+        }
+        break;
+     }
+  }
+}
+
+void trivialColumnPivots(const SparseMatrixZZp& A,
+                         PivotHelper& pivotHelper)
+{  
+  // find trivial column pivots, assuming trivial row pivots have been found are in pivotLocations
+  
+  // mark columns as obstructed based on pivot rows
+  // this requires us to loop through *all* nonzero entries of pivot rows
+  
+
+
+  // find those rows that have an entry in an unobstructed column
+  
+}
+
+void findUTPerms(const SparseMatrixZZp& A,
+                 PivotHelper& pivotHelper,
+                 std::vector<int>& rowPerm,
+                 std::vector<int>& colPermInv)
+{
+  // use pivotLocations and perform a topological sort to determine row and column perms
+}
+
+// constructor for a PivotGraph object?
+void buildPivotGraph(const SparseMatrixZZp& A,
+                     PivotHelper& pivotHelper,
+                     PivotGraph& pivotGraph)
+{
+  // build the graph with vertices corresponding to pivots and
+  // add an edge from pivot i (in position (r_i,c_i)) to
+  // pivot j (in position (r_j,c_j)) if A_(r_i,c_j) \neq 0
+}
+
+void applyPermutations(SparseMatrixZZp& A,
+                       const std::vector<int>& rowPerm,
+                       const std::vector<int>& colPermInv)
+{
+  // apply the row and column permutations -- if these perms come from pivotFinder,
+  // A will have an upper triangular upper-lefthand block
+}
+
+// PivotHelper class
+// row pivots (std::vector<int> of length = #pivots found thus far) 
+// column pivots (std::vector<int> of length = #cols, -1 as a sentinel meaning no pivot in that col
+// pivotLocations (std::vector<std::pair<int>>) (so we don't have to rebuilt it to do topological sort)
+
+0  2  1
+
+1  2  3
+0  0  1
+0  1  2
+  
 /////////////////////////////////
 // axpy type functions //////////
 /////////////////////////////////
@@ -245,6 +345,42 @@ SparseMatrixZZp SparseMatrixZZp::randomSparseMatrix(const M2::ARingZZpFlint& F,
 //
 //
 
+#if 0
+A = matrix{
+    {1,0,1,0,0,1,1,0,1},
+    {0,1,1,1,0,1,0,1,0},
+    {0,0,1,1,0,0,0,1,1},
+    {0,1,1,0,1,0,0,0,0},
+    {0,1,0,1,0,0,1,0,1},
+    {1,0,1,0,1,1,0,1,1}}
+
+A_{0,1,2,4,3,5,6,7,8}
+B = A_{4,0,1,2,3,5,6,7,8}
+B^{3,0,1,2,4,5}
+
+needsPackage "Graphs"
+
+A_{0,1,2,4}^{0,1,2,3}
+
+nodes: A = (0,0)
+B = (1,1)
+C = (2,2)
+D = (3,4)
+E = (4,6)
+
+-- add an edge from i (r_i,c_i) to j (r_j,c_j) if A_(r_i,c_j) \neq 0
+-- find a topological sort of this directed acyclic graph
+
+-- use vertex order: 
+
+
+
+
+A_{4,1,0,2}^{3,1,0,2} -- D B A C
+A_{4,0,1,2}^{3,0,1,2} -- D A B C
+#endif
+
 // Local Variables:
 // indent-tabs-mode: nil
 // End:
+

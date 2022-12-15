@@ -319,12 +319,19 @@ void PivotHelper::findPivots(const SparseMatrixZZp& A)
    return;
 }
 
+inline void enqueueColumn( std::vector<long>& columnQueue, long& queueTail, long col)
+{
+   columnQueue[queueTail++] = col;
+}
+
 void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
 {
    enum ColumnStatus { Unmarked, Candidate, Visited };
+
    std::vector<ColumnStatus> columnStatuses(A.numColumns());
    std::fill(columnStatuses.begin(), columnStatuses.end(), Unmarked);
-   std::vector<long> columnQueue;
+   std::vector<long> columnQueue(A.numColumns());
+
    long queueHead = 0;
    long queueTail = 0;
    long survivors = 0;
@@ -341,11 +348,7 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
       {
          long thisCol = (*c).first;
          if (mWhichRow[thisCol] != -1)
-         {
-           // if row is already matched, enqueue the column
-            queueTail++;
-            columnQueue.push_back(thisCol);
-         }
+            enqueueColumn(columnQueue, queueTail, thisCol);
          else
          {
             // otherwise, mark this column as a candidate
@@ -358,17 +361,18 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
       {
         long queueTop = columnQueue[queueHead++];
         long queueTopRow = mWhichRow[queueTop];
-        if (queueTopRow == -1) continue;
-        // otherwise, we enqueue the column
+        if (queueTopRow == -1)
+          continue;
+        // otherwise, we enqueue the non-visited entries in the matched row
         for (auto c = A.cbegin(queueTopRow); c != A.cend(queueTopRow); ++c)
         {
           long thisCol = (*c).first;
           if (columnStatuses[thisCol] != Visited)
           {
-            if (columnStatuses[thisCol] == Candidate) survivors--;
+            if (columnStatuses[thisCol] == Candidate)
+              survivors--;
             columnStatuses[thisCol] = Visited;
-            queueTail++;
-            columnQueue.push_back(thisCol);
+            enqueueColumn(columnQueue,queueTail,thisCol);
           }
         }
       }

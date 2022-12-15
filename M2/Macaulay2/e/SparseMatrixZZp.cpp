@@ -321,6 +321,87 @@ void PivotHelper::findPivots(const SparseMatrixZZp& A)
 
 void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
 {
+   enum ColumnStatus { Unmarked, Candidate, Visited };
+   std::vector<ColumnStatus> columnStatuses(A.numColumns());
+   std::fill(columnStatuses.begin(), columnStatuses.end(), Unmarked);
+   std::vector<long> columnQueue;
+   long queueHead = 0;
+   long queueTail = 0;
+   long survivors = 0;
+
+   for (long r = 0; r < A.numRows(); ++r)
+   {
+      // if row r is matched, then continue
+      if (mWhichColumn[r] != -1) continue;
+
+      // otherwise, begin the search for a pivot in this row
+
+      // initialization step
+      for (auto c = A.cbegin(r); c != A.cend(r); ++c)
+      {
+         long thisCol = (*c).first;
+         if (mWhichRow[thisCol] != -1)
+         {
+           // if row is already matched, enqueue the column
+            queueTail++;
+            columnQueue.push_back(thisCol);
+         }
+         else
+         {
+            // otherwise, mark this column as a candidate
+            columnStatuses[thisCol] = Candidate;
+            survivors++;
+         }
+      }
+
+      while (queueHead < queueTail && survivors > 0)
+      {
+        long queueTop = columnQueue[queueHead++];
+        long queueTopRow = mWhichRow[queueTop];
+        if (queueTopRow == -1) continue;
+        // otherwise, we enqueue the column
+        for (auto c = A.cbegin(queueTopRow); c != A.cend(queueTopRow); ++c)
+        {
+          long thisCol = (*c).first;
+          if (columnStatuses[thisCol] != Visited)
+          {
+            if (columnStatuses[thisCol] == Candidate) survivors--;
+            columnStatuses[thisCol] = Visited;
+            queueTail++;
+            columnQueue.push_back(thisCol);
+          }
+        }
+      }
+      
+      if (survivors > 0)
+      {
+         // find the survivor and add to the list
+         long newPivotCol = -1;
+         for (auto c = A.cbegin(r); c != A.cend(r); ++c)
+         {
+           long thisCol = (*c).first;
+           if (columnStatuses[thisCol] == Candidate)
+           {
+             addPivot(r,thisCol);
+             break;
+           }
+         }
+      }
+
+      // cleanup:
+      // clear the marks from nonzero entries in current row
+      for (auto c = A.cbegin(r); c != A.cend(r); ++c)
+      {
+         long thisCol = (*c).first;
+         columnStatuses[thisCol] = Unmarked;
+      }
+      for (long i = 0; i < queueTail; ++i)
+         columnStatuses[i] = Unmarked;
+      queueHead = 0;
+      queueTail = 0;
+      survivors = 0;
+   }
+
    return;
 }
 
@@ -332,7 +413,7 @@ std::ostream& operator<<(std::ostream& buf, const PivotHelper& pivotHelper)
     if (i != 0)
       buf << ",";
     buf << "(" << pivotHelper.mPivotRows[i]
-        << "," << pivotHelper.mPivotCols[i]
+        << "," << pivotHelper.mPivotColumns[i]
         << ")";
   }
   buf << "]";

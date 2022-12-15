@@ -180,17 +180,20 @@ class PivotHelper
   friend std::ostream& operator<<(std::ostream& buf, const PivotHelper& pivotHelper);
     
 public:
-  PivotHelper (int numcols) :
-     mWhichRow(numcols) 
+  PivotHelper (const SparseMatrixZZp& A) : 
+     mWhichRow(A.numColumns()), 
+     mWhichColumn(A.numRows()) 
   {
      std::fill(mWhichRow.begin(), mWhichRow.end(), -1); // set -1 to all.
+     std::fill(mWhichColumn.begin(), mWhichColumn.end(), -1); // set -1 to all.
   }
 
   void addPivot(long row, long col)
   {
      mPivotRows.push_back(row);
-     mPivotCols.push_back(col);
+     mPivotColumns.push_back(col);
      mWhichRow[col] = row;
+     mWhichColumn[row] = col;
   }
 
   void findTrivialRowPivots(const SparseMatrixZZp& A);
@@ -199,19 +202,21 @@ public:
 
   void findPivots(const SparseMatrixZZp& A);
   
+  long numPivots() const { return mPivotRows.size(); }
+
+  void findRemainingPivotsGreedy(const SparseMatrixZZp& A);
+  
 private:
   // the following two vectors will have same length, equal to numpivots
   std::vector<long> mPivotRows;
-  std::vector<long> mPivotCols;
+  std::vector<long> mPivotColumns;
 
-  // this vector is of length numcols and is initialized to -1 indicating no
-  // pivot in that column.  If not -1, then the entry is the row that has
-  // a pivot in this column.
+  // these vectors are of length numcols/numrows respectively and are initialized to -1 indicating no
+  // pivot in that column/row.  If not -1, then the entry is the row/col that has
+  // a pivot in this column/row.
   std::vector<int> mWhichRow;
+  std::vector<int> mWhichColumn;
 
-  // internal function to find the remaining pivots with greedy algorithm
-  void findRemainingPivotsGreedy(const SparseMatrixZZp& A);
-  
 };
 
 //std::ostream& operator<<(std::ostream& buf, const PivotHelper& pivotHelper);

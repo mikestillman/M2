@@ -35,7 +35,7 @@ TEST(SparseMatrixZZp, trivialPivotTest)
                            {1,3,4},
                            {2,0,5}, {2,2,6}, {2,6,7},
                            {4,0,8},{4,5,9}});
-  PivotHelper pivotHelper(7);
+  PivotHelper pivotHelper(A);
   pivotHelper.findTrivialRowPivots(A);
   std::cout << pivotHelper << std::endl;
   pivotHelper.findTrivialColumnPivots(A);
@@ -49,15 +49,17 @@ TEST(SparseMatrixZZp, trivialPivotTest)
 			      {5,0,1}, {5,2,2}, {5,4,3}, {5,5,4}, {5,7,5}, {5,8,6}});
   A2.denseDisplay(std::cout);
   
-  PivotHelper pivotHelper2(9);
+  PivotHelper pivotHelper2(A2);
   pivotHelper2.findTrivialRowPivots(A2);
   std::cout << pivotHelper2 << std::endl;
   pivotHelper2.findTrivialColumnPivots(A2);
   std::cout << pivotHelper2 << std::endl;
+  pivotHelper2.findRemainingPivotsGreedy(A2);
+  std::cout << pivotHelper2 << std::endl;
 
 }
 
-
+#if 0
 TEST(SparseMatrixZZp, fromTriplesFile)
 {
   M2:: ARingZZpFlint F(101);
@@ -101,6 +103,7 @@ TEST(SparseMatrixZZp, fromTriplesFile1)
 
   //  A.denseDisplay(std::cout);
 }
+#endif
 
 TEST(SparseMatrixZZp, fromUnsortedTriple)
 {

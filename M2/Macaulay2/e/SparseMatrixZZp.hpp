@@ -86,6 +86,8 @@ public:
     decltype(mColumns.cbegin()),
     decltype(mNonzeroElements.cbegin())
     >;
+  
+  using ConstRowIterColumns = decltype(mColumns.cbegin());
 
   long numRows() const { return mNumRows; }
   long numColumns() const { return mNumColumns; }
@@ -103,6 +105,9 @@ public:
   
   ConstRowIter cbegin(int row) const;
   ConstRowIter cend(int row) const;
+
+  ConstRowIterColumns cbeginColumns(int row) const;  
+  ConstRowIterColumns cendColumns(int row) const;  
 
   void dump(std::ostream &o) const;
   void denseDisplay(std::ostream& o) const;
@@ -171,6 +176,14 @@ inline SparseMatrixZZp::ConstRowIter SparseMatrixZZp::cbegin(int row) const {
 inline SparseMatrixZZp::ConstRowIter SparseMatrixZZp::cend(int row) const {
   return ConstRowIter(mColumns.cbegin() + mRows[row + 1],
                  mNonzeroElements.cbegin() + mRows[row + 1]);
+}
+
+inline SparseMatrixZZp::ConstRowIterColumns SparseMatrixZZp::cbeginColumns(int row) const {
+  return (mColumns.cbegin() + mRows[row]);
+}
+
+inline SparseMatrixZZp::ConstRowIterColumns SparseMatrixZZp::cendColumns(int row) const {
+  return (mColumns.cbegin() + mRows[row + 1]);
 }
 
 // helper class for determining pivots

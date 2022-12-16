@@ -86,14 +86,15 @@ TEST(SparseMatrixZZp, fromTriplesFile)
   // eventually: check that A == B.
 }
 
-//#endif
+#endif
 
 TEST(SparseMatrixZZp, fromTriplesFile2)
 {
   M2:: ARingZZpFlint F(101);
   std::ifstream infile;
   //infile.open("/Users/moorewf/Downloads/10164x1740.sms");
-  infile.open("/Users/moorewf/Downloads/47104x30144bis.sms");
+  //infile.open("/Users/moorewf/Downloads/47104x30144bis.sms");
+  infile.open("/Users/moorewf/Downloads/GL7d15.sms");
   if (not infile)
     {
       std::cout << "file not opened properly" << std::endl;
@@ -101,6 +102,8 @@ TEST(SparseMatrixZZp, fromTriplesFile2)
     }
   
   SparseMatrixZZp A(F, infile);
+  std::cout << "Number of rows   : " << A.numRows() << std::endl;
+  std::cout << "Number of columns: " << A.numColumns() << std::endl;
 
   PivotHelper pivotHelper(A);
 
@@ -114,7 +117,7 @@ TEST(SparseMatrixZZp, fromTriplesFile2)
   //  A.denseDisplay(std::cout);
 }
 
-#endif
+//#endif
 
 TEST(SparseMatrixZZp, fromUnsortedTriple)
 {

@@ -175,7 +175,6 @@ SparseMatrixZZp SparseMatrixZZp::transpose() const
   
   long *work = new long[numColumns()];
   std::fill(work, work + numColumns(), 0);
-  //  for (long i=0; i < numColumns(); ++i) work[i] = 0;
 
   for (long e=0; e < numNonZeros(); ++e)
     {
@@ -199,7 +198,7 @@ SparseMatrixZZp SparseMatrixZZp::transpose() const
       {
         long newloc = work[(*ic).first]++; // new location, and bump next location for this column
         result.mNonzeroElements[newloc] = (*ic).second;
-        //TODO: use field().set(...) instead...
+        // TODO: use field().set(...) instead...
         result.mColumns[newloc] = r;
       }
   
@@ -247,9 +246,9 @@ void PivotHelper::findTrivialRowPivots(const SparseMatrixZZp& A)
   assert(mPivotRows.size() == 0);
   for (auto r = 0; r < A.numRows(); ++r)
   {
-     for (auto j = A.cbegin(r); j != A.cend(r); ++j)
+     for (auto j = A.cbeginColumns(r); j != A.cendColumns(r); ++j)
      {
-        long c = (*j).first;
+        long c = *j;
         if (mWhichRow[c] == -1)
            addPivot(r,c);
         break;
@@ -269,9 +268,9 @@ void PivotHelper::findTrivialColumnPivots(const SparseMatrixZZp& A)
   // this requires us to loop through *all* nonzero entries of pivot rows
   for(auto i : mPivotRows)
   {
-     for(auto j = A.cbegin(i); j != A.cend(i); ++j)
+     for(auto j = A.cbeginColumns(i); j != A.cendColumns(i); ++j)
      {
-       isObstructed[(*j).first] = true;
+       isObstructed[*j] = true;
      }
   }
 
@@ -289,17 +288,17 @@ void PivotHelper::findTrivialColumnPivots(const SparseMatrixZZp& A)
      }
 
      // is there an unobstructed column in row i?
-     for (auto j = A.cbegin(r); j != A.cend(r); ++j)
+     for (auto j = A.cbeginColumns(r); j != A.cendColumns(r); ++j)
      {
-        long c = (*j).first;
+        long c = *j;
         if (!isObstructed[c])
         {
            // found a new pivot!
            addPivot(r,c);
            nRowPivots++;
-           while (j != A.cend(r))
+           while (j != A.cendColumns(r))
            {
-             isObstructed[(*j).first] = true;
+             isObstructed[*j] = true;
              ++j;
            }
            break;
@@ -311,17 +310,19 @@ void PivotHelper::findTrivialColumnPivots(const SparseMatrixZZp& A)
 void PivotHelper::findPivots(const SparseMatrixZZp& A)
 {
    findTrivialRowPivots(A);
+   long prevPivots = 0;
+   std::cout << "Number of trivial row pivots found   : " << numPivots() - prevPivots << std::endl;
+   prevPivots = numPivots();
    findTrivialColumnPivots(A);
+   std::cout << "Number of trivial column pivots found: " << numPivots() - prevPivots << std::endl;
+   prevPivots = numPivots();
    // if we already have all the pivots, then return 
    if (mPivotRows.size() == std::min(A.numRows(), A.numColumns())) return;
 
    findRemainingPivotsGreedy(A);
-   return;
-}
+   std::cout << "Number of greedy pivots found        : " << numPivots() - prevPivots << std::endl;
 
-inline void enqueueColumn( std::vector<long>& columnQueue, long& queueTail, long col)
-{
-   columnQueue[queueTail++] = col;
+   return;
 }
 
 void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
@@ -344,11 +345,11 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
       // otherwise, begin the search for a pivot in this row
 
       // initialization step
-      for (auto c = A.cbegin(r); c != A.cend(r); ++c)
+      for (auto c = A.cbeginColumns(r); c != A.cendColumns(r); ++c)
       {
-         long thisCol = (*c).first;
+         unsigned long thisCol = *c;
          if (mWhichRow[thisCol] != -1)
-            enqueueColumn(columnQueue, queueTail, thisCol);
+            columnQueue[queueTail++] = thisCol;
          else
          {
             // otherwise, mark this column as a candidate
@@ -359,20 +360,20 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
 
       while (queueHead < queueTail && survivors > 0)
       {
-        long queueTop = columnQueue[queueHead++];
-        long queueTopRow = mWhichRow[queueTop];
+        long queueTopColumn = columnQueue[queueHead++];
+        long queueTopRow = mWhichRow[queueTopColumn];
         if (queueTopRow == -1)
           continue;
         // otherwise, we enqueue the non-visited entries in the matched row
-        for (auto c = A.cbegin(queueTopRow); c != A.cend(queueTopRow); ++c)
+        for (auto c = A.cbeginColumns(queueTopRow); c != A.cendColumns(queueTopRow); ++c)
         {
-          long thisCol = (*c).first;
+          long thisCol = *c;
           if (columnStatuses[thisCol] != Visited)
           {
             if (columnStatuses[thisCol] == Candidate)
               survivors--;
             columnStatuses[thisCol] = Visited;
-            enqueueColumn(columnQueue,queueTail,thisCol);
+            columnQueue[queueTail++] = thisCol;
           }
         }
       }
@@ -381,9 +382,9 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
       {
          // find the survivor and add to the list
          long newPivotCol = -1;
-         for (auto c = A.cbegin(r); c != A.cend(r); ++c)
+         for (auto c = A.cbeginColumns(r); c != A.cendColumns(r); ++c)
          {
-           long thisCol = (*c).first;
+           long thisCol = *c;
            if (columnStatuses[thisCol] == Candidate)
            {
              addPivot(r,thisCol);
@@ -394,9 +395,9 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
 
       // cleanup:
       // clear the marks from nonzero entries in current row
-      for (auto c = A.cbegin(r); c != A.cend(r); ++c)
+      for (auto c = A.cbeginColumns(r); c != A.cendColumns(r); ++c)
       {
-         long thisCol = (*c).first;
+         long thisCol = *c;
          columnStatuses[thisCol] = Unmarked;
       }
       for (long i = 0; i < queueTail; ++i)

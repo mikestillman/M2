@@ -5,6 +5,8 @@
 #include <tuple>
 #include <iostream>
 #include "aring-zzp-flint.hpp"
+#include "aring-zzp-ffpack.hpp"
+#include "dmat.hpp"
 
 using ZZpElement = M2::ARingZZpFlint::ElementType; // really just long.
 
@@ -102,12 +104,18 @@ public:
                   );
 
   SparseMatrixZZp(const M2::ARingZZpFlint& F, std::istream& i); // i is in sms format (meaning TODO: what is this)
-  
+
   ConstRowIter cbegin(int row) const;
   ConstRowIter cend(int row) const;
 
   ConstRowIterColumns cbeginColumns(int row) const;  
   ConstRowIterColumns cendColumns(int row) const;  
+
+  bool entryPresent(long row, long col) const;
+
+  bool checkUpperTrapeziodalPermutations(const std::vector<long>& rowPerm,
+                                         const std::vector<long>& columnPerm,
+                                         const long numPivots) const;
 
   void dump(std::ostream &o) const;
   void denseDisplay(std::ostream& o) const;
@@ -186,10 +194,13 @@ inline SparseMatrixZZp::ConstRowIterColumns SparseMatrixZZp::cendColumns(int row
   return (mColumns.cbegin() + mRows[row + 1]);
 }
 
+void toDenseMatrix(const SparseMatrixZZp& input,
+                   const M2::ARingZZpFlint& field,
+                   DMat<M2::ARingZZpFFPACK>& result);
+
 // helper class for determining pivots
 class PivotHelper
 {
-
   friend std::ostream& operator<<(std::ostream& buf, const PivotHelper& pivotHelper);
     
 public:
@@ -218,7 +229,21 @@ public:
   long numPivots() const { return mPivotRows.size(); }
 
   void findRemainingPivotsGreedy(const SparseMatrixZZp& A);
+
+  void findUpperTrapezoidalPermutations(const SparseMatrixZZp& A,
+                                        std::vector<long>& rowPerm,
+                                        std::vector<long>& columnPermInverse) const;
+
+  void buildPivotGraph(const SparseMatrixZZp& A,
+                       std::vector<std::vector<long>>& pivotGraph) const;
   
+  void sortPivots(const SparseMatrixZZp& A,
+                  std::stack<long>& result) const;
+  void sortPivotsWorker(long curVertex,
+                        std::vector<std::vector<long>>& vertices,
+                        std::vector<bool>& visited,
+                        std::stack<long>& result) const;
+
 private:
   // the following two vectors will have same length, equal to numpivots
   std::vector<long> mPivotRows;
@@ -231,9 +256,6 @@ private:
   std::vector<int> mWhichColumn;
 
 };
-
-//std::ostream& operator<<(std::ostream& buf, const PivotHelper& pivotHelper);
-
 
 #if 0
 

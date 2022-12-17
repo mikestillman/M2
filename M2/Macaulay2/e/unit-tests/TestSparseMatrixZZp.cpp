@@ -1,4 +1,5 @@
 #include "SparseMatrixZZp.hpp"
+#include "mat-linalg.hpp"
 #include "timing.hpp"
 
 #include <iostream>
@@ -60,6 +61,7 @@ TEST(SparseMatrixZZp, trivialPivotTest)
 }
 
 #if 0
+
 TEST(SparseMatrixZZp, fromTriplesFile)
 {
   M2:: ARingZZpFlint F(101);
@@ -86,15 +88,14 @@ TEST(SparseMatrixZZp, fromTriplesFile)
   // eventually: check that A == B.
 }
 
-#endif
+//#endif
 
 TEST(SparseMatrixZZp, fromTriplesFile2)
 {
-  M2:: ARingZZpFlint F(101);
+  M2::ARingZZpFlint F(101);
+  M2::ARingZZpFFPACK F_ffpack(101);
   std::ifstream infile;
-  //infile.open("/Users/moorewf/Downloads/10164x1740.sms");
-  //infile.open("/Users/moorewf/Downloads/47104x30144bis.sms");
-  infile.open("/Users/moorewf/Downloads/GL7d15.sms");
+  infile.open("../exampleMat.sms");
   if (not infile)
     {
       std::cout << "file not opened properly" << std::endl;
@@ -102,6 +103,19 @@ TEST(SparseMatrixZZp, fromTriplesFile2)
     }
   
   SparseMatrixZZp A(F, infile);
+  //A.denseDisplay(std::cout);
+
+  auto tt = now();
+  DMat<M2::ARingZZpFFPACK> A_DMat(F_ffpack,A.numRows(),A.numColumns());
+  std::cout << "Time spent creating DMat: " << seconds(now() - tt) << std::endl;
+  toDenseMatrix(A,F,A_DMat);
+  auto a = DMatLinAlg<M2::ARingZZpFFPACK>(A_DMat);
+  tt = now();
+  long myRank = a.rank();
+  std::cout << "Time spent computing rank: " << seconds(now() - tt) << std::endl;
+  std::cout << "Rank of matrix   : " << myRank << std::endl;
+
+
   std::cout << "Number of rows   : " << A.numRows() << std::endl;
   std::cout << "Number of columns: " << A.numColumns() << std::endl;
 
@@ -112,11 +126,70 @@ TEST(SparseMatrixZZp, fromTriplesFile2)
   std::cout << "Time spent finding pivots: " << seconds(now() - t1) << std::endl;
   std::cout << "Number of pivots found: " << pivotHelper.numPivots() << std::endl;
 
+  std::cout << pivotHelper << std::endl;
+
   infile.close();;
 
   //  A.denseDisplay(std::cout);
 }
 
+#endif
+//#if 0
+
+TEST(SparseMatrixZZp, fromTriplesFile3)
+{
+  M2::ARingZZpFlint F(101);
+  M2::ARingZZpFFPACK F_ffpack(101);
+  std::ifstream infile;
+  //infile.open("/Users/moorewf/Downloads/10164x1740.sms");
+  //infile.open("/Users/moorewf/Downloads/47104x30144bis.sms");
+  //infile.open("/Users/moorewf/Downloads/GL7d15.sms");
+  //infile.open("/Users/moorewf/Downloads/GL7d13.sms");
+  infile.open("/Users/moorewf/Downloads/GL7d12.sms");
+  //infile.open("../exampleMat.sms");
+  if (not infile)
+  {
+    std::cout << "file not opened properly" << std::endl;
+    exit(1);
+  }
+  
+  SparseMatrixZZp A(F, infile);
+  infile.close();
+
+  auto tt = now();
+  DMat<M2::ARingZZpFFPACK> A_DMat(F_ffpack,A.numRows(),A.numColumns());
+  std::cout << "Time spent creating DMat: " << seconds(now() - tt) << std::endl;
+  toDenseMatrix(A,F,A_DMat);
+  auto a = DMatLinAlg<M2::ARingZZpFFPACK>(A_DMat);
+  tt = now();
+  long myRank = a.rank();
+  std::cout << "Time spent computing rank: " << seconds(now() - tt) << std::endl;
+  std::cout << "Rank of matrix   : " << myRank << std::endl;
+
+  std::cout << "Number of rows   : " << A.numRows() << std::endl;
+  std::cout << "Number of columns: " << A.numColumns() << std::endl;
+
+  PivotHelper pivotHelper(A);
+
+  auto t1 = now();
+  pivotHelper.findPivots(A);
+  std::cout << "Time spent finding pivots: " << seconds(now() - t1) << std::endl;
+  std::cout << "Number of pivots found: " << pivotHelper.numPivots() << std::endl;
+
+  std::vector<long> rowPerm;
+  std::vector<long> columnPermInverse;
+  
+  pivotHelper.findUpperTrapezoidalPermutations(A,rowPerm,columnPermInverse);
+  if (!A.checkUpperTrapeziodalPermutations(rowPerm,columnPermInverse,pivotHelper.numPivots()))
+     std::cout << "Error in finding pivots and/or permutations." << std::endl;
+  //  A.denseDisplay(std::cout);
+}
+
+//      if q: 4 2 1 6 5 0 3
+
+//            0 1 2 3 4 5 6
+
+//then qinv : 5 2 1 6 0 4 3
 //#endif
 
 TEST(SparseMatrixZZp, fromUnsortedTriple)

@@ -94,15 +94,11 @@ auto SparseMatrixZZp::triplesFromFile(const M2::ARingZZpFlint& field, std::istre
   field.init(normalized_val);
   std::string str;
   
+  // TODO: this code assumes that the tuples in the file are sorted lexicographically without repeats
   while (true)
     {
       i >> rownum >> colnum;
       std::getline(i, str);
-
-      // str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](unsigned char ch) {
-      //   return !std::isspace(ch);
-      // }));
-      //      std::cout << "str = ." << str << "." << std::endl;
 
       val = std::stol(str.c_str());
       if (rownum == 0) break;
@@ -122,6 +118,32 @@ SparseMatrixZZp::SparseMatrixZZp(const M2::ARingZZpFlint& F,
   auto sizes = sizesFromTriplesFile(i);
   auto triples = triplesFromFile(F, i);
   initialize(sizes.first, sizes.second, triples);
+}
+
+bool SparseMatrixZZp::checkUpperTrapeziodalPermutations(const std::vector<long>& rowPerm,
+                                                        const std::vector<long>& columnPermInverse,
+                                                        const long numPivots) const
+{
+   for (int r = 0; r < numPivots; ++r)
+   {
+      long newRow = rowPerm[r];
+      for (auto c = cbegin(newRow); c != cend(newRow); ++c)
+      {
+         if (columnPermInverse[(*c).first] < r && (*c).second != 0)
+            return false;
+      }
+   }
+   return true;
+}
+
+bool SparseMatrixZZp::entryPresent(long row, long col) const
+{
+   for (auto c = cbegin(row); c != cend(row); ++c)
+   {
+      if ((*c).first == col && (*c).second != 0) return true;
+      if ((*c).first > col) break;
+   }
+   return false;
 }
 
 void SparseMatrixZZp::dump(std::ostream& o) const
@@ -307,24 +329,6 @@ void PivotHelper::findTrivialColumnPivots(const SparseMatrixZZp& A)
   }
 }
 
-void PivotHelper::findPivots(const SparseMatrixZZp& A)
-{
-   findTrivialRowPivots(A);
-   long prevPivots = 0;
-   std::cout << "Number of trivial row pivots found   : " << numPivots() - prevPivots << std::endl;
-   prevPivots = numPivots();
-   findTrivialColumnPivots(A);
-   std::cout << "Number of trivial column pivots found: " << numPivots() - prevPivots << std::endl;
-   prevPivots = numPivots();
-   // if we already have all the pivots, then return 
-   if (mPivotRows.size() == std::min(A.numRows(), A.numColumns())) return;
-
-   findRemainingPivotsGreedy(A);
-   std::cout << "Number of greedy pivots found        : " << numPivots() - prevPivots << std::endl;
-
-   return;
-}
-
 void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
 {
    enum ColumnStatus { Unmarked, Candidate, Visited };
@@ -410,6 +414,97 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
    return;
 }
 
+void PivotHelper::findPivots(const SparseMatrixZZp& A)
+{
+   findTrivialRowPivots(A);
+   long prevPivots = 0;
+   std::cout << "Number of trivial row pivots found   : " << numPivots() - prevPivots << std::endl;
+   prevPivots = numPivots();
+   findTrivialColumnPivots(A);
+   std::cout << "Number of trivial column pivots found: " << numPivots() - prevPivots << std::endl;
+   prevPivots = numPivots();
+   // if we already have all the pivots, then return 
+   if (mPivotRows.size() == std::min(A.numRows(), A.numColumns())) return;
+
+   findRemainingPivotsGreedy(A);
+   std::cout << "Number of greedy pivots found        : " << numPivots() - prevPivots << std::endl;
+
+   return;
+}
+
+void PivotHelper::findUpperTrapezoidalPermutations(const SparseMatrixZZp& A,
+                                                   std::vector<long>& rowPerm,
+                                                   std::vector<long>& columnPermInverse) const
+{
+   assert(rowPerm.size() == 0);
+   assert(columnPerm.size() == 0);
+   columnPermInverse.resize(A.numColumns());
+   std::stack<long> pivotOrder;
+   sortPivots(A,pivotOrder);
+   long colNum = 0;
+   while (!pivotOrder.empty())
+   {
+     auto top = pivotOrder.top();
+     rowPerm.push_back(mPivotRows[top]);
+     columnPermInverse[mPivotColumns[top]] = colNum++;
+     pivotOrder.pop();
+   }
+
+   // now have to fill out the row and column perm with the non-pivot rows and columns arbitrarily
+   for (int r = 0; r < A.numRows(); ++r)
+      if (mWhichColumn[r] == -1) rowPerm.push_back(r);
+   for (int c = 0; c < A.numColumns(); ++c)
+      if (mWhichRow[c] == -1) columnPermInverse[c] = colNum++;
+}
+
+void PivotHelper::buildPivotGraph(const SparseMatrixZZp& A,
+                                  std::vector<std::vector<long>>& pivotGraph) const
+{
+   assert(pivotGraph.size() == 0);
+   // build pivot graph
+   for (int i = 0; i < mPivotRows.size(); ++i)
+      pivotGraph.emplace_back(std::vector<long> {});
+   
+   for (int i = 0; i < mPivotRows.size(); ++i)
+   {
+      for (int j = i+1; j < mPivotRows.size(); ++j)
+      {
+         if (A.entryPresent(mPivotRows[i],mPivotColumns[j])) pivotGraph[i].push_back(j);
+         if (A.entryPresent(mPivotRows[j],mPivotColumns[i])) pivotGraph[j].push_back(i);
+      }
+   }
+}
+
+void PivotHelper::sortPivots(const SparseMatrixZZp& A,
+                             std::stack<long>& result) const
+{
+   assert(result.size() == 0);
+   std::vector<std::vector<long>> pivotGraph;
+   std::vector<bool> visited(mPivotRows.size(),false);
+
+   buildPivotGraph(A,pivotGraph);
+   
+   for (int i = 0; i < mPivotRows.size(); ++i)
+      if (!visited[i])
+	 sortPivotsWorker(i,pivotGraph,visited,result);
+
+   return;
+}
+
+void PivotHelper::sortPivotsWorker(long curVertex,
+                                   std::vector<std::vector<long>>& pivotGraph,
+                                   std::vector<bool>& visited,
+                                   std::stack<long>& result) const
+{
+   visited[curVertex] = true;
+
+   for (auto edgeTo = pivotGraph[curVertex].cbegin(); edgeTo != pivotGraph[curVertex].cend(); ++edgeTo)
+      if (!visited[*edgeTo])
+         sortPivotsWorker(*edgeTo, pivotGraph, visited, result);
+
+   result.push(curVertex);
+}
+
 std::ostream& operator<<(std::ostream& buf, const PivotHelper& pivotHelper)
 {
   buf << "[";
@@ -425,15 +520,22 @@ std::ostream& operator<<(std::ostream& buf, const PivotHelper& pivotHelper)
   return buf;
 }
 
-#if 0
-
-void findUTPerms(const SparseMatrixZZp& A,
-                 PivotHelper& pivotHelper,
-                 std::vector<int>& rowPerm,
-                 std::vector<int>& colPermInv)
+void toDenseMatrix(const SparseMatrixZZp& input,
+                   const M2::ARingZZpFlint& field,
+                   DMat<M2::ARingZZpFFPACK>& result)
 {
-  // use pivotLocations and perform a topological sort to determine row and column perms
+   auto& R = result.ring();
+   for (long r = 0; r < input.numRows(); ++r)
+   {
+      for (auto c = input.cbegin(r); c != input.cend(r); ++c)
+      {
+         R.set_from_long(result.entry(r,(*c).first),
+                         field.coerceToLongInteger((*c).second));
+      }
+   }
 }
+
+#if 0
 
 // constructor for a PivotGraph object?
 void buildPivotGraph(const SparseMatrixZZp& A,
@@ -502,6 +604,10 @@ E = (4,6)
 
 A_{4,1,0,2}^{3,1,0,2} -- D B A C
 A_{4,0,1,2}^{3,0,1,2} -- D A B C
+
+R = ZZ
+M = mutableMatrix(R,10,12)
+
 #endif
 
 // Local Variables:

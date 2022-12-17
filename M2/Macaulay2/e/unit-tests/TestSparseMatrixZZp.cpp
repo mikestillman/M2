@@ -164,7 +164,7 @@ TEST(SparseMatrixZZp, fromTriplesFile3)
   // toDenseMatrix(A,F,A_DMat);
   // auto a = DMatLinAlg<M2::ARingZZpFFPACK>(A_DMat);
   // tt = now();
-  // long myRank = a.rank();
+  // long myRank = a6.rank();
   // std::cout << "Time spent computing rank: " << seconds(now() - tt) << std::endl;
   // std::cout << "Rank of matrix   : " << myRank << std::endl;
 
@@ -178,8 +178,8 @@ TEST(SparseMatrixZZp, fromTriplesFile3)
   std::cout << "Time spent finding pivots: " << seconds(now() - t1) << std::endl;
   std::cout << "Number of pivots found: " << pivotHelper.numPivots() << std::endl;
 
-  std::vector<long> rowPerm;
-  std::vector<long> columnPermInverse;
+  std::vector<IndexType> rowPerm;
+  std::vector<IndexType> columnPermInverse;
   
   pivotHelper.findUpperTrapezoidalPermutations(A,rowPerm,columnPermInverse);
   if (!A.checkUpperTrapeziodalPermutations(rowPerm,columnPermInverse,pivotHelper.numPivots()))

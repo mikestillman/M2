@@ -9,12 +9,7 @@
 #include "dmat.hpp"
 
 using ZZpElement = M2::ARingZZpFlint::ElementType; // really just long.
-
-class Permutation
-{
-  // bool: is identity.
-  // single std::vector<long>... possibly, or as a sparse set of operations.
-};
+using IndexType = int;
 
 template<typename Iter1, typename Iter2>
 class DiagonalIter
@@ -24,12 +19,12 @@ class DiagonalIter
 private:
   Iter1 mIter1;
   Iter2 mIter2;
-  long mIndex;
+  IndexType mIndex;
 
   using Value1 = decltype(* mIter1);
   using Value2 = decltype(* mIter2);
 public:
-  DiagonalIter(Iter1 iter1, Iter2 iter2, long firstIndex = 0)
+  DiagonalIter(Iter1 iter1, Iter2 iter2, IndexType firstIndex = 0)
     : mIter1(iter1),
       mIter2(iter2),
       mIndex(firstIndex)
@@ -55,7 +50,7 @@ public:
   }
 
   // operator*: returns (column, (nonzero) entry at given row and this column)
-  long index()
+  IndexType index()
   {
     return mIndex;
   }
@@ -71,18 +66,18 @@ class SparseMatrixZZp
 private:
   // Let e be the number of non-zero elements in the matrix
   const M2::ARingZZpFlint& mField;
-  long mNumRows;
-  long mNumColumns;
+  IndexType mNumRows;
+  IndexType mNumColumns;
   std::vector<ZZpElement> mNonzeroElements; // 0..e-1
-  std::vector<long> mColumns; // 0..e-1: mColumns[i] is the column number of of the i-th element in mNonzeroElements.
-  std::vector<long> mRows; // 0..mNumRows // mRows[r]..mRows[r+1]-1 are the indices into mNonzeroElements, in this row.
+  std::vector<IndexType> mColumns; // 0..e-1: mColumns[i] is the column number of of the i-th element in mNonzeroElements.
+  std::vector<IndexType> mRows; // 0..mNumRows // mRows[r]..mRows[r+1]-1 are the indices into mNonzeroElements, in this row.
   // Note: if none, mRows[r-1] == mRows[r].
 
   // Question: what is the format of a 0x0 matrix.
   // [[], [], [0]]
 
 public:
-  using TriplesList = std::vector<std::tuple<long,long,ZZpElement>>; // each entry is (row index, column index, value).
+  using TriplesList = std::vector<std::tuple<IndexType,IndexType,ZZpElement>>; // each entry is (row index, column index, value).
 
   using ConstRowIter = DiagonalIter<
     decltype(mColumns.cbegin()),
@@ -91,15 +86,15 @@ public:
   
   using ConstRowIterColumns = decltype(mColumns.cbegin());
 
-  long numRows() const { return mNumRows; }
-  long numColumns() const { return mNumColumns; }
-  long numNonZeros() const { return mColumns.size(); }
+  IndexType numRows() const { return mNumRows; }
+  IndexType numColumns() const { return mNumColumns; }
+  IndexType numNonZeros() const { return mColumns.size(); }
   const M2::ARingZZpFlint& field() const {return mField; }
 
   /// Constructor: from a set of triples, IN LEX ORDER, (r,c,element).
   SparseMatrixZZp(const M2::ARingZZpFlint& F,
-                  long nrows,
-                  long ncols,
+                  IndexType nrows,
+                  IndexType ncols,
                   const TriplesList& triples
                   );
 
@@ -111,11 +106,11 @@ public:
   ConstRowIterColumns cbeginColumns(int row) const;  
   ConstRowIterColumns cendColumns(int row) const;  
 
-  bool entryPresent(long row, long col) const;
+  bool entryPresent(IndexType row, IndexType col) const;
 
-  bool checkUpperTrapeziodalPermutations(const std::vector<long>& rowPerm,
-                                         const std::vector<long>& columnPerm,
-                                         const long numPivots) const;
+  bool checkUpperTrapeziodalPermutations(const std::vector<IndexType>& rowPerm,
+                                         const std::vector<IndexType>& columnPerm,
+                                         const IndexType numPivots) const;
 
   void dump(std::ostream &o) const;
   void denseDisplay(std::ostream& o) const;
@@ -145,20 +140,20 @@ public:
   // What about: A+B, A-B, A += c*D, A*B, etc...
   
   static SparseMatrixZZp randomSparseMatrix(const M2::ARingZZpFlint& F,
-                                            long nrows,
-                                            long ncols,
+                                            IndexType nrows,
+                                            IndexType ncols,
                                             float density);
 private:
   // Fill in entire object except for the field.
   // Assumption: each matrix element (i,j) must appear at most once, and the element must be non-zero.
-  void initialize(long nrows,
-                  long ncols,
+  void initialize(IndexType nrows,
+                  IndexType ncols,
                   const TriplesList& triples);
   
   // Private initializer that sets sizes of the vectors, but does not initialize them?
-  SparseMatrixZZp(long nrows,
-                  long ncols,
-                  long nentries,
+  SparseMatrixZZp(IndexType nrows,
+                  IndexType ncols,
+                  IndexType nentries,
                   const M2::ARingZZpFlint& F
                   );
 
@@ -167,8 +162,8 @@ private:
   //  (line 1): numrows numcols unusedString
   //  lines of the form:  i j val
   //  ending with 0 0 0
-  // Notes: these are 1-indexed, val is a long
-  static std::pair<long, long> sizesFromTriplesFile(std::istream& i);
+  // Notes: these are 1-indexed, val is a IndexType
+  static std::pair<IndexType, IndexType> sizesFromTriplesFile(std::istream& i);
   static TriplesList triplesFromFile(const M2::ARingZZpFlint& field, std::istream& i);
   
   // Are the i,j values in ascending lex order?  The field elements are not accessed.
@@ -212,7 +207,7 @@ public:
      std::fill(mWhichColumn.begin(), mWhichColumn.end(), -1); // set -1 to all.
   }
 
-  void addPivot(long row, long col)
+  void addPivot(IndexType row, IndexType col)
   {
      mPivotRows.push_back(row);
      mPivotColumns.push_back(col);
@@ -226,35 +221,35 @@ public:
 
   void findPivots(const SparseMatrixZZp& A);
   
-  long numPivots() const { return mPivotRows.size(); }
+  IndexType numPivots() const { return mPivotRows.size(); }
 
   void findRemainingPivotsGreedy(const SparseMatrixZZp& A);
 
   void findUpperTrapezoidalPermutations(const SparseMatrixZZp& A,
-                                        std::vector<long>& rowPerm,
-                                        std::vector<long>& columnPermInverse) const;
+                                        std::vector<IndexType>& rowPerm,
+                                        std::vector<IndexType>& columnPermInverse) const;
 
   void buildPivotGraph(const SparseMatrixZZp& A,
-                       std::vector<std::vector<long>>& pivotGraph) const;
+                       std::vector<std::vector<IndexType>>& pivotGraph) const;
   
   void sortPivots(const SparseMatrixZZp& A,
-                  std::stack<long>& result) const;
+                  std::stack<IndexType>& result) const;
 
-  void sortPivotsWorker(long curVertex,
-                        std::vector<std::vector<long>>& vertices,
+  void sortPivotsWorker(IndexType curVertex,
+                        std::vector<std::vector<IndexType>>& vertices,
                         std::vector<bool>& visited,
-                        std::stack<long>& result) const;
+                        std::stack<IndexType>& result) const;
 
 private:
   // the following two vectors will have same length, equal to numpivots
-  std::vector<long> mPivotRows;
-  std::vector<long> mPivotColumns;
+  std::vector<IndexType> mPivotRows;
+  std::vector<IndexType> mPivotColumns;
 
   // these vectors are of length numcols/numrows respectively and are initialized to -1 indicating no
   // pivot in that column/row.  If not -1, then the entry is the row/col that has
   // a pivot in this column/row.
-  std::vector<int> mWhichRow;
-  std::vector<int> mWhichColumn;
+  std::vector<IndexType> mWhichRow;
+  std::vector<IndexType> mWhichColumn;
 
 };
 

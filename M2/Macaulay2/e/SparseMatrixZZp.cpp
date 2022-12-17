@@ -15,17 +15,17 @@
 // cols: [1 4 6 3 0 2 6 0]
 // rows: [0 3 4 7 8]
 
-void SparseMatrixZZp::initialize(long nrows,
-                                 long ncols,
+void SparseMatrixZZp::initialize(IndexType nrows,
+                                 IndexType ncols,
                                  const TriplesList& triples)
 {
   mNumRows = nrows;
   mNumColumns = ncols;
 
   auto t1 = now();
-  std::vector<long> indices(triples.size()); // set the size of the vector.
+  std::vector<IndexType> indices(triples.size()); // set the size of the vector.
   std::iota(indices.begin(), indices.end(), 0); // fill it with 0..#triples-1
-  std::sort(indices.begin(), indices.end(), [&triples](long i, long j) {
+  std::sort(indices.begin(), indices.end(), [&triples](IndexType i, IndexType j) {
     auto i1 = std::get<0>(triples[i]);
     auto i2 = std::get<1>(triples[i]);
     auto j1 = std::get<0>(triples[j]);
@@ -35,13 +35,13 @@ void SparseMatrixZZp::initialize(long nrows,
   std::cout << "sort time: " << seconds(now() - t1) << std::endl;
 
   t1 = now();
-  long last_r = 0;
+  IndexType last_r = 0;
   mRows.push_back(0);
   for (auto t : indices)
     {
-      long r = std::get<0>(triples[t]);
-      long c = std::get<1>(triples[t]);
-      long v = std::get<2>(triples[t]);
+      IndexType r = std::get<0>(triples[t]);
+      IndexType c = std::get<1>(triples[t]);
+      IndexType v = std::get<2>(triples[t]);
       if (r > last_r) mRows.insert(mRows.end(), r-last_r, mColumns.size());
       last_r = r;
       mNonzeroElements.push_back(v);
@@ -53,9 +53,9 @@ void SparseMatrixZZp::initialize(long nrows,
 }
 
                                  
-SparseMatrixZZp::SparseMatrixZZp(long nrows,
-                                 long ncols,
-                                 long nentries,
+SparseMatrixZZp::SparseMatrixZZp(IndexType nrows,
+                                 IndexType ncols,
+                                 IndexType nentries,
                                  const M2::ARingZZpFlint& F)
   : mField(F),
     mNumRows(nrows),
@@ -67,8 +67,8 @@ SparseMatrixZZp::SparseMatrixZZp(long nrows,
 }
 
 SparseMatrixZZp::SparseMatrixZZp(const M2::ARingZZpFlint& field,
-                                 long nrows,
-                                 long ncols,
+                                 IndexType nrows,
+                                 IndexType ncols,
                                  const TriplesList& triples)
                                  
   : mField(field)
@@ -76,10 +76,10 @@ SparseMatrixZZp::SparseMatrixZZp(const M2::ARingZZpFlint& field,
   initialize(nrows, ncols, triples);
 }
 
-std::pair<long, long> SparseMatrixZZp::sizesFromTriplesFile(std::istream& i)
+std::pair<IndexType, IndexType> SparseMatrixZZp::sizesFromTriplesFile(std::istream& i)
 {
-  long nrows;
-  long ncols;
+  IndexType nrows;
+  IndexType ncols;
   char notused;
   i >> nrows >> ncols >> notused;
   std::cout << "sizes: " << nrows << " " << ncols << std::endl;  
@@ -89,7 +89,8 @@ std::pair<long, long> SparseMatrixZZp::sizesFromTriplesFile(std::istream& i)
 auto SparseMatrixZZp::triplesFromFile(const M2::ARingZZpFlint& field, std::istream& i) -> TriplesList
 {
   TriplesList t;
-  long rownum, colnum, val;
+  IndexType rownum, colnum;
+  long val;
   ZZpElement normalized_val;
   field.init(normalized_val);
   std::string str;
@@ -120,13 +121,13 @@ SparseMatrixZZp::SparseMatrixZZp(const M2::ARingZZpFlint& F,
   initialize(sizes.first, sizes.second, triples);
 }
 
-bool SparseMatrixZZp::checkUpperTrapeziodalPermutations(const std::vector<long>& rowPerm,
-                                                        const std::vector<long>& columnPermInverse,
-                                                        const long numPivots) const
+bool SparseMatrixZZp::checkUpperTrapeziodalPermutations(const std::vector<IndexType>& rowPerm,
+                                                        const std::vector<IndexType>& columnPermInverse,
+                                                        const IndexType numPivots) const
 {
    for (int r = 0; r < numPivots; ++r)
    {
-      long newRow = rowPerm[r];
+      IndexType newRow = rowPerm[r];
       for (auto c = cbegin(newRow); c != cend(newRow); ++c)
       {
          if (columnPermInverse[(*c).first] < r && (*c).second != 0)
@@ -136,7 +137,7 @@ bool SparseMatrixZZp::checkUpperTrapeziodalPermutations(const std::vector<long>&
    return true;
 }
 
-bool SparseMatrixZZp::entryPresent(long row, long col) const
+bool SparseMatrixZZp::entryPresent(IndexType row, IndexType col) const
 {
    for (auto c = cbegin(row); c != cend(row); ++c)
    {
@@ -154,27 +155,16 @@ void SparseMatrixZZp::dump(std::ostream& o) const
   o << "  Rows: length " << mRows.size() << std::endl;
 }
 
-// void SparseMatrixZZp::denseDisplay(std::ostream& o) const
-// {
-//   long nextEntry = 0;
-//   for (long r=0; r < numRows(); ++r)
-//     for (long c=0; c < numColumns(); ++c)
-//       {
-//         // to be completed
-//       }
-// }
-
 // TODO with Frank: simplify this code.
 void SparseMatrixZZp::denseDisplay(std::ostream& o) const
 {
-  long nextEntry = 0;
-  for (long r=0; r < numRows(); ++r)
+  for (IndexType r=0; r < numRows(); ++r)
     {
-      long c = 0;
+      IndexType c = 0;
       auto i {cbegin(r)};
       do
         {
-          long nextcol = (i == cend(r) ? numColumns() : (*i).first);
+          IndexType nextcol = (i == cend(r) ? numColumns() : (*i).first);
           for ( ; c < nextcol; ++c) std::cout << "   .";
           if (c < numColumns())
             {
@@ -195,18 +185,18 @@ SparseMatrixZZp SparseMatrixZZp::transpose() const
   // private internal initializer.  This does not initialize its data.
   SparseMatrixZZp result {numColumns(), numRows(), numNonZeros(), field()};
   
-  long *work = new long[numColumns()];
+  IndexType *work = new IndexType[numColumns()];
   std::fill(work, work + numColumns(), 0);
 
-  for (long e=0; e < numNonZeros(); ++e)
+  for (IndexType e=0; e < numNonZeros(); ++e)
     {
       work[mColumns[e]]++;
     }
 
   // Now compute partial sums (but starting 0, a0, a0+a1, ...) into w, result.mColumns.
   // We also change work to have these partial sums as well.
-  long sum = 0;
-  for (long c = 0; c < numColumns(); ++c)
+  IndexType sum = 0;
+  for (IndexType c = 0; c < numColumns(); ++c)
     {
       result.mRows[c] = sum;
       sum += work[c];
@@ -215,10 +205,10 @@ SparseMatrixZZp SparseMatrixZZp::transpose() const
   result.mRows[numColumns()] = sum;
 
   // ConstRowIter version
-  for (long r = 0; r < numRows(); ++r)
+  for (IndexType r = 0; r < numRows(); ++r)
     for (auto ic = cbegin(r); ic != cend(r); ++ic)
       {
-        long newloc = work[(*ic).first]++; // new location, and bump next location for this column
+        IndexType newloc = work[(*ic).first]++; // new location, and bump next location for this column
         result.mNonzeroElements[newloc] = (*ic).second;
         // TODO: use field().set(...) instead...
         result.mColumns[newloc] = r;
@@ -229,19 +219,19 @@ SparseMatrixZZp SparseMatrixZZp::transpose() const
 }
 
 SparseMatrixZZp SparseMatrixZZp::randomSparseMatrix(const M2::ARingZZpFlint& F,
-                                                    long nrows,
-                                                    long ncols,
+                                                    IndexType nrows,
+                                                    IndexType ncols,
                                                     float density)
 {
-  long nentries = nrows * 1.0 * ncols * density;
+  IndexType nentries = nrows * 1.0 * ncols * density;
   auto t1 = now();
-  std::vector<std::tuple<long,long,ZZpElement>> triples(nentries);
+  std::vector<std::tuple<IndexType,IndexType,ZZpElement>> triples(nentries);
   std::generate(triples.begin(),triples.end(), [&F,nrows,ncols]() {
     ZZpElement val;
     do
       F.random(val);
     while (F.is_zero(val));
-    return std::tuple<long,long,ZZpElement>(
+    return std::tuple<IndexType,IndexType,ZZpElement>(
       rawRandomULong(nrows),
       rawRandomULong(ncols),
       val);
@@ -270,7 +260,7 @@ void PivotHelper::findTrivialRowPivots(const SparseMatrixZZp& A)
   {
      for (auto j = A.cbeginColumns(r); j != A.cendColumns(r); ++j)
      {
-        long c = *j;
+        IndexType c = *j;
         if (mWhichRow[c] == -1)
            addPivot(r,c);
         break;
@@ -298,8 +288,8 @@ void PivotHelper::findTrivialColumnPivots(const SparseMatrixZZp& A)
 
   // find those rows that have an entry in an unobstructed column
   
-  long currentPivotIndex = 0;
-  long nRowPivots = mPivotRows.size();
+  IndexType currentPivotIndex = 0;
+  IndexType nRowPivots = mPivotRows.size();
   for (auto r = 0; r < A.numRows(); ++r)
   {
      // determine if i is a pivot row
@@ -312,7 +302,7 @@ void PivotHelper::findTrivialColumnPivots(const SparseMatrixZZp& A)
      // is there an unobstructed column in row i?
      for (auto j = A.cbeginColumns(r); j != A.cendColumns(r); ++j)
      {
-        long c = *j;
+        IndexType c = *j;
         if (!isObstructed[c])
         {
            // found a new pivot!
@@ -335,13 +325,13 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
 
    std::vector<ColumnStatus> columnStatuses(A.numColumns());
    std::fill(columnStatuses.begin(), columnStatuses.end(), Unmarked);
-   std::vector<long> columnQueue(A.numColumns());
+   std::vector<IndexType> columnQueue(A.numColumns());
 
-   long queueHead = 0;
-   long queueTail = 0;
-   long survivors = 0;
+   IndexType queueHead = 0;
+   IndexType queueTail = 0;
+   IndexType survivors = 0;
 
-   for (long r = 0; r < A.numRows(); ++r)
+   for (IndexType r = 0; r < A.numRows(); ++r)
    {
       if (r % 5000 == 0)
       {
@@ -356,7 +346,7 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
       // initialization step
       for (auto c = A.cbeginColumns(r); c != A.cendColumns(r); ++c)
       {
-         long thisCol = *c;
+         IndexType thisCol = *c;
          // if column is pivotal, then queue this column
          if (mWhichRow[thisCol] != -1)
             columnQueue[queueTail++] = thisCol;
@@ -370,14 +360,14 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
 
       while (queueHead < queueTail && survivors > 0)
       {
-        long queueTopColumn = columnQueue[queueHead++];
-        long queueTopRow = mWhichRow[queueTopColumn];
+        IndexType queueTopColumn = columnQueue[queueHead++];
+        IndexType queueTopRow = mWhichRow[queueTopColumn];
         if (queueTopRow == -1)
           continue;
         // otherwise, we enqueue the non-visited entries in the matched row
         for (auto c = A.cbeginColumns(queueTopRow); c != A.cendColumns(queueTopRow); ++c)
         {
-          long thisCol = *c;
+          IndexType thisCol = *c;
           if (columnStatuses[thisCol] != Visited)
           {
             if (columnStatuses[thisCol] == Candidate)
@@ -391,10 +381,10 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
       if (survivors > 0)
       {
          // find the survivor and add to the list
-         long newPivotCol = -1;
+         IndexType newPivotCol = -1;
          for (auto c = A.cbeginColumns(r); c != A.cendColumns(r); ++c)
          {
-           long thisCol = *c;
+           IndexType thisCol = *c;
            if (columnStatuses[thisCol] == Candidate)
            {
              addPivot(r,thisCol);
@@ -407,7 +397,7 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
       // clear the marks from nonzero entries in current row
       for (auto c = A.cbeginColumns(r); c != A.cendColumns(r); ++c)
          columnStatuses[*c] = Unmarked;
-      for (long i = 0; i < queueTail; ++i)
+      for (IndexType i = 0; i < queueTail; ++i)
          columnStatuses[columnQueue[i]] = Unmarked;
       queueHead = 0;
       queueTail = 0;
@@ -420,7 +410,7 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
 void PivotHelper::findPivots(const SparseMatrixZZp& A)
 {
    findTrivialRowPivots(A);
-   long prevPivots = 0;
+   IndexType prevPivots = 0;
    std::cout << "Number of trivial row pivots found   : " << numPivots() - prevPivots << std::endl;
    prevPivots = numPivots();
    findTrivialColumnPivots(A);
@@ -436,15 +426,15 @@ void PivotHelper::findPivots(const SparseMatrixZZp& A)
 }
 
 void PivotHelper::findUpperTrapezoidalPermutations(const SparseMatrixZZp& A,
-                                                   std::vector<long>& rowPerm,
-                                                   std::vector<long>& columnPermInverse) const
+                                                   std::vector<IndexType>& rowPerm,
+                                                   std::vector<IndexType>& columnPermInverse) const
 {
    assert(rowPerm.size() == 0);
    assert(columnPerm.size() == 0);
    columnPermInverse.resize(A.numColumns());
-   std::stack<long> pivotOrder;
+   std::stack<IndexType> pivotOrder;
    sortPivots(A,pivotOrder);
-   long colNum = 0;
+   IndexType colNum = 0;
    while (!pivotOrder.empty())
    {
      auto top = pivotOrder.top();
@@ -462,12 +452,12 @@ void PivotHelper::findUpperTrapezoidalPermutations(const SparseMatrixZZp& A,
 }
 
 void PivotHelper::buildPivotGraph(const SparseMatrixZZp& A,
-                                  std::vector<std::vector<long>>& pivotGraph) const
+                                  std::vector<std::vector<IndexType>>& pivotGraph) const
 {
    assert(pivotGraph.size() == 0);
    // build pivot graph
    for (int i = 0; i < mPivotRows.size(); ++i)
-      pivotGraph.emplace_back(std::vector<long> {});
+      pivotGraph.emplace_back(std::vector<IndexType> {});
    
    for (int i = 0; i < mPivotRows.size(); ++i)
    {
@@ -480,10 +470,10 @@ void PivotHelper::buildPivotGraph(const SparseMatrixZZp& A,
 }
 
 void PivotHelper::sortPivots(const SparseMatrixZZp& A,
-                             std::stack<long>& result) const
+                             std::stack<IndexType>& result) const
 {
    assert(result.size() == 0);
-   std::vector<std::vector<long>> pivotGraph;
+   std::vector<std::vector<IndexType>> pivotGraph;
    std::vector<bool> visited(mPivotRows.size(),false);
 
    buildPivotGraph(A,pivotGraph);
@@ -495,10 +485,10 @@ void PivotHelper::sortPivots(const SparseMatrixZZp& A,
    return;
 }
 
-void PivotHelper::sortPivotsWorker(long curVertex,
-                                   std::vector<std::vector<long>>& pivotGraph,
+void PivotHelper::sortPivotsWorker(IndexType curVertex,
+                                   std::vector<std::vector<IndexType>>& pivotGraph,
                                    std::vector<bool>& visited,
-                                   std::stack<long>& result) const
+                                   std::stack<IndexType>& result) const
 {
    visited[curVertex] = true;
 
@@ -529,7 +519,7 @@ void toDenseMatrix(const SparseMatrixZZp& input,
                    DMat<M2::ARingZZpFFPACK>& result)
 {
    auto& R = result.ring();
-   for (long r = 0; r < input.numRows(); ++r)
+   for (IndexType r = 0; r < input.numRows(); ++r)
    {
       for (auto c = input.cbegin(r); c != input.cend(r); ++c)
       {

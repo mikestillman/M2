@@ -343,6 +343,11 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
 
    for (long r = 0; r < A.numRows(); ++r)
    {
+      if (r % 5000 == 0)
+      {
+         std::cout << "Processed " << r << " rows." << std::endl;
+      }
+
       // if row r is matched, then continue
       if (mWhichColumn[r] != -1) continue;
 
@@ -351,7 +356,8 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
       // initialization step
       for (auto c = A.cbeginColumns(r); c != A.cendColumns(r); ++c)
       {
-         unsigned long thisCol = *c;
+         long thisCol = *c;
+         // if column is pivotal, then queue this column
          if (mWhichRow[thisCol] != -1)
             columnQueue[queueTail++] = thisCol;
          else
@@ -400,12 +406,9 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
       // cleanup:
       // clear the marks from nonzero entries in current row
       for (auto c = A.cbeginColumns(r); c != A.cendColumns(r); ++c)
-      {
-         long thisCol = *c;
-         columnStatuses[thisCol] = Unmarked;
-      }
+         columnStatuses[*c] = Unmarked;
       for (long i = 0; i < queueTail; ++i)
-         columnStatuses[i] = Unmarked;
+         columnStatuses[columnQueue[i]] = Unmarked;
       queueHead = 0;
       queueTail = 0;
       survivors = 0;
@@ -451,6 +454,7 @@ void PivotHelper::findUpperTrapezoidalPermutations(const SparseMatrixZZp& A,
    }
 
    // now have to fill out the row and column perm with the non-pivot rows and columns arbitrarily
+   // TODO: Think about how to use mWhichColumn instead and deal with 'extra' rows more efficiently
    for (int r = 0; r < A.numRows(); ++r)
       if (mWhichColumn[r] == -1) rowPerm.push_back(r);
    for (int c = 0; c < A.numColumns(); ++c)

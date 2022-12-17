@@ -143,9 +143,9 @@ TEST(SparseMatrixZZp, fromTriplesFile3)
   std::ifstream infile;
   //infile.open("/Users/moorewf/Downloads/10164x1740.sms");
   //infile.open("/Users/moorewf/Downloads/47104x30144bis.sms");
-  //infile.open("/Users/moorewf/Downloads/GL7d15.sms");
+  infile.open("/Users/moorewf/Downloads/GL7d15.sms");
   //infile.open("/Users/moorewf/Downloads/GL7d13.sms");
-  infile.open("/Users/moorewf/Downloads/GL7d12.sms");
+  //infile.open("/Users/moorewf/Downloads/GL7d12.sms");
   //infile.open("../exampleMat.sms");
   if (not infile)
   {
@@ -153,18 +153,20 @@ TEST(SparseMatrixZZp, fromTriplesFile3)
     exit(1);
   }
   
-  SparseMatrixZZp A(F, infile);
+  SparseMatrixZZp B(F, infile);
   infile.close();
 
-  auto tt = now();
-  DMat<M2::ARingZZpFFPACK> A_DMat(F_ffpack,A.numRows(),A.numColumns());
-  std::cout << "Time spent creating DMat: " << seconds(now() - tt) << std::endl;
-  toDenseMatrix(A,F,A_DMat);
-  auto a = DMatLinAlg<M2::ARingZZpFFPACK>(A_DMat);
-  tt = now();
-  long myRank = a.rank();
-  std::cout << "Time spent computing rank: " << seconds(now() - tt) << std::endl;
-  std::cout << "Rank of matrix   : " << myRank << std::endl;
+  SparseMatrixZZp A = B.transpose();
+
+  // auto tt = now();
+  // DMat<M2::ARingZZpFFPACK> A_DMat(F_ffpack,A.numRows(),A.numColumns());
+  // std::cout << "Time spent creating DMat: " << seconds(now() - tt) << std::endl;
+  // toDenseMatrix(A,F,A_DMat);
+  // auto a = DMatLinAlg<M2::ARingZZpFFPACK>(A_DMat);
+  // tt = now();
+  // long myRank = a.rank();
+  // std::cout << "Time spent computing rank: " << seconds(now() - tt) << std::endl;
+  // std::cout << "Rank of matrix   : " << myRank << std::endl;
 
   std::cout << "Number of rows   : " << A.numRows() << std::endl;
   std::cout << "Number of columns: " << A.numColumns() << std::endl;
@@ -190,6 +192,7 @@ TEST(SparseMatrixZZp, fromTriplesFile3)
 //            0 1 2 3 4 5 6
 
 //then qinv : 5 2 1 6 0 4 3
+
 //#endif
 
 TEST(SparseMatrixZZp, fromUnsortedTriple)

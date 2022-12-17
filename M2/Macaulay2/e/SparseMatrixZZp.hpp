@@ -239,6 +239,7 @@ public:
   
   void sortPivots(const SparseMatrixZZp& A,
                   std::stack<long>& result) const;
+
   void sortPivotsWorker(long curVertex,
                         std::vector<std::vector<long>>& vertices,
                         std::vector<bool>& visited,

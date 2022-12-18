@@ -1,4 +1,5 @@
-#include "SparseMatrixZZp.hpp"
+#include "sparse-matrix/SparseMatrixZZp.hpp"
+#include "sparse-matrix/PivotHelper.hpp"
 #include "mat-linalg.hpp"
 #include "timing.hpp"
 
@@ -151,8 +152,8 @@ TEST(SparseMatrixZZp, fromTriplesFile3)
   std::ifstream infile;
   //infile.open("/Users/moorewf/Downloads/10164x1740.sms");
   //infile.open("/Users/moorewf/Downloads/47104x30144bis.sms");
-  infile.open("/Users/moorewf/Downloads/GL7d16.sms");
-  //infile.open("/Users/moorewf/Downloads/GL7d15.sms");
+  //infile.open("/Users/moorewf/Downloads/GL7d16.sms");
+  infile.open("/Users/moorewf/Downloads/GL7d15.sms");
   //infile.open("/Users/moorewf/Downloads/GL7d13.sms");
   //infile.open("/Users/moorewf/Downloads/GL7d12.sms");
   //infile.open("../exampleMat.sms");

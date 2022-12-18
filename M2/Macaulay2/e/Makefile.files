@@ -9,7 +9,8 @@ INTERFACE2 = interrupted
 #  NCAlgebras/SuffixTree \
 
 INTERFACE = \
-	SparseMatrixZZp \
+	sparse-matrix/SparseMatrixZZp \
+	sparse-matrix/PivotHelper \
 	myalloc \
 	BasicPoly \
 	BasicPolyList \

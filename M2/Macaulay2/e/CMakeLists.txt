@@ -155,10 +155,17 @@ set(CPPONLYFILES
 # these files all have .hpp and .cpp files
 # MES TODO: put these NCAlgebra files (and friends) into alpha order in list
 set(SRCLIST
+<<<<<<< HEAD
   BasicPoly
   BasicPolyList
   BasicPolyListParser
   SparseMatrixZZp
+||||||| parent of de40ba96d (Created directory for sparse matrix stuff, and created separate file for PivotHelper code.)
+  SparseMatrixZZp
+=======
+  sparse-matrix/SparseMatrixZZp
+  sparse-matrix/PivotHelper
+>>>>>>> de40ba96d (Created directory for sparse matrix stuff, and created separate file for PivotHelper code.)
   myalloc
   matrix-ncbasis
   M2FreeAlgebraQuotient

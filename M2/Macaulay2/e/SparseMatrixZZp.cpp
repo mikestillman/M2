@@ -48,7 +48,7 @@ void SparseMatrixZZp::initialize(IndexType nrows,
       mColumns.push_back(c);
     }
   mRows.insert(mRows.end(), nrows-last_r, mColumns.size());
-  mRows.push_back(mColumns.size());
+  //mRows.push_back(mColumns.size());
   std::cout << "construct time: " << seconds(now() - t1) << std::endl;
 }
 
@@ -158,6 +158,8 @@ void SparseMatrixZZp::dump(std::ostream& o) const
 // TODO with Frank: simplify this code.
 void SparseMatrixZZp::denseDisplay(std::ostream& o) const
 {
+  // TODO: this code assumes the entries for a row are in increasing column order.
+  //       do we want to enforce this?  if not, where else are we using this?  I am not sure...
   for (IndexType r=0; r < numRows(); ++r)
     {
       IndexType c = 0;
@@ -215,6 +217,52 @@ SparseMatrixZZp SparseMatrixZZp::transpose() const
       }
   
   delete[] work;
+  return result;
+}
+
+SparseMatrixZZp SparseMatrixZZp::applyPermutations(const std::vector<IndexType>& rowPerm,
+                                                  const std::vector<IndexType>& columnPermInverse) const
+{
+  // private internal initializer.  This does not initialize its data.
+  SparseMatrixZZp result {numRows(), numColumns(), numNonZeros(), field()};
+  
+  IndexType newloc = 0;
+  IndexType *work = new IndexType[numColumns()];
+
+  for (IndexType i = 0; i < numRows(); ++i)
+  {
+     result.mRows[i] = newloc;
+     
+     // we can decide to either keep the columns in a row sorted by column number or not.
+
+     // sorting version here
+     IndexType rowEntries = numRowEntries(rowPerm[i]);
+     IndexType rowLoc = mRows[rowPerm[i]];
+     std::iota(work, work+rowEntries,0);
+     std::sort(work, work+rowEntries, [this,&columnPermInverse,rowLoc] (IndexType i, IndexType j) {
+       return (columnPermInverse[mColumns[rowLoc+i]] < columnPermInverse[mColumns[rowLoc+j]]);
+     });
+     for (IndexType j = 0; j < rowEntries; ++j)
+     {
+        result.mNonzeroElements[newloc+j] = mNonzeroElements[rowLoc+work[j]];
+        result.mColumns[newloc+j] = columnPermInverse[mColumns[rowLoc+work[j]]];
+     }
+     newloc += rowEntries;
+     //end sorting version
+     
+     // non-sorting version here
+     // for (auto c = cbegin(rowPerm[i]); c != cend(rowPerm[i]); ++c)
+     // {
+     //    // do we care about sorting the entries for a row in column order?
+     //    // this will mess up the order, if we care.
+     //    result.mNonzeroElements[newloc] = (*c).second;
+     //    result.mColumns[newloc] = columnPermInverse[(*c).first];
+     //    newloc++;
+     // }
+     // end non-sorting version
+  }
+  result.mRows[numRows()] = newloc;
+  delete [] work;
   return result;
 }
 
@@ -288,16 +336,10 @@ void PivotHelper::findTrivialColumnPivots(const SparseMatrixZZp& A)
 
   // find those rows that have an entry in an unobstructed column
   
-  IndexType currentPivotIndex = 0;
-  IndexType nRowPivots = mPivotRows.size();
   for (auto r = 0; r < A.numRows(); ++r)
   {
-     // determine if i is a pivot row
-     if (currentPivotIndex < nRowPivots && r == mPivotRows[currentPivotIndex])
-     {
-        currentPivotIndex++;
-        continue;
-     }
+     // determine if r is a pivot row
+     if (mWhichColumn[r] != -1) continue;
 
      // is there an unobstructed column in row i?
      for (auto j = A.cbeginColumns(r); j != A.cendColumns(r); ++j)
@@ -307,7 +349,7 @@ void PivotHelper::findTrivialColumnPivots(const SparseMatrixZZp& A)
         {
            // found a new pivot!
            addPivot(r,c);
-           nRowPivots++;
+           // set the remainder of the row to be obstructed
            while (j != A.cendColumns(r))
            {
              isObstructed[*j] = true;
@@ -432,6 +474,7 @@ void PivotHelper::findUpperTrapezoidalPermutations(const SparseMatrixZZp& A,
    assert(rowPerm.size() == 0);
    assert(columnPerm.size() == 0);
    columnPermInverse.resize(A.numColumns());
+   
    std::stack<IndexType> pivotOrder;
    sortPivots(A,pivotOrder);
    IndexType colNum = 0;
@@ -449,6 +492,9 @@ void PivotHelper::findUpperTrapezoidalPermutations(const SparseMatrixZZp& A,
       if (mWhichColumn[r] == -1) rowPerm.push_back(r);
    for (int c = 0; c < A.numColumns(); ++c)
       if (mWhichRow[c] == -1) columnPermInverse[c] = colNum++;
+
+   assert(rowPerm.size() == A.numRows());
+   assert(columnPermInverse.size() == A.numColumns());
 }
 
 void PivotHelper::buildPivotGraph(const SparseMatrixZZp& A,

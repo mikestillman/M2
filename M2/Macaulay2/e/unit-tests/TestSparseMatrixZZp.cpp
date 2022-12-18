@@ -58,6 +58,14 @@ TEST(SparseMatrixZZp, trivialPivotTest)
   pivotHelper2.findRemainingPivotsGreedy(A2);
   std::cout << pivotHelper2 << std::endl;
 
+  std::vector<IndexType> rowPerm;
+  std::vector<IndexType> columnPerm;
+  
+  pivotHelper2.findUpperTrapezoidalPermutations(A2,rowPerm,columnPerm);
+
+  SparseMatrixZZp B = A2.applyPermutations(rowPerm,columnPerm);
+  B.denseDisplay(std::cout);
+
 }
 
 #if 0

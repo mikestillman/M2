@@ -89,6 +89,8 @@ public:
   IndexType numRows() const { return mNumRows; }
   IndexType numColumns() const { return mNumColumns; }
   IndexType numNonZeros() const { return mColumns.size(); }
+  IndexType numRowEntries(IndexType row) const { return (mRows[row+1] - mRows[row]); }
+
   const M2::ARingZZpFlint& field() const {return mField; }
 
   /// Constructor: from a set of triples, IN LEX ORDER, (r,c,element).
@@ -109,7 +111,7 @@ public:
   bool entryPresent(IndexType row, IndexType col) const;
 
   bool checkUpperTrapeziodalPermutations(const std::vector<IndexType>& rowPerm,
-                                         const std::vector<IndexType>& columnPerm,
+                                         const std::vector<IndexType>& columnPermInverse,
                                          const IndexType numPivots) const;
 
   void dump(std::ostream &o) const;
@@ -136,6 +138,8 @@ public:
   
   // Operations
   SparseMatrixZZp transpose() const;
+  SparseMatrixZZp applyPermutations(const std::vector<IndexType>& rowPerm,
+                                    const std::vector<IndexType>& columnPerm) const;
 
   // What about: A+B, A-B, A += c*D, A*B, etc...
   

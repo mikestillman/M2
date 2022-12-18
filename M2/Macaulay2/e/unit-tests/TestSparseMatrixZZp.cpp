@@ -151,7 +151,8 @@ TEST(SparseMatrixZZp, fromTriplesFile3)
   std::ifstream infile;
   //infile.open("/Users/moorewf/Downloads/10164x1740.sms");
   //infile.open("/Users/moorewf/Downloads/47104x30144bis.sms");
-  infile.open("/Users/moorewf/Downloads/GL7d15.sms");
+  infile.open("/Users/moorewf/Downloads/GL7d16.sms");
+  //infile.open("/Users/moorewf/Downloads/GL7d15.sms");
   //infile.open("/Users/moorewf/Downloads/GL7d13.sms");
   //infile.open("/Users/moorewf/Downloads/GL7d12.sms");
   //infile.open("../exampleMat.sms");
@@ -163,8 +164,20 @@ TEST(SparseMatrixZZp, fromTriplesFile3)
   
   SparseMatrixZZp B(F, infile);
   infile.close();
+  
+  std::vector<IndexType> rowPerm(B.numRows());
+  std::vector<IndexType> columnPermInverse(B.numColumns());
+  
+  std::iota(rowPerm.begin(),rowPerm.end(),0);
+  for (int i = 0; i < B.numColumns(); ++i)
+     columnPermInverse[i] = B.numColumns()-1-i;
+  
+  SparseMatrixZZp A = B.applyPermutations(rowPerm,columnPermInverse);
 
-  SparseMatrixZZp A = B.transpose();
+  rowPerm.resize(0);
+  columnPermInverse.resize(0);
+
+  //SparseMatrixZZp A = B.transpose();
 
   // auto tt = now();
   // DMat<M2::ARingZZpFFPACK> A_DMat(F_ffpack,A.numRows(),A.numColumns());
@@ -186,12 +199,16 @@ TEST(SparseMatrixZZp, fromTriplesFile3)
   std::cout << "Time spent finding pivots: " << seconds(now() - t1) << std::endl;
   std::cout << "Number of pivots found: " << pivotHelper.numPivots() << std::endl;
 
-  std::vector<IndexType> rowPerm;
-  std::vector<IndexType> columnPermInverse;
-  
+  std::cout << "Finding UT Permutations." << std::endl << std::flush;
+  t1 = now();
   pivotHelper.findUpperTrapezoidalPermutations(A,rowPerm,columnPermInverse);
+  std::cout << "Time spent finding permutations: " << seconds(now()-t1) << std::endl << std::flush;
+
+  std::cout << "Checking UT Permutations... ";
   if (!A.checkUpperTrapeziodalPermutations(rowPerm,columnPermInverse,pivotHelper.numPivots()))
      std::cout << "Error in finding pivots and/or permutations." << std::endl;
+  else
+     std::cout << "Passed!" << std::endl;
   //  A.denseDisplay(std::cout);
 }
 

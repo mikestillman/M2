@@ -221,7 +221,7 @@ SparseMatrixZZp SparseMatrixZZp::transpose() const
 }
 
 SparseMatrixZZp SparseMatrixZZp::applyPermutations(const std::vector<IndexType>& rowPerm,
-                                                  const std::vector<IndexType>& columnPermInverse) const
+                                                   const std::vector<IndexType>& columnPermInverse) const
 {
   // private internal initializer.  This does not initialize its data.
   SparseMatrixZZp result {numRows(), numColumns(), numNonZeros(), field()};
@@ -248,7 +248,7 @@ SparseMatrixZZp SparseMatrixZZp::applyPermutations(const std::vector<IndexType>&
         result.mColumns[newloc+j] = columnPermInverse[mColumns[rowLoc+work[j]]];
      }
      newloc += rowEntries;
-     //end sorting version
+     // end sorting version
      
      // non-sorting version here
      // for (auto c = cbegin(rowPerm[i]); c != cend(rowPerm[i]); ++c)
@@ -303,6 +303,7 @@ SparseMatrixZZp SparseMatrixZZp::randomSparseMatrix(const M2::ARingZZpFlint& F,
 void PivotHelper::findTrivialRowPivots(const SparseMatrixZZp& A)
 {  
   // find trivial row pivots -- populates pivotHelper (should be empty beforehand)
+  // TODO: This code requires rows to be sorted in column index order.
   assert(mPivotRows.size() == 0);
   for (auto r = 0; r < A.numRows(); ++r)
   {

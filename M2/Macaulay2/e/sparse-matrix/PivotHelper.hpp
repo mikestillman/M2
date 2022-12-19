@@ -71,9 +71,6 @@ public:
                                         std::vector<IndexType>& rowPerm,
                                         std::vector<IndexType>& columnPermInverse) const;
 
-  void sortPivots(const SparseMatrixZZp& A,
-                  std::stack<IndexType>& result) const;
-
   IndexType pivotRow(IndexType piv) const { return mPivotRows[piv]; }
   IndexType pivotColumn(IndexType piv) const { return mPivotColumns[piv]; }
 
@@ -88,14 +85,6 @@ public:
   IndexType columnPivotIndex(IndexType col) const { return mWhichPivotColumn.at(col); }
 
 private:
-
-  void sortPivotsWorker(IndexType curVertex,
-                        std::vector<std::vector<IndexType>>& vertices,
-                        std::vector<bool>& visited,
-                        std::stack<IndexType>& result) const;
-
-  void buildPivotGraph(const SparseMatrixZZp& A,
-                       std::vector<std::vector<IndexType>>& pivotGraph) const;
 
 };
 

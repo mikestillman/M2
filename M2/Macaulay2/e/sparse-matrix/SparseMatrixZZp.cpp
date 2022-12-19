@@ -131,7 +131,10 @@ bool SparseMatrixZZp::checkUpperTrapeziodalPermutations(const std::vector<IndexT
       for (auto c = cbegin(newRow); c != cend(newRow); ++c)
       {
          if (columnPermInverse[(*c).first] < r && (*c).second != 0)
-            return false;
+         {
+           std::cout << "Error in position (" << rowPerm[r] << "," << columnPermInverse[(*c).first] << ")" << std::endl;
+           return false;
+         }
       }
    }
    return true;
@@ -139,6 +142,7 @@ bool SparseMatrixZZp::checkUpperTrapeziodalPermutations(const std::vector<IndexT
 
 bool SparseMatrixZZp::entryPresent(IndexType row, IndexType col) const
 {
+   // TODO: this code also assumes that the entries in a row are sorted according to column
    for (auto c = cbegin(row); c != cend(row); ++c)
    {
       if ((*c).first == col && (*c).second != 0) return true;

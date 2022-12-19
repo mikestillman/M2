@@ -1,4 +1,5 @@
 #include "PivotHelper.hpp"
+#include "PivotGraph.hpp"
 #include "SparseMatrixZZp.hpp"
 #include "interface/random.h"
 #include "timing.hpp"
@@ -18,7 +19,7 @@ void PivotHelper::findTrivialRowPivots(const SparseMatrixZZp& A)
      for (auto j = A.cbeginColumns(r); j != A.cendColumns(r); ++j)
      {
         IndexType c = *j;
-        if (mWhichRow[c] == -1)
+        if (!isPivotColumn(c))
            addPivot(r,c);
         break;
      }
@@ -48,7 +49,7 @@ void PivotHelper::findTrivialColumnPivots(const SparseMatrixZZp& A)
   for (auto r = 0; r < A.numRows(); ++r)
   {
      // determine if r is a pivot row
-     if (mWhichColumn[r] != -1) continue;
+     if (isPivotRow(r)) continue;
 
      // is there an unobstructed column in row i?
      for (auto j = A.cbeginColumns(r); j != A.cendColumns(r); ++j)
@@ -90,7 +91,7 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
       }
 
       // if row r is matched, then continue
-      if (mWhichColumn[r] != -1) continue;
+      if (isPivotRow(r)) continue;
 
       // otherwise, begin the search for a pivot in this row
 
@@ -99,7 +100,7 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
       {
          IndexType thisCol = *c;
          // if column is pivotal, then queue this column
-         if (mWhichRow[thisCol] != -1)
+         if (isPivotColumn(thisCol))
             columnQueue[queueTail++] = thisCol;
          else
          {
@@ -112,9 +113,9 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
       while (queueHead < queueTail && survivors > 0)
       {
         IndexType queueTopColumn = columnQueue[queueHead++];
-        IndexType queueTopRow = mWhichRow[queueTopColumn];
-        if (queueTopRow == -1)
+        if (!isPivotColumn(queueTopColumn))
           continue;
+        IndexType queueTopRow = mWhichRow.at(queueTopColumn);
         // otherwise, we enqueue the non-visited entries in the matched row
         for (auto c = A.cbeginColumns(queueTopRow); c != A.cendColumns(queueTopRow); ++c)
         {
@@ -184,74 +185,29 @@ void PivotHelper::findUpperTrapezoidalPermutations(const SparseMatrixZZp& A,
    assert(columnPerm.size() == 0);
    columnPermInverse.resize(A.numColumns());
    
-   std::stack<IndexType> pivotOrder;
-   sortPivots(A,pivotOrder);
-   IndexType colNum = 0;
-   while (!pivotOrder.empty())
+   std::vector<VertexType> topSort;
+   PivotGraph pivotGraph(A,*this);
+   pivotGraph.topologicalSort(topSort);
+   if (topSort.size() != numPivots())
+      std::cout << "Error finding structural pivots." << std::endl;
+
+   int index = 0;
+   for ( ; index < numPivots(); ++index)
    {
-     auto top = pivotOrder.top();
-     rowPerm.push_back(mPivotRows[top]);
-     columnPermInverse[mPivotColumns[top]] = colNum++;
-     pivotOrder.pop();
+      rowPerm.push_back(mPivotRows[topSort[index]]);
+      columnPermInverse[mPivotColumns[topSort[index]]] = index;
    }
 
    // now have to fill out the row and column perm with the non-pivot rows and columns arbitrarily
    // TODO: Think about how to use mWhichColumn instead and deal with 'extra' rows more efficiently
+   // TODO: In fact, do we want to pad these out at all, or just infer the rest?
    for (int r = 0; r < A.numRows(); ++r)
-      if (mWhichColumn[r] == -1) rowPerm.push_back(r);
+      if (!isPivotRow(r)) rowPerm.push_back(r);
    for (int c = 0; c < A.numColumns(); ++c)
-      if (mWhichRow[c] == -1) columnPermInverse[c] = colNum++;
+      if (!isPivotColumn(c)) columnPermInverse[c] = index++;
 
    assert(rowPerm.size() == A.numRows());
    assert(columnPermInverse.size() == A.numColumns());
-}
-
-void PivotHelper::buildPivotGraph(const SparseMatrixZZp& A,
-                                  std::vector<std::vector<IndexType>>& pivotGraph) const
-{
-   assert(pivotGraph.size() == 0);
-   // build pivot graph
-   for (int i = 0; i < mPivotRows.size(); ++i)
-      pivotGraph.emplace_back(std::vector<IndexType> {});
-   
-   for (int i = 0; i < mPivotRows.size(); ++i)
-   {
-      for (int j = i+1; j < mPivotRows.size(); ++j)
-      {
-         if (A.entryPresent(mPivotRows[i],mPivotColumns[j])) pivotGraph[i].push_back(j);
-         if (A.entryPresent(mPivotRows[j],mPivotColumns[i])) pivotGraph[j].push_back(i);
-      }
-   }
-}
-
-void PivotHelper::sortPivots(const SparseMatrixZZp& A,
-                             std::stack<IndexType>& result) const
-{
-   assert(result.size() == 0);
-   std::vector<std::vector<IndexType>> pivotGraph;
-   std::vector<bool> visited(mPivotRows.size(),false);
-
-   buildPivotGraph(A,pivotGraph);
-   
-   for (int i = 0; i < mPivotRows.size(); ++i)
-      if (!visited[i])
-	 sortPivotsWorker(i,pivotGraph,visited,result);
-
-   return;
-}
-
-void PivotHelper::sortPivotsWorker(IndexType curVertex,
-                                   std::vector<std::vector<IndexType>>& pivotGraph,
-                                   std::vector<bool>& visited,
-                                   std::stack<IndexType>& result) const
-{
-   visited[curVertex] = true;
-
-   for (auto edgeTo = pivotGraph[curVertex].cbegin(); edgeTo != pivotGraph[curVertex].cend(); ++edgeTo)
-      if (!visited[*edgeTo])
-         sortPivotsWorker(*edgeTo, pivotGraph, visited, result);
-
-   result.push(curVertex);
 }
 
 std::ostream& operator<<(std::ostream& buf, const PivotHelper& pivotHelper)

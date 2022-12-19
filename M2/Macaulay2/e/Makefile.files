@@ -11,6 +11,7 @@ INTERFACE2 = interrupted
 INTERFACE = \
 	sparse-matrix/SparseMatrixZZp \
 	sparse-matrix/PivotHelper \
+	sparse-matrix/PivotGraph \
 	myalloc \
 	BasicPoly \
 	BasicPolyList \

@@ -108,6 +108,7 @@ public:
   ConstRowIterColumns cbeginColumns(int row) const;  
   ConstRowIterColumns cendColumns(int row) const;  
 
+  // warning: This is painfully slow - think before you use :)
   bool entryPresent(IndexType row, IndexType col) const;
 
   bool checkUpperTrapeziodalPermutations(const std::vector<IndexType>& rowPerm,

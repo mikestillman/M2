@@ -85,11 +85,6 @@ void PivotHelper::findRemainingPivotsGreedy(const SparseMatrixZZp& A)
 
    for (IndexType r = 0; r < A.numRows(); ++r)
    {
-      if (r % 5000 == 0)
-      {
-         std::cout << "Processed " << r << " rows." << std::endl;
-      }
-
       // if row r is matched, then continue
       if (isPivotRow(r)) continue;
 
@@ -163,16 +158,16 @@ void PivotHelper::findPivots(const SparseMatrixZZp& A)
 {
    findTrivialRowPivots(A);
    IndexType prevPivots = 0;
-   std::cout << "Number of trivial row pivots found   : " << numPivots() - prevPivots << std::endl;
+   // std::cout << "Number of trivial row pivots found   : " << numPivots() - prevPivots << std::endl;
    prevPivots = numPivots();
    findTrivialColumnPivots(A);
-   std::cout << "Number of trivial column pivots found: " << numPivots() - prevPivots << std::endl;
+   // std::cout << "Number of trivial column pivots found: " << numPivots() - prevPivots << std::endl;
    prevPivots = numPivots();
    // if we already have all the pivots, then return 
    if (mPivotRows.size() == std::min(A.numRows(), A.numColumns())) return;
 
    findRemainingPivotsGreedy(A);
-   std::cout << "Number of greedy pivots found        : " << numPivots() - prevPivots << std::endl;
+   // std::cout << "Number of greedy pivots found        : " << numPivots() - prevPivots << std::endl;
 
    return;
 }
@@ -200,7 +195,7 @@ void PivotHelper::findUpperTrapezoidalPermutations(const SparseMatrixZZp& A,
 
    // now have to fill out the row and column perm with the non-pivot rows and columns arbitrarily
    // TODO: Think about how to use mWhichColumn instead and deal with 'extra' rows more efficiently
-   // TODO: In fact, do we want to pad these out at all, or just infer the rest?
+   // TODO: In fact, do we want to pad these out at all, or just infer the remainder of the permutation?
    for (int r = 0; r < A.numRows(); ++r)
       if (!isPivotRow(r)) rowPerm.push_back(r);
    for (int c = 0; c < A.numColumns(); ++c)

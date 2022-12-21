@@ -223,6 +223,11 @@ MutableMatrix /* or null */ *rawResolutionGetMatrix2(Computation *C,
                                                      int level,
                                                      int degree);
 
+M2_bool rawResolutionGetSMSMatrix(Computation *C,
+                                  int slantedDegree,
+                                  int level,
+                                  M2_string filename);
+
 MutableMatrix /* or null */ *rawResolutionGetMutableMatrixB(Computation *C,
                                                             const Ring *R,
                                                             int level);

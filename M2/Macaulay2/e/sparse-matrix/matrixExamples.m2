@@ -80,3 +80,39 @@ A = matrix{
     {0,1,0,1,0,0,1,0,1},
     {1,0,1,0,1,1,0,1,1}}
 A^{0,2,3,4,1,5}_{0,2,4,6,1,3,5,7,8}
+
+restart
+kk = ZZ/32003
+I = Grassmannian(2,6,CoefficientRing=>kk);
+R = ring I;
+gbTrace = 2
+M = coker gens I
+C = res(M, Strategy => 4, LengthLimit => 4)
+minimalBetti(M, LengthLimit => 3)
+
+debug Core
+rawComp = M.cache#(ResolutionContext{}).Result.Resolution.RawComputation
+map(kk,rawResolutionGetMatrix2(rawComp,3,4)) -- (level, total_degree)
+
+writeSMSMatrix = method()
+writeSMSMatrix (Module, ZZ, ZZ, String) := (M, slantedDegree, level, fileName) -> (
+   rawComp := M.cache#(ResolutionContext{}).Result.Resolution.RawComputation;
+   rawResolutionGetSMSMatrix(rawComp,slantedDegree,level,fileName)
+)
+
+writeSMSMatrix(M,1,3,"gr25_13.sms")
+writeSMSMatrix(M,1,4,"gr26_14.sms")
+writeSMSMatrix(M,2,4,"gr26_24.sms")
+
+-- create top-level functions that refine fastnonminimal betti table
+-- based on structural pivots
+
+restart
+R = ZZ/101[a_(1,1)..a_(3,3)]
+G = genericMatrix(R,3,3)
+I = minors(2,G)
+J = I^6;
+M = coker gens J;
+gbTrace = 2
+C = res(M, Strategy => 4)
+minimalBetti M

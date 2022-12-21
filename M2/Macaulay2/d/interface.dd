@@ -3679,6 +3679,24 @@ export rawResolutionGetMatrix2(e:Expr):Expr := (
      else WrongNumArgs(3));
 setupfun("rawResolutionGetMatrix2", rawResolutionGetMatrix2);
 
+export rawResolutionGetSMSMatrix(e:Expr):Expr := (
+     when e is a:Sequence do 
+     if length(a) == 4 then 
+     when a.0 is G:RawComputationCell do 
+     when a.1 is slantedDegree:ZZcell do
+     when a.2 is level:ZZcell do
+     when a.3 is filename:stringCell do
+     if !isInt(slantedDegree) then WrongArgSmallInteger(2) else
+     if !isInt(level) then WrongArgSmallInteger(3) else
+     possibleEngineError(Ccode(bool, "rawResolutionGetSMSMatrix(", G.p, ",", toInt(slantedDegree), ",", toInt(level), ",", filename.v, ")" ))
+     else WrongArgString(4)
+     else WrongArgZZ(3)
+     else WrongArgZZ(2)     
+     else WrongArg(1,"a raw computation")
+     else WrongNumArgs(4)
+     else WrongNumArgs(4));
+setupfun("rawResolutionGetSMSMatrix", rawResolutionGetSMSMatrix);
+
 export rawResolutionGetMutableMatrixB(e:Expr):Expr := (
      when e is a:Sequence do 
      if length(a) == 3 then 

@@ -40,6 +40,9 @@ class F4ResComputation : public ResolutionComputation
   M2_arrayint minimal_betti(M2_arrayint slanted_degree_limit,
                             M2_arrayint length_limit);
 
+  SchreyerFrame& frame() { return *mComp; }
+  const SchreyerFrame& frame() const { return *mComp; }
+
  public:
   MutableMatrix /* or null */* get_mutable_matrix(const Ring* R, int level);
   MutableMatrix /* or null */* get_mutable_matrix(const Ring* KK,
@@ -54,7 +57,6 @@ class F4ResComputation : public ResolutionComputation
     return true;
   }
 
-  SchreyerFrame& frame() { return *mComp; }
   void start_computation();
 
   int complete_thru_degree() const;

@@ -65,6 +65,12 @@ class ResF4toM2Interface
 
 };
 
+void f4ResolutionComputationToSMSFile(SchreyerFrame& frame,
+				      int slantedDegree,
+				      int level,
+				      std::string fileName);
+
+
 #endif
 
 // Local Variables:

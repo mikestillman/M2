@@ -158,16 +158,16 @@ void PivotHelper::findPivots(const SparseMatrixZZp& A)
 {
    findTrivialRowPivots(A);
    IndexType prevPivots = 0;
-   // std::cout << "Number of trivial row pivots found   : " << numPivots() - prevPivots << std::endl;
+   std::cout << "Number of trivial row pivots found   : " << numPivots() - prevPivots << std::endl;
    prevPivots = numPivots();
    findTrivialColumnPivots(A);
-   // std::cout << "Number of trivial column pivots found: " << numPivots() - prevPivots << std::endl;
+   std::cout << "Number of trivial column pivots found: " << numPivots() - prevPivots << std::endl;
    prevPivots = numPivots();
    // if we already have all the pivots, then return 
    if (mPivotRows.size() == std::min(A.numRows(), A.numColumns())) return;
 
    findRemainingPivotsGreedy(A);
-   // std::cout << "Number of greedy pivots found        : " << numPivots() - prevPivots << std::endl;
+   std::cout << "Number of greedy pivots found        : " << numPivots() - prevPivots << std::endl;
 
    return;
 }

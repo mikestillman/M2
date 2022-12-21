@@ -575,6 +575,33 @@ void setDMatFromSparseMatrixGeneratorTransposed(Gen& G, DMat<RingType>& M)
     }
 }
 
+template<typename Gen>
+void smsFileFromSparseMatrixGenerator(std::ostream& o, Gen& G)
+{
+  const Ring* R = G.ring();
+  o << G.numRows() << " " << G.numColumns() << " " << "M" << std::endl;
+  for (auto i = G.begin(); i != G.end(); ++i)
+    {
+      for (int j=0; j < i.components().size(); ++j)
+      {
+        o << i.components()[j] + 1 << " " << i.column() + 1 << " " << i.coefficients()[j] << std::endl;
+      }
+    }
+  o << "0 0 0" << std::endl;
+}
+
+void f4ResolutionComputationToSMSFile(SchreyerFrame& frame,
+				      int slantedDegree,
+				      int level,
+				      std::string fileName)
+{
+  std::ofstream smsFile { fileName };
+
+  DegreeZeroMapGenerator D(frame, slantedDegree, level);
+  smsFileFromSparseMatrixGenerator(smsFile,D);
+  
+  smsFile.close();
+}
 
 template<typename Gen>
 int SchreyerFrame::rankUsingSparseMatrix(Gen& D)

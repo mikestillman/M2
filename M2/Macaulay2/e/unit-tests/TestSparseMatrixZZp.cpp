@@ -143,17 +143,17 @@ TEST(SparseMatrixZZp, fromTriplesFile2)
 }
 
 #endif
-//#if 0
+#if 0
 
 TEST(SparseMatrixZZp, fromTriplesFile3)
 {
-  M2::ARingZZpFlint F(101);
-  M2::ARingZZpFFPACK F_ffpack(101);
+  M2::ARingZZpFlint F(32003);
+  M2::ARingZZpFFPACK F_ffpack(32003);
   std::ifstream infile;
   //infile.open("/Users/moorewf/Downloads/10164x1740.sms");
   //infile.open("/Users/moorewf/Downloads/47104x30144bis.sms");
   //infile.open("/Users/moorewf/Downloads/GL7d16.sms");
-  infile.open("/Users/frank/Downloads/GL7d15.sms");
+  infile.open("/Users/moorewf/Downloads/GL7d15.sms");
   //infile.open("/Users/moorewf/Downloads/GL7d13.sms");
   //infile.open("/Users/moorewf/Downloads/GL7d12.sms");
   //infile.open("../exampleMat.sms");
@@ -219,7 +219,7 @@ TEST(SparseMatrixZZp, fromTriplesFile3)
 
 //then qinv : 5 2 1 6 0 4 3
 
-//#endif
+#endif
 
 TEST(SparseMatrixZZp, fromUnsortedTriple)
 {
@@ -300,6 +300,37 @@ TEST(SparseMatrixZZp, randomSparseMatrix)
   auto B = A.transpose();
   // std::cout << "and its transpose is: " << std::endl;
   // B.denseDisplay(std::cout);
+}
+
+TEST(SparseMatrixZZp, grassmannian)
+{
+  M2::ARingZZpFlint F(32003);
+
+  std::ifstream infile;
+  //infile.open("/Users/moorewf/Macaulay2/M2-frank/M2/Macaulay2/e/schreyer-resolution/gr25_13.sms");
+  infile.open("/Users/moorewf/Macaulay2/M2-frank/M2/Macaulay2/e/schreyer-resolution/gr26_14.sms");
+  //infile.open("/Users/moorewf/Macaulay2/M2-frank/M2/Macaulay2/e/schreyer-resolution/gr26_24.sms");
+
+  if (not infile)
+  {
+    std::cout << "file not opened properly" << std::endl;
+    exit(1);
+  }
+
+  SparseMatrixZZp A(F, infile);
+  infile.close();
+
+  PivotHelper pivotHelper(A);
+
+  auto t1 = now();
+  pivotHelper.findPivots(A);
+  std::cout << "Time spent finding pivots: " << seconds(now() - t1) << std::endl;
+  std::cout << "Number of pivots found: " << pivotHelper.numPivots() << std::endl;
+
+  // std::cout << pivotHelper << std::endl;
+
+  // A.denseDisplay(std::cout);
+
 }
 
 // TEST(SparseMatrixZZp, bigRandomSparseMatrix)

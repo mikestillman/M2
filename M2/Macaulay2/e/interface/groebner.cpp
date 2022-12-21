@@ -27,6 +27,7 @@
 #include "poly.hpp"
 #include "interrupted.hpp"
 #include "schreyer-resolution/res-f4-computation.hpp"
+#include "schreyer-resolution/res-f4-m2-interface.hpp"
 
 class FreeModule;
 struct MonomialOrdering;
@@ -516,6 +517,42 @@ MutableMatrix /* or null */ *rawResolutionGetMatrix2(Computation *C,
       return nullptr;
   }
 }
+
+M2_bool rawResolutionGetSMSMatrix(Computation *C,
+                                  int slantedDegree,
+                                  int level,
+                                  M2_string filename)
+{
+  try
+    {
+      clear_emit_size();
+      ResolutionComputation *G = C->cast_to_ResolutionComputation();
+      //if (G != nullptr) return G->get_matrix(level, degree);
+      if (G == nullptr)
+      {
+        ERROR("expected resolution computation type");
+        return false;
+      }
+      auto Gf4 = reinterpret_cast<F4ResComputation*>(G);
+      if (Gf4 == nullptr)
+      {
+        ERROR("expected f4 resolution computation type");
+        return false;
+      }
+
+      auto file = string_M2_to_std(filename);
+
+      f4ResolutionComputationToSMSFile(Gf4->frame(), slantedDegree, level, file);
+      
+      return true;
+
+  } catch (const exc::engine_error& e)
+    {
+      ERROR(e.what());
+      return false;
+  }
+}
+
 
 MutableMatrix /* or null */ *rawResolutionGetMutableMatrixB(Computation *C,
                                                             const Ring *R,

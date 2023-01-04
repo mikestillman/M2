@@ -102,6 +102,8 @@ set(HPPONLYFILES
   schreyer-resolution/res-memblock.hpp
   schreyer-resolution/res-monomial-types.hpp
   schreyer-resolution/res-schreyer-order.hpp
+  sparse-matrix/Iterators.hpp
+  sparse-matrix/MatrixOps.hpp
   )
 
 # these files have .cpp file, but NOT .hpp file
@@ -160,6 +162,7 @@ set(SRCLIST
   BasicPolyListParser
   SparseMatrixZZp
   SparseMatrixZZp
+  sparse-matrix/SparseVector
   sparse-matrix/SparseMatrixZZp
   sparse-matrix/PivotHelper
   sparse-matrix/PivotGraph

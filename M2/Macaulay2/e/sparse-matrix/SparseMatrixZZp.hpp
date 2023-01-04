@@ -7,59 +7,13 @@
 #include "aring-zzp-flint.hpp"
 #include "aring-zzp-ffpack.hpp"
 #include "dmat.hpp"
+#include "Iterators.hpp"
+
+class SparseVector;
+class DenseVector;
 
 using ZZpElement = M2::ARingZZpFlint::ElementType; // really just long.
 using IndexType = int;
-
-template<typename Iter1, typename Iter2>
-class DiagonalIter
-{
-  // Assumption: both iterators should point to valid memory simultaneously
-  // even after each increment.
-private:
-  Iter1 mIter1;
-  Iter2 mIter2;
-  IndexType mIndex;
-
-  using Value1 = decltype(* mIter1);
-  using Value2 = decltype(* mIter2);
-public:
-  DiagonalIter(Iter1 iter1, Iter2 iter2, IndexType firstIndex = 0)
-    : mIter1(iter1),
-      mIter2(iter2),
-      mIndex(firstIndex)
-  {
-  }
-  
-  bool operator==(DiagonalIter j)
-  {
-    return (mIter1 == j.mIter1 and mIter2 == j.mIter2);
-  }
-
-  bool operator!=(DiagonalIter j)
-  {
-    return (mIter1 != j.mIter1 or mIter2 != j.mIter2);
-  }
-  
-  DiagonalIter operator++()
-  {
-    ++mIndex;
-    ++mIter1;
-    ++mIter2;
-    return *this;
-  }
-
-  // operator*: returns (column, (nonzero) entry at given row and this column)
-  IndexType index()
-  {
-    return mIndex;
-  }
-  
-  std::pair<Value1, Value2> operator*()
-  {
-    return {*mIter1, *mIter2};
-  }
-};
 
 class SparseMatrixZZp
 {
@@ -118,7 +72,7 @@ public:
   void dump(std::ostream &o) const;
   void denseDisplay(std::ostream& o) const;
 
-  // read and write files.  Formats: triples.  compressed.
+  void writeSMSFile(std::ostream &o) const;
 
   // Submatrices, windows?
 
@@ -177,13 +131,12 @@ private:
 
 inline SparseMatrixZZp::ConstRowIter SparseMatrixZZp::cbegin(int row) const {
   return ConstRowIter(mColumns.cbegin() + mRows[row],
-                 mNonzeroElements.cbegin() + mRows[row],
-                 mRows[row]);
+                      mNonzeroElements.cbegin() + mRows[row]);
 }
 
 inline SparseMatrixZZp::ConstRowIter SparseMatrixZZp::cend(int row) const {
   return ConstRowIter(mColumns.cbegin() + mRows[row + 1],
-                 mNonzeroElements.cbegin() + mRows[row + 1]);
+                      mNonzeroElements.cbegin() + mRows[row + 1]);
 }
 
 inline SparseMatrixZZp::ConstRowIterColumns SparseMatrixZZp::cbeginColumns(int row) const {

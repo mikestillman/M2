@@ -78,26 +78,11 @@ public:
 
   // Permutations of rows and columns?
   
-  // Basic operations. d, e dense vectors, x,y sparse (row) vectors, A,B sparse matrices, c field element
-  //  x, y should be allowed to be rows of a sparse matrix A (without creating separate vector).
-  //   d += c*x (scatter in spasm)
-  //   d += e*A (dense e)
-  //   d += x*A (sparse x)
-  //  void rowUpdate(DenseRow& d, const FieldElement c, const SparseRow x);
-
-  // for rank.
-  //   sparse PLUQ decomposition
-  //   
-
-  // Solve x*A = b, A upper triangular, A lower triangular, b dense, b sparse/
-  
   // Operations
   SparseMatrixZZp transpose() const;
   SparseMatrixZZp applyPermutations(const std::vector<IndexType>& rowPerm,
                                     const std::vector<IndexType>& columnPerm) const;
 
-  // What about: A+B, A-B, A += c*D, A*B, etc...
-  
   static SparseMatrixZZp randomSparseMatrix(const M2::ARingZZpFlint& F,
                                             IndexType nrows,
                                             IndexType ncols,
@@ -151,6 +136,7 @@ void toDenseMatrix(const SparseMatrixZZp& input,
                    const M2::ARingZZpFlint& field,
                    DMat<M2::ARingZZpFFPACK>& result);
 
+// TODO: Do we want to keep these?
 #if 0
 
 class Permutation
@@ -189,21 +175,6 @@ private:
   std::vector<long> mColumns; // 0..e-1
 };
 
-namespace SparseMatrixOps
-{
-  // Constructors, change of representation
-  // read/write to/from file
-
-  // Transpose
-  // Matrix/Vector Multiplication (v*A, A*B, ...)
-
-  // sparse PLUQ decomposition:
-  // Wiedemann
-  // Lanczos
-  // rank computation
-
-  // finding a good matching...
-};
 #endif
 #endif
 

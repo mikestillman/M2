@@ -103,7 +103,6 @@ set(HPPONLYFILES
   schreyer-resolution/res-monomial-types.hpp
   schreyer-resolution/res-schreyer-order.hpp
   sparse-matrix/Iterators.hpp
-  sparse-matrix/MatrixOps.hpp
   )
 
 # these files have .cpp file, but NOT .hpp file
@@ -157,18 +156,15 @@ set(CPPONLYFILES
 # these files all have .hpp and .cpp files
 # MES TODO: put these NCAlgebra files (and friends) into alpha order in list
 set(SRCLIST
-<<<<<<< HEAD
   BasicPoly
   BasicPolyList
   BasicPolyListParser
   SparseMatrixZZp
   SparseMatrixZZp
   sparse-matrix/SparseVector
-||||||| parent of 52804f1c6 (Changed name of vectors file.)
   sparse-matrix/SparseVector
-=======
+  sparse-matrix/MatrixOps
   sparse-matrix/Vectors
->>>>>>> 52804f1c6 (Changed name of vectors file.)
   sparse-matrix/SparseMatrixZZp
   sparse-matrix/PivotHelper
   sparse-matrix/PivotGraph

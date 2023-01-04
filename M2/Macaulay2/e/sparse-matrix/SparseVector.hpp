@@ -1,5 +1,5 @@
-#ifndef _sparse_vector_hpp_
-#define _sparse_vector_hpp_
+#ifndef _vectors_hpp_
+#define _vectors_hpp_
 
 #include <vector>
 #include "aring-zzp-flint.hpp"

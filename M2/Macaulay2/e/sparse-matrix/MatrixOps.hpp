@@ -1,6 +1,8 @@
 #ifndef _matrixops_hpp
 #define _matrixops_hpp
 
+#include "aring-zzp-flint.hpp"
+
 using ZZpElement = M2::ARingZZpFlint::ElementType; // really just long.
 using IndexType = int;
 
@@ -8,7 +10,7 @@ class SparseMatrixZZp;
 class SparseVector;
 class DenseVector;
 
-// TODO: Go Through These, brought over from SparseMatrixZZp header
+// TODO: Go through these, brought over from SparseMatrixZZp header
 
   // Constructors, change of representation
   // read/write to/from file
@@ -25,30 +27,33 @@ class DenseVector;
 
 namespace MatrixOps
 {
-  // solves result*A = a.  Requires A to be a block 2x2 matrix with a upper unitriangular matrix in
-  // top left corner.
-  void upperUnitriangluarSolve(const SparseMatrixZZp& A, const SparseVector& a, SparseVector& result);
-  void upperUnitriangularSolve(const SparseMatrixZZp& A, const SparseVector& a, DenseVector& result);
-  void upperUnitriangluarSolve(const SparseMatrixZZp& A, const DenseVector& a, SparseVector& result);
-  void upperUnitriangularSolve(const SparseMatrixZZp& A, const DenseVector& a, DenseVector& result);
+  // solves result*A = a.  Requires A to be a matrix with a upper unitriangular matrix in
+  // top left corner with numPivots many pivots.
+  void upperUnitriangluarSolve(const SparseMatrixZZp& A, IndexType numPivots, const SparseVector& a, SparseVector& result);
+  void upperUnitriangularSolve(const SparseMatrixZZp& A, IndexType numPivots, const SparseVector& a, DenseVector& result);
+  void upperUnitriangluarSolve(const SparseMatrixZZp& A, IndexType numPivots, const DenseVector& a, SparseVector& result);
+  void upperUnitriangularSolve(const SparseMatrixZZp& A, IndexType numPivots, const DenseVector& a, DenseVector& result);
 
   // performs result += cx.  Scatters cx into result
-  void scatter(const SparseMatrixZZp& A, const ZZpElement& element, const SparseVector& x, SparseVector& result);
-  void scatter(const SparseMatrixZZp& A, const ZZpElement& element, const SparseVector& x, DenseVector& result);
-  void scatter(const SparseMatrixZZp& A, const ZZpElement& element, const DenseVector& x, SparseVector& result);
-  void scatter(const SparseMatrixZZp& A, const ZZpElement& element, const DenseVector& x, DenseVector& result);
+  void scatter(SparseVector& result, const ZZpElement& element, const SparseVector& x);
+  void scatter(SparseVector& result, const ZZpElement& element, const DenseVector& x);
+
+  void scatter(SparseVector& result, const ZZpElement& element, const SparseMatrixZZp& A, IndexType row);
+
+  void scatter(DenseVector& result, const ZZpElement& element, const SparseVector& x);
+  void scatter(DenseVector& result, const ZZpElement& element, const DenseVector& x);
+
+  void scatter(DenseVector& result, const ZZpElement& element, const SparseMatrixZZp& A, IndexType row);
 
   // performs result += bA where b is either dense or sparse.  Result has same form of b.
-  void rowUpdate(const SparseVector& sparse, SparseVector& result, SparseVector& b);
-  void rowUpdate(const SparseVector& sparse, SparseVector& result, DenseVector& b);
-  void rowUpdate(const SparseVector& sparse, DenseVector& result, SparseVector& b);
-  void rowUpdate(const SparseVector& sparse, DenseVector& result, DenseVector& b);
+  void rowUpdate(SparseVector& result, const SparseMatrixZZp& sparse, SparseVector& b);
+  void rowUpdate(SparseVector& result, const SparseMatrixZZp& sparse, DenseVector& b);
+  void rowUpdate(SparseVector& result, const SparseMatrixZZp& sparse, SparseVector& b);
+  void rowUpdate(SparseVector& result, const SparseMatrixZZp& sparse, DenseVector& b);
 
-  // What about: A+B, A-B, A += c*D, A*B, etc...
+  void schurComplement(const SparseMatrixZZp& A, SparseMatrixZZp& result);
 
-  void schurComplement(const SparseMatrix& A, SparseMatrix& result);
-
-  IndexType rank(const SparseMatrix& A);
+  IndexType rank(const SparseMatrixZZp& A);
   
 }
 

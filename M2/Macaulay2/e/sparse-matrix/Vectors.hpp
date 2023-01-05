@@ -25,31 +25,66 @@ private:
   std::vector<IndexType> mColumns;
   IndexType mNumColumns;
 
+public:
+
   using ConstIter = DiagonalIter<
+    decltype(mColumns.cbegin()),
+    decltype(mNonzeroElements.cbegin())
+    >;
+  using Iter = DiagonalIter<
     decltype(mColumns.cbegin()),
     decltype(mNonzeroElements.cbegin())
     >;
 
   ConstIter cbegin() const;
   ConstIter cend() const;
+  Iter begin();
+  Iter end();
 
 };
 
-inline SparseMatrixZZp::ConstRowIter SparseMatrixZZp::cbegin() const {
+inline SparseVector::ConstIter SparseVector::cbegin() const {
   return ConstIter(mColumns.cbegin(),
 		   mNonzeroElements.cbegin());
 }
 
-inline SparseMatrixZZp::ConstRowIter SparseMatrixZZp::cend() const {
+inline SparseVector::ConstIter SparseVector::cend() const {
   return ConstIter(mColumns.cend(),
 		   mNonzeroElements.cend());
+}
+
+inline SparseVector::Iter SparseVector::begin() {
+  return Iter(mColumns.begin(),
+              mNonzeroElements.begin());
+}
+
+inline SparseVector::ConstIter SparseVector::end() {
+  return Iter(mColumns.end(),
+              mNonzeroElements.end());
 }
 
 class DenseVector
 {
 private:
   std::vector<ZZpElement> mEntries;
-}
+
+public:
+  using ConstIter = decltype(mEntries.cbegin());
+  using Iter = decltype(mEntries.begin());
+
+  void resize( size_t size ) { mEntries.resize(size); }
+  void fill( const ZZpElement& element ) { std::fill(mEntries.begin(), mEntries.end(), element); }
+  IndexType size() const { return mEntries.size(); }
+
+  ZZpElement& operator[]( size_t pos ) { return mEntries[pos]; }
+  const ZZpElement& operator[]( size_t pos ) const { return mEntries[pos]; }
+
+  ConstIter cbegin() const { return mEntries.cbegin(); }
+  ConstIter cend() const { return mEntries.cend(); }
+
+  Iter begin() { return mEntries.begin(); }
+  Iter end() { return mEntries.end(); }
+};
 
 #endif
 

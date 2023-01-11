@@ -272,6 +272,17 @@ debug-arm64-appleclang : always
 		--disable-optimize \
 		--enable-download
 
+arm64-linbox-appleclang : always
+	mkdir -p builds.tmp/arm64-linbox-appleclang
+	cd builds.tmp/arm64-linbox-appleclang; ../../../../configure \
+		CPPFLAGS="-I`brew --prefix tbb@2021`/include -I`brew --prefix`/include" \
+		LDFLAGS="-L`brew --prefix tbb@2021`/lib -L`brew --prefix`/lib" \
+	    --with-boost-regex=boost_regex \
+		--enable-linbox \
+		--prefix="`pwd`/installed" \
+		--disable-strip \
+		--enable-download
+
 arm64-tbb2020-appleclang : always
 	mkdir -p builds.tmp/arm64-tbb2020-appleclang
 	cd builds.tmp/arm64-tbb2020-appleclang; ../../../../configure \

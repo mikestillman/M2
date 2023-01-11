@@ -7,7 +7,7 @@ SHARED_UNITTEST_CCFILES := \
 
 UNITTEST_CCFILES := \
     $(SHARED_UNITTEST_CCFILES) \
-    TestSparseMatrixZZp \
+    LinboxTest \
     NCGroebnerTest \
     PointArray \
     ARingZZTest \
@@ -29,7 +29,8 @@ UNITTEST_CCFILES := \
     PolyRingTest \
     NewF4Test \
     MonoidTest \
-    MatrixIOTest
+    MatrixIOTest \
+    SubsetTest  
 
 #    RingRRRTest \
 #    RingCCCTest \

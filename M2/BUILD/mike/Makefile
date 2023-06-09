@@ -46,6 +46,7 @@ cmake-no-tbb-appleclang:
 		-DBUILD_DOCS=on \
 		../../../..
 
+#good.  But currently need to comment out OpenMP lines in e/CMakeLists.txt
 cmake-appleclang:
 	echo "git branch is " $(BRANCH)
 	mkdir -p builds.tmp/cmake-appleclang
@@ -59,6 +60,7 @@ cmake-appleclang:
 		-DBUILD_DOCS=on \
 		../../../..
 
+# good (to M2-core). Lots of warnings though.
 cmake-debug-appleclang:
 	mkdir -p builds.tmp/cmake-debug-appleclang
 	cd builds.tmp/cmake-debug-appleclang; cmake \
@@ -70,16 +72,18 @@ cmake-debug-appleclang:
 		-DBUILD_DOCS=on \
 		../../../..
 
-cmake-profile-appleclang:
-	echo "git branch is " $(BRANCH)
-	mkdir -p builds.tmp/cmake-profile-appleclang
-	cd builds.tmp/cmake-profile-appleclang; cmake \
-		-GNinja \
-		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
-		-DPROFILING=on \
-		-DBUILD_TESTING=on \
-		-DBUILD_DOCS=on \
-		../../../..
+# cmake-profile-appleclang:
+# 	echo "git branch is " $(BRANCH)
+# 	mkdir -p builds.tmp/cmake-profile-appleclang
+# 	cd builds.tmp/cmake-profile-appleclang; cmake \
+# 		-GNinja \
+# 		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+# 		-DCMAKE_PREFIX_PATH="`brew --prefix tbb@2021`;`brew --prefix libffi`;`brew --prefix`" \
+# 		-DBUILD_NATIVE=off \
+# 		-DPROFILING=on \
+# 		-DBUILD_TESTING=on \
+# 		-DBUILD_DOCS=on \
+# 		../../../..
 #		-DLINTING=on
 
 cmake-profile-appleclang:
@@ -87,25 +91,34 @@ cmake-profile-appleclang:
 	cd builds.tmp/cmake-profile-appleclang; cmake \
 		-GNinja \
 		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
-		-DCMAKE_PREFIX_PATH="`brew --prefix tbb@2020`;`brew --prefix`" \
+		-DCMAKE_PREFIX_PATH="`brew --prefix tbb@2021`;`brew --prefix libffi`;`brew --prefix`" \
 		-DCMAKE_INSTALL_PREFIX=`pwd`/installed-profile \
-		-DBUILD_NATIVE=on \
+		-DPROFILING=on \
+		-DBUILD_NATIVE=off \
 		-DBUILD_TESTING=on \
 		-DBUILD_DOCS=on \
 		../../../..
 #		-DLINTING=on
 
-# this one still needs to be modified for M1
 cmake-latestclang:
 	mkdir -p builds.tmp/cmake-latestclang
-	cd builds.tmp/cmake-latestclang; LIBRARY_PATH=`/usr/local/opt/llvm/bin/llvm-config --libdir` cmake \
+	cd builds.tmp/cmake-latestclang; LIBRARY_PATH=`/opt/homebrew/opt/llvm@14/bin/llvm-config --libdir` cmake \
+	    -DCMAKE_C_COMPILER:FILEPATH=/opt/homebrew/opt/llvm@14/bin/clang \
+		-DCMAKE_CXX_COMPILER:FILEPATH=/opt/homebrew/opt/llvm@14/bin/clang++ \
 		-GNinja \
-	    -DCMAKE_C_COMPILER:FILEPATH=/usr/local/opt/llvm/bin/clang \
-		-DCMAKE_CXX_COMPILER:FILEPATH=/usr/local/opt/llvm/bin/clang++ \
 		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DCMAKE_PREFIX_PATH="`brew --prefix tbb@2021`;`brew --prefix libffi`;`brew --prefix`" \
+		-DBUILD_NATIVE=off \
+		-DCMAKE_INSTALL_PREFIX=`pwd`/installed \
 		-DBUILD_TESTING=on \
 		-DBUILD_DOCS=on \
 		../../../..
+
+# -GNinja \
+# 		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+# 		-DBUILD_TESTING=on \
+# 		-DBUILD_DOCS=on \
+# 		../../../..
 
 # this one still needs to be modified for M1
 cmake-debug-latestclang:
@@ -120,17 +133,19 @@ cmake-debug-latestclang:
 		../../../..
 
 # this one still needs to be modified for M1, tbb
-cmake-gcc9:
-	mkdir -p builds.tmp/cmake-gcc9
-	cd builds.tmp/cmake-gcc9; cmake \
+cmake-gcc13:
+	mkdir -p builds.tmp/cmake-gcc13
+	cd builds.tmp/cmake-gcc13; cmake \
 		-GNinja \
-	    -DCMAKE_C_COMPILER:FILEPATH=/usr/local/bin/gcc-9 \
-		-DCMAKE_CXX_COMPILER:FILEPATH=/usr/local/bin/g++-9 \
+	    -DCMAKE_C_COMPILER:FILEPATH=/opt/homebrew/opt/gcc/bin/gcc-13 \
+		-DCMAKE_CXX_COMPILER:FILEPATH=/opt/homebrew/opt/gcc/bin/g++-13 \
+		-DBUILD_LIBRARIES="Frobby" \
 		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
 		-DBUILD_TESTING=on \
 		-DBUILD_DOCS=on \
 		../../../..
 
+cmake -DBUILD_LIBRARIES="Givaro;FFLAS_FFPACK" .
 # this one still needs to be modified for M1, tbb
 ubuntu-cmake-gcc:
 	mkdir -p builds.tmp/ubuntu-cmake-gcc

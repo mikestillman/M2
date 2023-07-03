@@ -419,7 +419,10 @@ if(BUILD_TESTING)
     unit-tests/M2mem-replacement.c
     unit-tests/M2mem-replacement.h
 
+    unit-tests/util-polyring-creation.hpp
+    unit-tests/util-polyring-creation.cpp
     unit-tests/MonoidTest.cpp
+    unit-tests/PolyRingTest.cpp
 
     unit-tests/ARingTest.hpp
     unit-tests/ARingZZTest.cpp

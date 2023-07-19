@@ -23,7 +23,9 @@ UNITTEST_CCFILES := \
     RingTowerTest \
     DMatZZpTest \
     ResTest \
-    SubsetTest  
+    SubsetTest \
+    MonoidTest \
+    MatrixIOTest
 
 #    RingRRRTest \
 #    RingCCCTest \

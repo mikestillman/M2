@@ -240,8 +240,8 @@ BasicPolyList parseMsolveFromString(std::string contents)
           continue;
         }
 
-      if (thisline.size() == 0)
-        std::cout << "oops, this isn't good?" << std::endl;
+      // if (thisline.size() == 0)
+      //   std::cout << "oops, this isn't good?" << std::endl;
       if (thisline.size() == 0 or thisline[0] == '#')
         {
           continue;

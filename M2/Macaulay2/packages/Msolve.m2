@@ -28,6 +28,13 @@ readMsolveOutput(String):=(msolveOut)->(
     M2Out:=for s in moutStrL list value(s);
     return matrix {M2Out};
     );
+debug Core
+readMsolveOutputFile = method()
+readMsolveOutputFile(Ring,String) := Matrix => (R,mOut)->(
+    map(R, rawMatrixReadMsolveFile(raw R, mOut))
+    );
+
+
 inputOkay=method(TypicalValue=>Boolean);
 inputOkay(Ideal):=I->(
     R:=ring I;
@@ -60,9 +67,12 @@ grobBasis(Ideal):=(I)->(
     inStr:=l1|newline|l2|newline|Igens;
     mIn<<inStr<<close;
     mOut:=temporaryFileName()|".ms";
+    << "msolve input file is called: " << mIn << endl;
+    << "msolve output file is called: " << mOut << endl;
     callStr:=msolvePath|"/msolve -t "|toString(max(maxAllowableThreads,allowableThreads))|" -g 2 -f "|mIn|" -o "|mOut;
     run(callStr);
     msolGB:=readMsolveOutput(get(mOut));
+    --msolGB:=readMsolveOutputFile(R, mOut);
     return gens forceGB msolGB;
     );
 leadingMonomials=method(TypicalValue=>Matrix);
@@ -83,6 +93,7 @@ leadingMonomials(Ideal):=(I)->(
     callStr:=msolvePath|"/msolve -t "|toString(max(maxAllowableThreads,allowableThreads))|" -g 1 -f "|mIn|" -o "|mOut;
     run(callStr);
     msolGB:=readMsolveOutput(get(mOut));
+    --msolGB:=readMsolveOutputFile(R, mOut);
     return gens forceGB msolGB;
     );
 eliminationIdeal=method(TypicalValue=>Matrix);
@@ -116,6 +127,7 @@ eliminationIdeal(Ideal,List):=(J,elimvars)->(
     callStr:=msolvePath|"/msolve -t "|toString(max(maxAllowableThreads,allowableThreads))|" -e "|toString(elimNum)|" -g 2 -f "|mIn|" -o "|mOut;
     run(callStr);
     M2Out:=readMsolveOutput(get(mOut));
+    --M2Out:=readMsolveOutputFile(R, mOut);
     msolGB:=sub(selectInSubring(elimNum,M2Out),S);
     use S;
     return gens forceGB msolGB;
@@ -138,7 +150,9 @@ saturateByPoly(Ideal,RingElement):=(I,f)->(
     mOut:=temporaryFileName()|".ms";
     callStr:=msolvePath|"/msolve -f "|mIn|" -S -g 2 -o "|mOut;
     run(callStr);
-    msolGB:=readMsolveOutput(get(mOut));
+    --msolGB:=readMsolveOutput(get(mOut));
+    msolGB:=readMsolveOutputFile(R, mOut);
+    << "msolve output file is called: " << mOut << endl;
     return gens forceGB msolGB;
     );
 

@@ -7,7 +7,7 @@ isVirtualOfPair(List, Module) := opts -> (d, M) -> (
     B := opts.IrrelevantIdeal;
     l := d + dimVector ring M;
     -- TODO: return false if l < all degrees of I
-    F := res M; -- TODO: remove when virtualOfPair for a module gives a winnowingMap
+    F := freeResolution M; -- TODO: remove when virtualOfPair for a module gives a winnowingMap
     V := virtualOfPair(F, {l});
     -- For ideals, it is sufficient to check saturate(ann HH^0 F, B) == ann M
     -- but checking that the winnowing map is an isomorphism may be better

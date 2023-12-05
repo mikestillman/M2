@@ -34,7 +34,7 @@ doc ///
          ideal(x_1 - x_0, x_3 - 4*x_2),
          ideal(x_1 - 2*x_0, x_3 - 5*x_2),
          ideal(x_1 - 3*x_0, x_3 - 6*x_2)), B);
-     minres = res J;
+     minres = freeResolution J;
      multigraded betti minres
     Text
      As described in Algorithm 3.4 of Berkesch, Erman, and Smith's
@@ -78,8 +78,8 @@ doc ///
 doc ///
     Key
         isVirtual
-        (isVirtual,Ideal,ChainComplex)
-        (isVirtual,NormalToricVariety,ChainComplex)
+        (isVirtual,Ideal,Complex)
+        (isVirtual,NormalToricVariety,Complex)
     Headline
         checks whether a chain complex is a virtual resolution
     Usage
@@ -90,7 +90,7 @@ doc ///
             irrelevant ideal of the ring
         X:NormalToricVariety
             normal toric variety
-        C:ChainComplex
+        C:Complex
             chain complex we want to check if is a virtual resolution
     Outputs
         :Boolean
@@ -105,7 +105,7 @@ doc ///
             If @TO "debugLevel"@ is larger than zero, the homological degree where isVirtual fails is printed.
         Example
           R = ZZ/101[s,t];
-          isVirtual(ideal(s,t),res ideal(t))
+          isVirtual(ideal(s,t),freeResolution ideal(t))
         Text
           Continuing our running example of three points $([1:1],[1:4])$, $([1:2],[1:5])$, and $([1:3],[1:6])$
           in $\PP^1 \times \PP^1$, we can check whether the virtual complex we compute below and
@@ -118,7 +118,7 @@ doc ///
              ideal(x_1 - x_0, x_3 - 4*x_2),
              ideal(x_1 - 2*x_0, x_3 - 5*x_2),
              ideal(x_1 - 3*x_0, x_3 - 6*x_2)), B);
-          minres = res J;
+          minres = freeResolution J;
           vres = virtualOfPair(J,{{3,1}});
           isVirtual(B,vres)
         Text
@@ -394,7 +394,7 @@ doc ///
         A:List
             power you want to take the irrelevant ideal to
     Outputs
-        :ChainComplex
+        :Complex
             virtual resolution of our ideal
     Description
         Text
@@ -427,7 +427,7 @@ doc ///
         virtualOfPair
         (virtualOfPair, Ideal,        List)
         (virtualOfPair, Module,       List)
-        (virtualOfPair, ChainComplex, List)
+        (virtualOfPair, Complex, List)
     Headline
         creates a virtual resolution from a free resolution by keeping only summands of specified degrees
     Usage
@@ -439,12 +439,12 @@ doc ///
             ideal over multigraded ring
         M:Module
             module over multigraded ring
-        C:ChainComplex
+        C:Complex
             free resolution of a module
         L:List
             multidegrees of summands to keep
     Outputs
-        :ChainComplex
+        :Complex
     Description
         Text
           Given an ideal I or module M and a list of multidegrees L, this function produces a chain complex by iteratively
@@ -473,7 +473,7 @@ doc ///
           regularity of this example. Thus, since we want to compute a virtual resolution we apply virtualOfPair to the element
           $(3,1)$ since $(3,1)=(2,0)+(1,1)$ and $(1,1)$ is the dimension vector for $\PP^1\times\PP^1$.
         Example
-          minres = res J
+          minres = freeResolution J
           vres = virtualOfPair(J, {{3,1}}) --(3,1) = (2,0) + (1,1)
         Text
           Notice that the virtual resolution of the pair $(S^1/J, (2,0))$ is shorter and thinner than the graded minimal free

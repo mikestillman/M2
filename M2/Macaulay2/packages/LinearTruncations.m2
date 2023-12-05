@@ -152,8 +152,8 @@ findMins List := L -> (
 --using version in TateOnProducts instead
 coarseMultigradedRegularity' = method()
 coarseMultigradedRegularity' Module := M ->
-    coarseMultigradedRegularity' res prune M
-coarseMultigradedRegularity' ChainComplex := F -> (
+    coarseMultigradedRegularity' freeResolution prune M
+coarseMultigradedRegularity' Complex := F -> (
     t := degreeLength ring F;
     if t<=2 then
     partialRegularities F
@@ -167,8 +167,8 @@ coarseMultigradedRegularity' ChainComplex := F -> (
 
 partialRegularities = method()
 partialRegularities Module := M ->
-    partialRegularities res prune M
-partialRegularities ChainComplex := F-> (
+    partialRegularities freeResolution prune M
+partialRegularities Complex := F-> (
     t := degreeLength ring F;
     range := toList(min F..max F-1);
     apply(t, i -> max flatten apply(range, j -> (
@@ -179,7 +179,7 @@ partialRegularities ChainComplex := F-> (
 -*
 --version that allows generation in multiple multidegrees
 isLinearComplex = method()
-isLinearComplex ChainComplex := F -> (
+isLinearComplex Complex := F -> (
     if F == 0 then return true;
     t := degreeLength ring F;
     range := toList(min F..max F-1);
@@ -191,7 +191,7 @@ isLinearComplex ChainComplex := F -> (
 
 isLinearComplex = method()
 --requires generators in single degree
-isLinearComplex ChainComplex := F -> (
+isLinearComplex Complex := F -> (
     if F == 0 then return true;
     t := degreeLength ring F;
     range := toList(min F..max F-1);
@@ -206,7 +206,7 @@ isLinearComplex ChainComplex := F -> (
 linearTruncations = method(Options =>{Verbose =>false})
 linearTruncations Module := o -> M -> (
     t := degreeLength M;
-    F := res prune M;
+    F := freeResolution prune M;
     r := coarseMultigradedRegularity F;
     d := regularity F;
     L0 := diagonalMultidegrees(d,t);
@@ -215,14 +215,14 @@ linearTruncations Module := o -> M -> (
     candidates = toList candidates;
     if o.Verbose == true then <<"candidates are"<< candidates<<endl;
     L := select(candidates, ell ->
-	isLinearComplex res truncate(ell,M)
+	isLinearComplex freeResolution truncate(ell,M)
 	);
     if o.Verbose == true then << "the candidates with linear truncations are" << L<<endl;
     findMins L
     )
 linearTruncations(Module,List) := o -> (M, candidates) -> (
     L := select(candidates, c->(
-	    isLinearComplex res prune truncate(c, M)
+	    isLinearComplex freeResolution prune truncate(c, M)
 	    ));
     findMins L
     )
@@ -293,7 +293,7 @@ isLinearTruncation = method()
 isLinearTruncation(List,Module) := (d,M) -> (
     N := truncate(d,M);
     if N==0 then return true;
-    degree N_0 == d and isLinearComplex res prune N
+    degree N_0 == d and isLinearComplex freeResolution prune N
     )
 
 isQuasiLinear = method(Options => {IrrelevantIdeal => null})
@@ -327,19 +327,19 @@ isQuasiLinear BettiTally := opts -> T -> (
 	    any(allowed_hdeg, em -> all(em + d - ell_1, j -> j >=0))
 	    ))
     )
-isQuasiLinear ChainComplex := opts -> F -> isQuasiLinear(betti F, opts)
+isQuasiLinear Complex := opts -> F -> isQuasiLinear(betti F, opts)
 
 -------------------------
 --bounds on linear truncations region
 
 supportOfTor = method()
-supportOfTor ChainComplex := F -> (
+supportOfTor Complex := F -> (
     for i from min F to max F list (
 	degs := unique degrees F_i;
 	if degs == {} then continue else degs
 	)
     )
-supportOfTor Module := M -> supportOfTor res prune M
+supportOfTor Module := M -> supportOfTor freeResolution prune M
 
 compMin = method()
 compMin List := L -> (
@@ -410,7 +410,7 @@ regularityBound Module := M -> bound(M, Nonlinear => true)
 graphTor = method()
 --supportOfTor plus which maps are nonzero
 graphTor Module := M -> (
-    F := res prune M;
+    F := freeResolution prune M;
     degs := apply(1+length F, i -> degrees F_i);
     maps := apply(length F, i -> (
 	    apply(entries F.dd_(i+1), ell -> (
@@ -505,7 +505,7 @@ M = {
     {{{0,0}},{{-1,0},{0,-1}},{{-2,0},{-1,-1},{0,-2}},{{0,-4}},{}}
     };
 --twists appearing in chain complexes
-C = apply(M, L -> chainComplex(apply(#L - 1, i -> map(S^(L_i),S^(L_(i+1)),0))));
+C = apply(M, L -> complex(apply(#L - 1, i -> map(S^(L_i),S^(L_(i+1)),0))));
 A = {
     false,
     true,
@@ -577,7 +577,7 @@ Description
     L = linearTruncations({{0,0}, r}, M)
     --bounds={{5,2}}
     --linearTruncations={{2,3},{3,2}}
-    apply(L, i -> isLinearComplex res truncate(i,M))
+    apply(L, i -> isLinearComplex freeResolution truncate(i,M))
   Text
     If $M_{\geq d}$ has a linear truncation then $M_{\geq d'}$ has a linear truncation for all $d'\geq d$, so the function
     @TO linearTruncations@ gives the minimal such multidegrees in a given range, using the function @TO findRegion@.  The functions
@@ -643,7 +643,7 @@ doc ///
 Key
    partialRegularities
   (partialRegularities,Module)
-  (partialRegularities,ChainComplex)
+  (partialRegularities,Complex)
 Headline
   calculates Castelnuovo-Mumford regularity in each component of a multigrading
 Usage
@@ -651,7 +651,7 @@ Usage
 Inputs
   M: Module
     a multigraded module
-  F: ChainComplex
+  F: Complex
     the minimal free resolution of a module
 Outputs
   : List
@@ -679,13 +679,13 @@ SeeAlso
 doc ///
 Key
    isLinearComplex
-  (isLinearComplex,ChainComplex)
+  (isLinearComplex,Complex)
 Headline
   tests whether a complex of graded modules is linear
 Usage
   isLinearComplex F
 Inputs
-  F: ChainComplex
+  F: Complex
 Outputs
   : Boolean
     true if @TT "F"@ is a linear complex, false if it is not
@@ -698,10 +698,10 @@ Description
     S = ZZ/101[x_1..x_4]
     I = ideal(x_1*x_2, x_1*x_3,x_1*x_4, x_2*x_3, x_3*x_4)
     M = S^1/I
-    F = res M
+    F = freeResolution M
     betti F
     isLinearComplex F
-    F' = res truncate(2,M)
+    F' = freeResolution truncate(2,M)
     betti F'
     isLinearComplex F'
 Caveat
@@ -961,7 +961,7 @@ Description
     I = ideal(x_0*x_1*y_0*z_0^2, x_1^2*y_0^2*y_1^2*z_0^2, x_0^3*y_0*z_1, x_0^2*x_1*y_1*z_0*z_1, x_0*x_1^2*y_1^2*z_0^3, x_1^3*y_0^2*y_1*z_1^2)
     M = S^1/I
     L = linearTruncationsBound M
-    apply(L, d -> isLinearComplex res prune truncate(d,M))
+    apply(L, d -> isLinearComplex freeResolution prune truncate(d,M))
   Text
     The output is a list of the minimal multidegrees $d$ such that the sum of the positive
     coordinates of $b-d$ is at most $i$ for all degrees $b$ appearing in the @TT "i"@-th step of
@@ -1019,7 +1019,7 @@ Key
    IrrelevantIdeal
   (isQuasiLinear,List,Module)
   (isQuasiLinear,BettiTally)
-  (isQuasiLinear,ChainComplex)
+  (isQuasiLinear,Complex)
   [isQuasiLinear,IrrelevantIdeal]
 Headline
   checks whether degrees in the resolution of a truncation are at most those of the irrelevant ideal
@@ -1048,11 +1048,11 @@ Description
     I = ideal(x_0*x_1*y_0*z_0^2, x_1^2*y_0^2*y_1^2*z_0^2, x_0^3*y_0*z_1, x_0^2*x_1*y_1*z_0*z_1, x_0*x_1^2*y_1^2*z_0^3, x_1^3*y_0^2*y_1*z_1^2)
     M = S^1/I
     d = {4,3,2}
-    isLinearComplex res prune truncate({4,3,2},M)
+    isLinearComplex freeResolution prune truncate({4,3,2},M)
     isQuasiLinear(d,M)
   Text
     The condition comes from Theorem 2.9 in Berkesch, Erman, and Smith's paper "Virtual Resolutions for a Product of Projective Spaces."
-    The @TT "ChainComplex"@ and @TT "BettiTally"@ usages take the resolution of the truncation (or some other virtual resolution) directly.
+    The @TT "Complex"@ and @TT "BettiTally"@ usages take the resolution of the truncation (or some other virtual resolution) directly.
 Caveat
   If the resolution of the truncation is longer than the resolution of $S/B$ then @TT "isQuasiLinear"@ will return false.
 SeeAlso
@@ -1064,7 +1064,7 @@ doc ///
 Key
    supportOfTor
   (supportOfTor,Module)
-  (supportOfTor,ChainComplex)
+  (supportOfTor,Complex)
 Headline
   computes multidegrees in the support of Tor_i(M,k), where k is the residue field
 Usage
@@ -1072,7 +1072,7 @@ Usage
 Inputs
   M: Module
     a multigraded module
-  F: ChainComplex
+  F: Complex
     the minimal resolution of a module
 Outputs
   L: List
@@ -1085,7 +1085,7 @@ Description
     S = multigradedPolynomialRing {1,2}
     B = irrelevantIdeal S
     M = S^1/B
-    F = res prune M
+    F = freeResolution prune M
     multigraded betti F
     supportOfTor M
     netList supportOfTor M

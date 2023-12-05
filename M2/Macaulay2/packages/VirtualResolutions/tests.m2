@@ -92,7 +92,7 @@ TEST ///
     S = ZZ/101[x_0,x_1,x_2,x_3,x_4, Degrees=>{2:{1,0},3:{0,1}}];
     irr = intersect(ideal(x_0,x_1),ideal(x_2,x_3,x_4));
     I = ideal(random({1,2},S),random({3,1},S),random({2,2},S));
-    r = res I;
+    r = freeResolution I;
     elapsedTime assert(isVirtual(irr,r) == true) -- 0.34
 ///
 
@@ -244,7 +244,7 @@ TEST /// -- example 5.8 of BES
       x_(1,1)^6 - x_(1,0) * x_(1,1)^2 * x_(1,2)^3 + 2 * x_(1,1)^5 * x_(1,3) + x_(1,0)^3
       * x_(1,2)^2 * x_(1,3) - x_(1,0) * x_(1,1) * x_(1,2)^3 * x_(1,3) + x_(1,1)^4 * x_(1,3)^2)
   M = truncate({1, 3}, comodule I)
-  C = res M
+  C = freeResolution M
   assert isQuasiLinear({1, 3}, M)
   assert(ann HH_0 C == I)
 
@@ -291,7 +291,7 @@ debugLevel=1
   -- testing the winnowing map and isIsomorphismOfSheaves
   -- in two spots, {2,1} and {3,1}, we get a virtual resolution, but the resolution of
   -- the truncation at those degrees, which are not in regularity, is not quasi-linear
-  V = virtualOfPair(res M, {{2,1} + {1,2}})
+  V = virtualOfPair(freeResolution M, {{2,1} + {1,2}})
   phi = V.cache.winnowingMap
   -- TODO: test this more
   assert isIsomorphismOfSheaves(B, phi, Strategy => "Support")

@@ -628,10 +628,11 @@ beilinsonWindow Complex := (C)-> (
     maps := hashTable for i from minC + 1 to maxC list (
         rowPositions := windows_(i-minC-1);
         colPositions := windows_(i-minC);
-        if #rowPositions === 0 or #colPositions === 0 then continue
+        if #rowPositions === 0 then continue
         else
             i => submatrix(C.dd_i, rowPositions, colPositions)
         );
+    
     complex maps
     )
 
@@ -963,26 +964,26 @@ strand(Complex,List,List) := (T,c,I) -> (
 -- formal Complex manipulations            --
 --------------------------------------------------
 
-chainComplexData = C->(
-    minC := min C;
-    maxC := max C;
-    C':=C[minC];
-    {minC, maxC, apply(toList(1..maxC-minC), i-> (C').dd_i)}
-)
+-- chainComplexData = C->(
+--     minC := min C;
+--     maxC := max C;
+--     C':=C[minC];
+--     {minC, maxC, apply(toList(1..maxC-minC), i-> (C').dd_i)}
+-- )
 
-chainComplexFromData = method()
-chainComplexFromData List := L ->(
-    --format of L is desired min, desired max, list of
-    --shifted maps
-    C := complex L_2;
-    assert( min C == 0);
-    C[-L_0])
+-- chainComplexFromData = method()
+-- chainComplexFromData List := L ->(
+--     --format of L is desired min, desired max, list of
+--     --shifted maps
+--     C := complex L_2;
+--     assert( min C == 0);
+--     C[-L_0])
 
-chainComplexFromData(ZZ, List) := (minC,L) ->(
-    --minC will become the min of the output complex
-    C := complex L;
-    assert( min C ==0);
-    C[-minC])
+-- chainComplexFromData(ZZ, List) := (minC,L) ->(
+--     --minC will become the min of the output complex
+--     C := complex L;
+--     assert( min C ==0);
+--     C[-minC])
 
 trivialHomologicalTruncation=method()
 trivialHomologicalTruncation(Complex,ZZ,ZZ) := (C,d,e) -> (
@@ -1430,11 +1431,15 @@ pushAboveWindow Complex := Complex => C -> (
     --and makes it back into a chain complex.
     --That is:  Takes a chain complex and adds all the syzygies of maps in the complex that
     --are outside the Beilinson window.
-    C':=appendZeroMap appendZeroMap prependZeroMap C;
-    L := chainComplexData C';
-    M := pushAboveWindow L_2;
-    chainComplexFromData(min C', M)
-    )
+    (minC, maxC) := concentration C;
+    L2 := for i from minC to maxC+2 list C.dd_i;
+    M := pushAboveWindow L2;
+    complex(M, Base => minC-1)
+    -- C':=appendZeroMap appendZeroMap prependZeroMap C;
+    -- L := chainComplexData C';
+    -- M := pushAboveWindow L_2;
+    -- chainComplexFromData(min C', M)
+    );
 
 TEST ///
 debug TateOnProducts
@@ -1954,7 +1959,8 @@ beilinson Matrix := Matrix => opts -> o -> (
 
 beilinson Complex := opts -> (BT) -> (
     -- BT should be a complex over E = exterior algebra
-    data := chainComplexData BT;
+    (minBT, maxBT) := concentration BT;
+    -- data := chainComplexData BT;
     if opts.BundleType === MapsBetweenFreeBundles then (
 	-- Do we also need a sign convention for them?
 	tD := tateData ring BT;
@@ -1964,12 +1970,13 @@ beilinson Complex := opts -> (BT) -> (
 	--Csrc:=quotientPresentationComplex(BT);
 	Ctar:=beilinson(BT, BundleType=>FreeBundle);
 	
-	mapList:=data#2/(m->(beilinson(m,opts)));
+        mapList := for i from minBT+1 to maxBT list beilinson(BT.dd_i, opts);
+	-- mapList:=data#2/(m->(beilinson(m,opts)));
 	tempList:={};
 	apply(mapList,i->(tempList=tempList|{i_1}));
 	tempList=tempList|{(mapList_(#mapList-1))_0};
 	
-	f:= m->tempList_(m-data#0);
+	f:= m->tempList_(m-minBT);
 	
 	map(Ctar,Csrc,f)
 	-- Sometimes Ctar, Csrc may have different lengths (at boundary multidegrees).
@@ -1977,8 +1984,14 @@ beilinson Complex := opts -> (BT) -> (
 	-- and the default map is 0 unless we assign.
 	)
     else (
-    removeZeroTrailingTerms chainComplexFromData{data#0, data#1,data#2/(m -> (beilinson(m, opts)))}
-    )
+        complex hashTable for i from minBT+1 to maxBT list (
+            m := beilinson(BT.dd_i, opts);
+            if source m == 0 then continue 
+            else i => m
+            )
+        -- removeZeroTrailingTerms 
+        --   chainComplexFromData{data#0, data#1,data#2/(m -> (beilinson(m, opts)))}
+      )
     )
 
 -- quotientPresentationComplex = method()
@@ -2066,23 +2079,36 @@ contractionFunctor Matrix := Matrix => m -> (
 
 contractionFunctor Complex := (C) -> (
     -- C should be a complex over E = exterior algebra
-    data := chainComplexData contractionWindow C;
-    removeZeroTrailingTerms chainComplexFromData{data#0, data#1,data#2/(m -> contractionFunctor m)}
+    C' := contractionWindow C;
+    (minC', maxC') := concentration C';
+    complex hashTable for i from minC' + 1 to maxC' list (
+        m := contractionFunctor C'.dd_i;
+        if source m == 0 then continue
+        else i => m
+        )
+    -- data := chainComplexData contractionWindow C;
+    -- removeZeroTrailingTerms chainComplexFromData{data#0, data#1,data#2/(m -> contractionFunctor m)}
     )
 
 contractionWindow=method()
 contractionWindow Complex := (C)-> (
     tD := tateData ring C;
     (S,E) := tD.Rings;
-    (minC, maxC, mapsC) := toSequence chainComplexData C;
+    (minC, maxC) := concentration C;
+    -- (minC, maxC, mapsC) := toSequence chainComplexData C;
     windows := for i from minC to maxC list (
         degs := degrees C_i;
         positions(degs, a -> inContractionWindow(a,E))
         );
-    maps := for i from minC + 1 to maxC list (
-        submatrix(C.dd_i, windows_(i-minC-1), windows_(i-minC))
-        );
-    removeZeroTrailingTerms chainComplexFromData{minC, maxC, maps}
+    complex hashTable for i from minC + 1 to maxC list (
+        m := submatrix(C.dd_i, windows_(i-minC-1), windows_(i-minC));
+        if source m == 0 then continue
+        else i => m
+        )
+    -- maps := for i from minC + 1 to maxC list (
+    --     submatrix(C.dd_i, windows_(i-minC-1), windows_(i-minC))
+    --     );
+    -- removeZeroTrailingTerms chainComplexFromData{minC, maxC, maps}
     )
 
 contractionSequence = method()
@@ -2777,8 +2803,9 @@ inverseQIsoFromTate(Complex) :=  (W)->(
     psi := map(B'', B, id_B);
     
     -- computing pseudoinverse
-    mapsB := for i from (min B)+1 to max B list sub(B.dd_i,kk); -- reduction to the vector space maps
-    tempB := chainComplexFromData{min B, max B, mapsB};
+    --mapsB := for i from (min B)+1 to max B list sub(B.dd_i,kk); -- reduction to the vector space maps
+    --tempB := chainComplexFromData{min B, max B, mapsB};
+    tempB := complex hashTable for i from min B + 1 to max B list i => sub(B.dd_i, kk);    
     Binv:= (pseudoInverse tempB)**R; -- takes too much time in several cases
 --    assert(arePseudoInverses(tempB, Binv));
 
@@ -6806,16 +6833,6 @@ C1=(C**E^{{ +1}})[0]
 W=beilinsonWindow C1
 scan(min W+1 ..max W,k->assert(W.dd_k==C1.dd_k))
 ///
-
-TEST ///
-debug needsPackage "TateOnProducts"
-S=ZZ[x,y]/ideal(x*y)
-C=(complex{matrix{{x}},matrix{{y^2}},matrix{{x^2}}})[3]
-L=chainComplexData C
-C'=chainComplexFromData L
-assert(C'== C)
-///
-
 
 ///
 -- Frank: I removed this test many because I do not understand it

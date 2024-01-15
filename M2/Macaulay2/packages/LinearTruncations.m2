@@ -193,6 +193,7 @@ isLinearComplex = method()
 --requires generators in single degree
 isLinearComplex Complex := F -> (
     if F == 0 then return true;
+    if min F === max F then return true;
     t := degreeLength ring F;
     range := toList(min F..max F-1);
     if #(unique degrees F_(range_0)) != 1 then return false;

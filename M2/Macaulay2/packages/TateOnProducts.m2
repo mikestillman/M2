@@ -1073,12 +1073,17 @@ nonzeroMin C1, min C1
 
 removeZeroTrailingTerms = method()
 removeZeroTrailingTerms(Complex) := W -> (
-    E := ring W;
+--    E := ring W;
     mi := nonzeroMin W;
     ma := nonzeroMax W;
-    W' := W[mi];
-    if mi==ma then (return (complex({map(E^0,W'_0,0),map(W'_0,E^0,0)}))[-mi+1]) else
-    (complex apply(toList(1..ma-mi),i->W'.dd_i))[-mi]
+--    W' := W[mi];
+    if mi==ma then (
+        complex(W_mi, Base => mi)
+--        return (complex({map(E^0,W'_0,0),map(W'_0,E^0,0)}))[-mi+1]) 
+        )
+    else complex hashTable for i from mi+1 to ma list (
+        i => W.dd_i)
+--        (complex apply(toList(1..ma-mi),i->W'.dd_i))[-mi]
     )
 
 ///
@@ -1984,13 +1989,15 @@ beilinson Complex := opts -> (BT) -> (
 	-- and the default map is 0 unless we assign.
 	)
     else (
-        complex hashTable for i from minBT+1 to maxBT list (
+        if minBT === maxBT then 
+            return complex(target beilinson(BT.dd_(minBT+1), opts), 
+                           Base => minBT);
+        C := complex hashTable for i from minBT+1 to maxBT list (
             m := beilinson(BT.dd_i, opts);
             if source m == 0 then continue 
             else i => m
-            )
-        -- removeZeroTrailingTerms 
-        --   chainComplexFromData{data#0, data#1,data#2/(m -> (beilinson(m, opts)))}
+            );
+        removeZeroTrailingTerms C
       )
     )
 
@@ -2813,8 +2820,13 @@ inverseQIsoFromTate(Complex) :=  (W)->(
 --    mapFromB:=map(B''[1],B,i->splittingMapsFromB_(i-min B));
     
     splittingMapsFromB':= for i from min B to max B list psi_(i+1)*Binv.dd_(-i)*phi_i;
-    qIs:= map(B''[1],B',i->map(B''_(i-1), B'_i, splittingMapsFromB'_(i-min B')));
+--    qIs:= map(B''[1],B',i->map(B''_(i-1), B'_i, splittingMapsFromB'_(i-min B)));
     
+    (minB', maxB') := concentration B';
+    qIs:= map(B''[1],B',i->(
+            if i === minB' then map(B''_(i+1), B'_i, 0)
+            else map(B''_(i+1), B'_i, splittingMapsFromB'_(i-minB'-1))
+            ));
 --    (B',B,B'',mapFromB,qIs)
     qIs
 )
@@ -3533,7 +3545,7 @@ Ltr = (truncate ({2,2},L))**S^{{2,2}};
 betti freeResolution Ltr
 
 Q=symExt(presentation Ltr, E);
-T=time (freeResolution (coker Q,LengthLimit=>12))**E^{{2,2}}[4];
+T=time ((freeResolution (coker Q,LengthLimit=>12))**E^{{2,2}})[4];
 cohomologyMatrix (T, -{5,5},{3,3})
 sT=strand(T,{0,0},{0}); -- strand associated to Rpi_{*}L, where pi:C \times C \to C is the 2nd projection
 cohomologyMatrix (sT, -{5,5},{3,3})
@@ -3641,7 +3653,7 @@ Ltr = (truncate ({2,2},L))**S^{{2,2}};
 betti freeResolution Ltr
 
 Q=symExt(presentation Ltr, E);
-T=(freeResolution (coker Q,LengthLimit=>14))**E^{{2,2}}[4];
+T=((freeResolution (coker Q,LengthLimit=>14))**E^{{2,2}})[4];
 cohomologyMatrix (T, -{5,5},{5,5})
 sT=strand(T,{0,0},{0}); -- strand associated to Rpi_{*}L, where pi:C \times C \to C is the 2nd projection
 cohomologyMatrix (sT, -{5,5},{5,5})
@@ -6128,7 +6140,7 @@ doc ///
       We read off (a finite subquotient of) the Tate resolution of Rf_{*}L as follows.
   Example
       Q=symExt(presentation Ltr, E);
-      T=(freeResolution (coker Q,LengthLimit=>12))**E^{{2,2}}[4];
+      T=((freeResolution (coker Q,LengthLimit=>12))**E^{{2,2}})[4];
       cohomologyMatrix (T, -{5,5},{3,3})
       sT=strand(T,{0,0},{0});
 
@@ -6141,8 +6153,7 @@ doc ///
           i =>  E'^(-apply(degrees sTFull_i, d -> d_{1}));
       Wmaps = hashTable for i from mi+1 to ma list
           i => map(Wmodules#(i-1), Wmodules#i, projOnE sTFull.dd_i);
-      W = if mi === ma then complex {Wmodules#mi}
-          else complex Wmaps;
+      W = if mi === ma then complex {Wmodules#mi} else complex Wmaps;
       betti W
   Text
       One can check that W has two strands (corresponding to R^0f_{*}L and R^1f_{*}L, respectively).

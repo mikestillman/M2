@@ -80,21 +80,46 @@ cokernelMap(Matrix, Matrix) := Matrix => (g, f) -> (
     -- if p : C --> coker f is the cokernel map of f
     -- result should be coker f --> A.
     -- return the map ghat : coker f --> A s.t. ghat * p = g,
+    if target f =!= source g then error "expected target of second map to be the same as source of the first map";
+    if g*f != 0 then error "expected the composite map to be zero";
     p := cokernelMap f;
     map(target g, target p, matrix g)
     )
 cokernelMap(ComplexMap, ComplexMap) := ComplexMap => (g, f) -> (
     -- f : B --> C
     -- g : C --> A
+    -- returns a lift of g, ghat : coker f --> A
     --  s.t. g*f = 0
+    if target f =!= source g then error "expected target of second map to be the same as source of the first map";
+    if g*f != 0 then error "expected the composite map to be zero";
     -- if p : C --> coker f is the cokernel map of f
     -- result should be coker f --> A.
     -- return the map ghat : coker f --> A s.t. ghat * p = g,
-    map(coker f, target g, i -> cokernelMap(g_i, f_i))
+    map(target g, coker f, i -> cokernelMap(g_i, f_i))
     )
     
-
-
+coimageMap = method()
+imageMap = method()
+coimageToImage = method()
+coimageToImageInverse = method() -- axiom of an Abelian category: coimageToImage f is an isomorphism
+coimageMap Matrix := (f) -> cokernelMap kernelMap f
+imageMap Matrix := (f) -> kernelMap cokernelMap f
+coimageMap ComplexMap := (f) -> cokernelMap kernelMap f
+imageMap ComplexMap := (f) -> kernelMap cokernelMap f
+coimageToImage ComplexMap :=
+coimageToImage Matrix := (f) -> (
+    eta := kernelMap f; -- eta: ker f --> B
+    p := cokernelMap f; -- p: C --> coker f
+    theta' := cokernelMap eta; -- theta' : B --> coker eta == coim f
+    theta := kernelMap(f, p); -- theta:  B --> ker p == im f
+    mu := cokernelMap(theta, eta); -- coim f --> im f
+    mu
+    )
+coimageToImageInverse ComplexMap :=
+coimageToImageInverse Matrix := (f) -> (
+    g := coimageToImage f;
+    g^(-1) -- todo: for complexes, does this work?
+    )
 
 TEST ///
   restart
@@ -127,18 +152,19 @@ TEST ///
   eta2 = kernelMap(kernelMap f, f)
   isWellDefined eta2
 
-  p2 = cokernelMap(f, cokernelMap f)
+  p2 = kernelMap(f, cokernelMap f)
   
-  f = randomComplexMap(complex M1, complex N1)
-  isWellDefined f
+  f = randomComplexMap(complex M1, complex N1, Cycle => true)
+  assert isWellDefined f
+  assert isComplexMorphism f
   g = f_0
-  source g === N1
-  target g === M1
+  assert(source g === N1)
+  assert(target g === M1)
   ker g
   eta = inducedMap(complex N1, ker f)
   eta0 = eta_0
-  source eta0 === ker g  
-  target eta0 === N1
+  assert(source eta0 === ker g)
+  assert(target eta0 === N1)
   
   -- kernelMap universal property
   R = ZZ/101[a..d]
@@ -148,28 +174,30 @@ TEST ///
   f = D.dd_-2
   g = D.dd_-1
   ghat = kernelMap(g, f)
-  assert(target ghat == ker f)
-  assert(source ghat == source g)
-  degrees source ghat, degrees source g
-  g == (kernelMap f) * ghat
+  -- check the kernel map result (for modules, not complexes) 
+  assert(target ghat === ker f)
+  assert(source ghat === source g)
+  assert(g === (kernelMap f) * ghat)
 
   D = Hom(C, R^1/I)
   f = D.dd_-2
   g = D.dd_-1
   ghat = kernelMap(g, f)
-  assert(target ghat == ker f)
-  assert(source ghat == source g)
-  g == (kernelMap f) * ghat
+  -- check the kernel map result (for modules, not complexes)
+  assert(target ghat === ker f)
+  assert(source ghat === source g)
+  assert(g == (kernelMap f) * ghat)
 
   D = Hom(C, R^1/I_0 ++ R^1/I_1)
   f = D.dd_-2
   g = D.dd_-1
   ghat = kernelMap(g, f)
-  assert(target ghat == ker f)
-  assert(source ghat == source g)
-  g == (kernelMap f) * ghat
-  
-  -- cokermap universal property
+  -- check the kernel map result (for modules, not complexes)
+  assert(target ghat === ker f)
+  assert(source ghat === source g)
+  assert(g === (kernelMap f) * ghat)
+
+  -- cokermap universal property (for modules)
   R = ZZ/101[a..d]
   I = monomialCurveIdeal(R, {1,3,4})
   C = freeResolution I
@@ -180,9 +208,10 @@ TEST ///
   cokernel f
   cokernelMap f
   ghat = cokernelMap(g, f)
-  assert(target ghat == target g)
-  assert(source ghat == cokernel f)
-  assert(g == ghat * cokernelMap f)
+  -- check the cokernel map result (for modules, not complexes)
+  assert(target ghat === target g)
+  assert(source ghat === cokernel f)
+  assert(g === ghat * cokernelMap f)
 
   D = Hom(C, R^1/I_0 ++ R^1/I_1)
   f = D.dd_-1
@@ -191,10 +220,91 @@ TEST ///
   cokernel f
   cokernelMap f
   ghat = cokernelMap(g, f)
-  assert(target ghat == target g)
-  assert(source ghat == cokernel f)
-  assert(g == ghat * cokernelMap f)
+  -- check the cokernel map result (for modules, not complexes)
+  assert(target ghat === target g)
+  assert(source ghat === cokernel f)
+  assert(g === ghat * cokernelMap f)
   ///
+
+TEST ///
+-*
+  restart
+  needs "./Modules.m2"
+*-
+  -- testing ker and coker universal maps, for complexes
+  S = ZZ/11[x,y,z];
+  K2 = koszulComplex matrix{{x,y}}
+  K3 = koszulComplex matrix{{x,y,z}}
+  psi = randomComplexMap(K3,K2, Cycle => true, InternalDegree => 1)
+  assert isComplexMorphism psi
+  ker psi == 0 -- this map is a monmorphism
+
+  eta = kernelMap psi -- 0 map
+  cokernelMap eta === id_(source psi) -- false... why?
+  assert(cokernelMap eta == id_(source psi)) -- true
+
+  p = cokernelMap psi
+  source imageMap psi == image psi -- but not ===, why?
+  target coimageMap psi == coimage psi -- but not ===, why?
+  image psi  
+  coimage psi
+  imageMap psi
+  coimageMap psi
+  coimageToImage psi * coimageToImageInverse psi === id_(coimage psi)
+  g = coimageToImage psi
+  h = coimageToImageInverse psi
+  g*h === id_(image g) -- this is false
+  g*h == id_(image g) -- this is true
+
+-- an example which is not injective nor surjective
+  S = ZZ/11[x,y,z];
+  K2 = koszulComplex matrix{{x,y}}
+  K3 = koszulComplex matrix{{x,y,z}}
+  f1 = randomComplexMap(K3,K2, Cycle => true, InternalDegree => 1)
+  f2 = randomComplexMap(K2, K3, Cycle => true, InternalDegree => 1)
+  g = f1*f2
+  isWellDefined g
+  source g === K3
+  target g === K3
+  degree g_0 == {2} -- degrees are inside the maps
+  assert isComplexMorphism g
+  eta = kernelMap g
+  assert(ker eta == 0)
+  p = cokernelMap g
+  assert(coker p == 0)
+  kernelMap p
+  mu = coimageToImage g
+  mu1 = coimageToImageInverse g
+  assert(mu * mu1 == 1)
+  assert(mu1 * mu == 1)
+  assert(mu^(-1) == mu1)
+///
+
+TEST ///
+-*
+  restart
+  needs "./Modules.m2"
+*-
+  -- coimage to image map for complexes
+  S = ZZ/11[x,y,z];
+  K2 = koszulComplex matrix{{x,y}}
+  K3 = koszulComplex matrix{{x,y,z}}
+  psi = randomComplexMap(K3,K2, Cycle => true, InternalDegree => 1)
+  assert isComplexMorphism psi
+  ker psi == 0 -- this map is a monmorphism
+  
+  source imageMap psi == image psi -- but not ===, why?
+  target coimageMap psi == coimage psi -- but not ===, why?
+  image psi  
+  coimage psi
+  imageMap psi
+  coimageMap psi
+  coimageToImage psi * coimageToImageInverse psi === id_(coimage psi)
+  g = coimageToImage psi
+  h = coimageToImageInverse psi
+  g*h === id_(image g) -- this is false, why?
+  assert(g*h == id_(image g)) -- this is true
+///
 
 TEST ///
   -- images and coimages
@@ -211,8 +321,36 @@ TEST ///
   kernelMap cokernelMap f
   image f
   coimage f
+  imf = imageMap f
+  target imf === target f
+  coimf = coimageMap f
+  image f 
+  target coimf
+  coimageToImage f
+  coimageToImageInverse f
+
+    eta = kernelMap f; -- eta: ker f --> B
+      source eta === ker f
+      target eta === source f
+    p = cokernelMap f; -- p: C --> coker f
+      source p === target f
+      target p === cokernel f
+      f * eta == 0
+      p * f == 0
+    theta' = cokernelMap eta; -- theta' : B --> coker eta
+      source theta' === source f
+      target theta' === coker eta
+    theta = kernelMap(f, p); -- theta:  target p --> target f
+      source theta === source f
+      target theta === kernel p
+    mu = cokernelMap(theta, eta)
+      source mu === coker eta
+      target mu === target theta
+      source mu == prune image f
+      target mu 
+
   -- want the induced maps (given f : B --> C)
-  -- Firat we have these two:
+  -- First we have these two:
   -- p : C --> coker f, p = cokernelMap f
   -- eta : ker f --> B, eta = kernelMap f
   -- kernelMap p : image f --> C
@@ -243,6 +381,9 @@ TEST ///
     source mu === target theta'
     target mu === kernel p
     isIsomorphism mu -- this is a natural isomorphism
+    -- BUT: in an arbitrary category with Ker, Coker's, this is not always an isom.
+    -- Hence it is an axiom: we must be given this isomorphism.
+    -- It is easy to compute/invert for modules, complexes.
 
   coimf = target theta'
   imf = target theta
@@ -275,4 +416,13 @@ TEST ///
   -- suppose that ker f = 0, coker f = 0.  We know that then f is an isomorphism.
   -- Find the (unique) inverse map g : C --> B.
   -- Use kernelMap, cokernelMap functions to find g.
+///
+
+TEST ///
+  -- Exercise:
+  --  Write the following function(s):
+  --  Given a R-map or R-complex map, f : B --> C
+  -- (a) implement the imageMap universal property.
+  -- (b) implement the coimageMap universal property.
+  -- (c) get the isomorphism from coimage f --> image f (and vice versa).
 ///

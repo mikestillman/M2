@@ -25,6 +25,7 @@ injectModule Matrix := ComplexMap => f -> (
     map(D, C, i -> if i === 0 then f else map(D_i, C_i, 0))
     )
 
+-- this routine should use modules directly, not complexes
 randomMatrix = method()
 randomMatrix(Module, Module) := Matrix => (N, M) -> (
     g := randomComplexMap(complex N, complex M);
@@ -32,14 +33,28 @@ randomMatrix(Module, Module) := Matrix => (N, M) -> (
     )
 
 kernelMap = method()
+-- this routine should use modules directly, not complexes
+-- kernelMap Matrix := Matrix => (f) -> (
+--     C := injectModule source f;
+--     g := injectModule f;
+--     kerg := ker g;
+--     eta := inducedMap(C, kerg);
+--     eta_0
+--     )
 kernelMap Matrix := Matrix => (f) -> (
-    C := injectModule source f;
-    g := injectModule f;
-    kerg := ker g;
-    eta := inducedMap(C, kerg);
-    eta_0
+    B := source f;
+    K := ker f;
+    map(B, K, (generators K) // (generators B))
     )
-kernelMap ComplexMap := ComplexMap => (f) -> inducedMap(source f, ker f)
+--kernelMap ComplexMap := ComplexMap => (f) -> inducedMap(source f, ker f)
+kernelMap ComplexMap := ComplexMap => (f) -> (
+    B := source f;
+    K := ker f;
+    (lo, hi) := concentration K;
+    maps := hashTable for i from lo to hi list i => 
+        map(B_i, K_i, (generators K_i) // (generators B_i));
+    map(B, K, maps)
+    )
 
 kernelMap(Matrix, Matrix) := Matrix => (g, f) -> (
     -- f : B --> C
@@ -64,14 +79,28 @@ kernelMap(ComplexMap, ComplexMap) := ComplexMap => (g, f) -> (
     )
 
 cokernelMap = method()
+-- cokernelMap Matrix := Matrix => (f) -> (
+-- -- this routine should use modules directly, not complexes
+--     D := injectModule target f;
+--     g := injectModule f;
+--     cokerg := cokernel g;
+--     p := inducedMap(cokerg, D);
+--     p_0
+--     )
 cokernelMap Matrix := Matrix => (f) -> (
-    D := injectModule target f;
-    g := injectModule f;
-    cokerg := cokernel g;
-    p := inducedMap(cokerg, D);
-    p_0
+    C := target f;
+    map(coker f, C, id_C)
     )
-cokernelMap ComplexMap := ComplexMap => (f) -> inducedMap(cokernel f, target f)
+
+--cokernelMap ComplexMap := ComplexMap => (f) -> (inducedMap(cokernel f, target f)
+cokernelMap ComplexMap := ComplexMap => (f) -> (
+    C := target f;
+    Q := coker f;
+    (lo, hi) := concentration C;
+    maps := hashTable for i from lo to hi list i =>
+        map(Q_i, C_i, id_(C_i));
+    map(Q, C, maps)
+    )
 
 cokernelMap(Matrix, Matrix) := Matrix => (g, f) -> (
     -- f : B --> C
@@ -121,6 +150,82 @@ coimageToImageInverse Matrix := (f) -> (
     g^(-1) -- todo: for complexes, does this work?
     )
 
+kernel(ComplexMap, ComplexMap, ComplexMap, ComplexMap) := (a,b,c,d) -> (
+    -- TODO: what should this really do and return?
+    -- Given a : A --> B
+    --       b : A' --> B'
+    --       c : 
+    -- ker b --> ker a.
+    )
+
+cokernel(ComplexMap, ComplexMap, ComplexMap, ComplexMap) := (a,b,c,d) -> (
+    -- TODO.  What should this return?
+    -- ker b --> ker a.
+    )
+
+fiberProduct = method()
+fiberSum = method()
+
+fiberProduct(Matrix, Matrix) :=
+fiberProduct(ComplexMap, ComplexMap) := Sequence => (phi, phi') -> (
+    -- Given: phi : B --> C
+    -- Given: phi' : B' --> C
+    -- return: (B x_C B', p, p'), and stash the kernel map and map B ++ B' --> C
+    C := target phi;
+    if C =!= target phi' then error "expected maps to have the same target";
+    direct := map(C, source phi ++ source phi', {{phi, -phi'}});
+    gmap := kernelMap direct;
+    ans := source gmap;
+    ans.cache#fiberProduct = (gmap, direct); -- note that phi == direct_[0], phi' == -direct_[1]
+    (ans, gmap^[0], gmap^[1])
+    )
+
+fiberProduct(Complex, ComplexMap, ComplexMap) := Sequence => (E, alpha, alpha') -> (
+    -- if alpha, alpha' are maps A --> B, A --> B', and
+    -- E is the fiber product of (f,f') : B ++ B' --> C
+    -- and if phi*alpha = phi'*alpha', then this function returns the unique map
+    -- h:A --> E such that alpha = p*h, alpha' = p'*h.
+    if not E.cache#?fiberProduct then error "expected first argument to be a fiber product";
+    if source alpha != source alpha' then error "expected maps to have the same source";
+    (gmap, direct) := E.cache#fiberProduct;
+    phi := direct_[0];
+    phi' := -direct_[1];
+    if phi*alpha != phi'*alpha' then error "expected maps to commute";
+    h := map(source direct, source alpha, {{alpha}, {alpha'}});
+    kernelMap(h, direct)
+    ) 
+
+
+fiberSum(Matrix, Matrix) :=
+fiberSum(ComplexMap, ComplexMap) := Sequence => (psi, psi') -> (
+    -- Given: psi : A --> B
+    -- Given: psi' : A --> B'
+    -- return B ++_A B', maps of B in this, and B' to this.
+    A := source psi;
+    if A =!= source psi' then error "expected maps to have the same source";
+    direct := map(target psi ++ target psi', A,  {{psi}, {-psi'}});
+    gmap := cokernelMap direct;
+    ans := target gmap;
+    ans.cache#fiberSum = (gmap, direct);
+    (ans, gmap_[0], gmap_[1])
+    )
+
+-- WORKING ON THIS ONE!!
+fiberSum(Complex, ComplexMap, ComplexMap) := Sequence => (E, phi, phi') -> (
+    -- if phi, phi' are maps B --> C, B' --> C, and
+    -- E is the fiber sum of (psi,psi'), coker of A --> B ++ B'
+    -- and if phi*psi = phi'*psi', then this function returns the unique map
+    -- h: E --> C such that phi = h*i, phi' = h*i'.
+    if not E.cache#?fiberSum then error "expected first argument to be a fiber sum";
+    if target phi != target phi' then error "expected maps to have the same target";
+    (gmap, direct) := E.cache#fiberSum;
+    psi := direct^[0];
+    psi' := -direct^[1];
+    if phi*psi != phi'*psi' then error "expected maps to commute";
+    h := map(target phi, target direct, {{phi, phi'}});
+    cokernelMap(h, direct)
+    ) 
+    
 TEST ///
   restart
   needs "./Modules.m2"
@@ -150,10 +255,9 @@ TEST ///
   assert(f.cache.cokernel === coker f) -- make sure value is acrtually cached
 
   eta2 = kernelMap(kernelMap f, f)
-  isWellDefined eta2
+  assert isWellDefined eta2
+  assert(kernelMap f * eta2 == kernelMap f)
 
-  p2 = kernelMap(f, cokernelMap f)
-  
   f = randomComplexMap(complex M1, complex N1, Cycle => true)
   assert isWellDefined f
   assert isComplexMorphism f
@@ -391,6 +495,49 @@ TEST ///
   ///
 
 TEST ///
+-*
+  restart
+  needs "./Modules.m2"
+*-
+  -- testing fiber products
+  S = ZZ/11[x,y,z];
+  K2 = koszulComplex matrix{{x,y}}
+  K3 = koszulComplex matrix{{x,y,z}}
+  f1 = randomComplexMap(K3,K2, Cycle => true, InternalDegree => 1)
+  f2 = randomComplexMap(K3,K2, Cycle => true, InternalDegree => 1)
+  (D, g1, g2) = fiberProduct(f1, f2)
+  prune D
+  assert(source g1 == D) -- want === here !! and on next few lines too...!
+  assert(source g2 == D)
+  assert(target g1 == source f1)
+  assert(target g2 == source f2)
+  assert(f1*g1 === f2*g2)
+  h = fiberProduct(D, g1, g2)
+  -- XXX
+///
+
+TEST ///
+-*
+  restart
+  needs "./Modules.m2"
+*-
+  -- testing fiber sums
+  S = ZZ/11[x,y,z];
+  K2 = koszulComplex matrix{{x,y}}
+  K3 = koszulComplex matrix{{x,y,z}}
+  f1 = randomComplexMap(K3,K2, Cycle => true, InternalDegree => 1)
+  f2 = randomComplexMap(K3,K2, Cycle => true, InternalDegree => 1)
+  (D, g1, g2) = fiberSum(f1, f2)
+  prune D
+  assert(target g1 == D)  -- want === here !! and on next few lines too...!
+  assert(target g2 == D)
+  assert(source g1 == target f1)
+  assert(source g2 == target f2)
+  assert(g1*f1 === g2*f2)
+  fiberSum(D, g1, g2)
+///
+
+TEST ///
   -- Exercise:
   -- Given a R-linear map (of modules or complexes)
   -- f : B --> C,
@@ -401,28 +548,28 @@ TEST ///
 
 TEST ///
   -- Exercise:
-  -- Given a R-linear maps f : B --> C, f' : B' --> C.
-  --   write a function which implements the fiberProduct (one function which constructs it, 
-  --   one function which gives the 2 augmented maps, and one function which implements the
-  --   universal property.
-
-  -- Do the same for the fiber sum of R-linear maps f : A --> B, f; : A --> B':
-  --   write a function which implements the fiberSum (one function which constructs it, 
-  --   one function which gives the 2 augmented maps, and one function which implements the
-  --   universal property.
-
-
-  -- f : B --> C,
-  -- suppose that ker f = 0, coker f = 0.  We know that then f is an isomorphism.
-  -- Find the (unique) inverse map g : C --> B.
-  -- Use kernelMap, cokernelMap functions to find g.
+  --  Write the following function(s):
+  --  Given a R-map or R-complex map, f : B --> C
+  -- (a) implement the imageMap universal property. (Is this a thing?)
+  -- (b) implement the coimageMap universal property.
 ///
 
 TEST ///
-  -- Exercise:
-  --  Write the following function(s):
-  --  Given a R-map or R-complex map, f : B --> C
-  -- (a) implement the imageMap universal property.
-  -- (b) implement the coimageMap universal property.
-  -- (c) get the isomorphism from coimage f --> image f (and vice versa).
+-*
+  restart
+  needs "./Modules.m2"
+*-
+  -- exercise: given phi : B --> C,
+  -- show that Im(phi) --> C x_D C, where X = C ++_B C is an isomorphism
+  S = ZZ/11[x,y,z];
+  K2 = koszulComplex matrix{{x,y}}
+  K3 = koszulComplex matrix{{x,y,z}}
+  f1 = randomComplexMap(K3,K2, Cycle => true, InternalDegree => 1)
+  f2 = randomComplexMap(K2,K3, Cycle => true, InternalDegree => 1)
+  phi = f1*f2
+  prune image phi
+  (D, g1, g2) = fiberSum(phi, phi)
+  (E, h1, h2) = fiberProduct(g1, g2)
+  
+  -- Next, we need to exhibit a natural map (which is an isomorphism) from image phi to E.
 ///

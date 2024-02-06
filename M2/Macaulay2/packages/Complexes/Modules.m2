@@ -235,6 +235,8 @@ TEST ///
   M = module I
   N = module J
   f = inducedMap(M, N)
+  source f === N
+  target f === M
   M1 = M ++ comodule I
   N1 = N ++ comodule J
   f = randomMatrix(M1, N1)

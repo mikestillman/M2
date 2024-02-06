@@ -6175,13 +6175,13 @@ doc ///
       on the direct image under \pi, in other words, provide {O_C}-module structures. As results,
       these actions make (the sheafification of) M0 and M1 into {O_C}-modules which are identical to 
       R^0f_{*}L and R^1f_{*}L. 
-  Example
+  Pre
       J=ideal (S'_0^4+S'_1^4+S'_2^4);
       retTable=actionOnDirectImage(J,W);
       keys retTable
   Text
       We see that 0, 1 appear as keys, in other words, both R^0f_{*}L and R^1f_{*}L survives.
-  Example
+  Pre
       prunedActionList = i->apply(dim S',j->prune HH^i retTable#i#j);
       apply(keys retTable, i->isAction(J,prunedActionList(i)))
 	        

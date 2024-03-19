@@ -284,7 +284,6 @@ M2_arrayint ARingGFGivaro::representationToM2Array(UTT representation,
   std::cerr << "representation" << representation << std::endl;
 #endif
   long exp = 0;
-  assert(representation != 0);
 
   while (representation != 0)
     {
@@ -549,7 +548,7 @@ void ARingGFGivaro::divide(ElementType &result,
   givaroField.div(result, a, b);
 }
 
-/// @jakob overflow can be occured due to multiplication. use exact mpz for
+/// @jakob overflow can occur due to multiplication. use exact mpz for
 /// multiply and modulo operation instead!
 void ARingGFGivaro::power(ElementType &result,
                           const ElementType a,
@@ -583,6 +582,9 @@ void ARingGFGivaro::power(ElementType &result,
       assert(tmp >= 0);  // tmp<0 should never occur
       if (tmp < 0) tmp += givaroField.cardinality() - 1;
       result = tmp;
+      mpz_clear(mpz_a);
+      mpz_clear(mpz_n);
+      mpz_clear(mpz_tmp);
     }
   else
     {
@@ -604,7 +606,7 @@ void ARingGFGivaro::power_mpz(ElementType &result,
   power(result, a, n1);
 }
 
-///@note dublicate code
+///@note duplicate code
 void ARingGFGivaro::swap(ElementType &a, ElementType &b) const
 {
   ElementType tmp = a;

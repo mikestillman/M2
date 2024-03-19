@@ -4,7 +4,7 @@
 export { 
     "DualSpace", "BasePoint", "dualSpace", "PolySpace", "polySpace", "Reduced", "Gens", "Space",
     "reduceSpace",
-    "addition", "intersection", "isContained" 
+    "addition", "isContained"
     }
 
 -------------------------------------------
@@ -29,11 +29,11 @@ DualSpace = new Type of MutableHashTable
 globalAssignment DualSpace
 dualSpace = method()
 dualSpace DualSpace := L -> new DualSpace from L
-dualSpace (PolySpace, Point) := (S,p)-> (
+dualSpace (PolySpace, AbstractPoint) := (S,p)-> (
     assert(numgens ring S.Gens == #coordinates p);
     new DualSpace from {Space=>S,BasePoint=>p}
     )
-dualSpace (Matrix, Point) := (M,p)-> dualSpace(polySpace M,p)
+dualSpace (Matrix, AbstractPoint) := (M,p)-> dualSpace(polySpace M,p)
 -- what other constructors would we have?
 
 gens PolySpace := o -> S -> S.Gens
@@ -69,8 +69,7 @@ isContained (PolySpace,PolySpace) := o -> (S,T) ->
 isContained (DualSpace,DualSpace) := o -> (L,K) ->
     areEqual(L.BasePoint,K.BasePoint,Tolerance=>o.Tolerance) and isContained(L.Space,K.Space,Tolerance=>o.Tolerance)
 
-intersection = method(TypicalValue => PolySpace, Options => {Tolerance=>1e-6})
-intersection (PolySpace,PolySpace) := o -> (S,T) -> (
+intersection (PolySpace,PolySpace) := PolySpace => {Tolerance=>1e-6} >> o -> (S,T) -> (
     (mons,coefs) := coefficients (gens S|gens T);
     Scoefs := submatrix(coefs,(0..dim S-1));
     Tcoefs := submatrix'(coefs,(0..dim T-1));

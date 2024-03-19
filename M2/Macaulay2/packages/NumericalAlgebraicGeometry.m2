@@ -3,8 +3,8 @@
 
 newPackage select((
      "NumericalAlgebraicGeometry",
-     Version => "1.14",
-     Date => "Aug 2019",
+     Version => "1.21",
+     Date => "Nov 2022",
      Headline => "numerical algebraic geometry",
      HomePage => "http://people.math.gatech.edu/~aleykin3/NAG4M2",
      AuxiliaryFiles => true,
@@ -17,7 +17,7 @@ newPackage select((
      PackageExports => {"NAGtypes",
 	 "NumericalLinearAlgebra",
 	 "SLPexpressions"},
-     PackageImports => {"PHCpack","Bertini","Truncations"},
+     PackageImports => {"PHCpack","Bertini"},
      -- DebuggingMode should be true while developing a package, 
      --   but false after it is done
      --DebuggingMode => true,
@@ -209,7 +209,7 @@ getDefault Symbol := (s)->DEFAULT#s
 -- Solutions are lists {s, a, b, c, ...} where s is list of coordinates (in CC)
 -- and a,b,c,... contain extra information, e.g, SolutionStatus=>Regular indicates the solution is regular.
 -- NEW FORMAT:
--- Solutions are of type Point (defined in NAGtypes).
+-- Solutions are of a type derived from AbstractPoint (defined in NAGtypes), e.g. Point.
  
 -- M2 tracker ----------------------------------------
 integratePoly = method(TypicalValue => RingElement)
@@ -258,10 +258,10 @@ multistepPredictor (QQ,List) := List => memoize((c,s) -> (
 
 multistepPredictorLooseEnd = method(TypicalValue => List)
 multistepPredictorLooseEnd (QQ,List) := List => memoize((c,s) -> (
--- coefficients for a multistep predictor with intederminate last step
+-- coefficients for a multistep predictor with indeterminate last step
 -- IN:  c = step adjustment coefficient (in QQ)
 --      s = list of step adjustments (from the initial stepsize h = t_1-t_0)
--- OUT: b = list of polinomials in QQ[a], where a=(last step size)/(next to last stepsize)   
+-- OUT: b = list of polynomials in QQ[a], where a=(last step size)/(next to last stepsize)   
      t := symbol t;
      n := #s + 2; -- t_n is the one for which prediction is being made
      a := symbol a;
@@ -429,7 +429,7 @@ makeHom4psInput (Ring, List) := (R, T) -> (
 --      T = polynomials of target system (in R)
 -- OUT: (name, perm), where
 --      name = input filename   
---      perm = hashtable of order of appearences of variables in the input
+--      perm = hashtable of order of appearances of variables in the input
   filename := temporaryFileName() | "input"; 
   s := "{\n";
   scan(T, p -> s = s | replace("ii", "I", toString p) | ";\n");
@@ -507,7 +507,7 @@ conditionNumber (List,List) := (F,x) -> (
      )
 
 isSolution = method(Options=>{Tolerance=>null})
-isSolution(Point,PolySystem) := o -> (P,F) -> (
+isSolution(AbstractPoint,PolySystem) := o -> (P,F) -> (
     o = fillInDefaultOptions o;
     -- P = newton(F,P); -- !!! change for non regular
     -- P.ErrorBoundEstimate < o.Tolerance
@@ -523,7 +523,7 @@ undocumented {
     Field, 
     GateParameterHomotopy, 
     GateHomotopy, trackHomotopy, (trackHomotopy,Thing,List), endGameCauchy, (endGameCauchy,GateHomotopy,Number,MutableMatrix), 
-    (endGameCauchy,GateHomotopy,Number,Point),
+    (endGameCauchy,GateHomotopy,Number,AbstractPoint),
     (evaluateH,GateHomotopy,Matrix,Number),
 (evaluateH,GateParameterHomotopy,Matrix,Matrix,Number),
 (evaluateHt,GateHomotopy,Matrix,Number),

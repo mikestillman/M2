@@ -10,39 +10,6 @@ document {
      }
 
 document {
-     Key => {describe,
-	  (describe, PolynomialRing),
-	  (describe, QuotientRing),
-	  (describe, FractionField),
-	  (describe, Thing),
-	  (describe, AffineVariety),
-	  (describe, CoherentSheaf),
-	  (describe, GaloisField),
-	  (describe, GeneralOrderedMonoid),
-	  (describe, Matrix),
-	  (describe, Module),
-	  (describe, ProjectiveVariety),
-	  (describe, RingMap)
-	  },
-     Headline => "real description",
-     TT "describe x", " -- returns ", ofClass Expression, " containing the 
-     real description of ", TT "x", ", bypassing the feature that causes
-     certain types of things to acquire, for brevity, the names of global variables to which
-     they are assigned.  For polynomial rings, it also displays the options used at creation.",
-     PARA{},
-     EXAMPLE lines ///
-	  R = ZZ/101[a,b,c_1,c_2];
-      	  R
-      	  describe R
-	  toString describe R
-	  toExternalString R
-	  QQ[x,d,WeylAlgebra=>{x=>d}]
-	  describe oo
-	  ///,
-     SeeAlso => {"toString", "toExternalString"}
-     }
-
-document {
      Key => symbol SPACE, 
      Headline => "blank operator; often used for function application, making polynomial rings",
      SeeAlso =>(symbol SPACE, Function, Thing)		    -- not really a method
@@ -57,11 +24,8 @@ document {
 undocumented {
      (symbol *, Number, RingElement),
      (symbol *, RingElement, Number),
-    (symbol*,  Expression, Product),
-    (symbol*,  Product, Expression),
     (symbol*,  Minus, Expression),
     (symbol*,  Product, Holder),
-    (symbol*,  ZeroExpression, Expression),
     (symbol*,  Minus, Minus),
     (symbol*,  ZZ, InfiniteNumber),
     (symbol*,  QQ, InfiniteNumber),
@@ -69,12 +33,7 @@ undocumented {
     (symbol*,  InfiniteNumber, ZZ),
     (symbol*,  InfiniteNumber, QQ),
     (symbol*,  InfiniteNumber, RR),
-    (symbol*,  Product, ZeroExpression),
     (symbol*,  ZZ, Ideal),
-    (symbol*,  Product, OneExpression),
-    (symbol*,  ZeroExpression, Holder),
-    (symbol*,  Holder, ZeroExpression),
-    (symbol*,  Holder, OneExpression),
     (symbol*,  ZZ, GradedModuleMap),
     (symbol*,  InfiniteNumber, InfiniteNumber),
     (symbol*,  Expression, Minus),
@@ -84,7 +43,6 @@ undocumented {
     (symbol*,  ZZ, MonomialIdeal),
     (symbol*,  String),
     (symbol*,  ZZ, ChainComplexMap),
-    (symbol*,  Expression, ZeroExpression),
     (symbol*,  Expression, OneExpression),
     (symbol*,  OneExpression, Expression),
     (symbol*,  Number, Vector)
@@ -102,7 +60,6 @@ document {
     (symbol *,Constant,Number),
     (symbol *,InexactNumber,Constant),
     (symbol *,Matrix,Number),
-    (symbol *,Matrix,ZZ),
     (symbol *,Number,Constant),
     (symbol *,Number,Matrix),
     (symbol *,QQ,CC),
@@ -121,6 +78,13 @@ document {
     (symbol *,CC,QQ),
     (symbol *,CC,RR),
     (symbol *,CC,ZZ),
+    (symbol *, QQ, RRi),
+    (symbol *, RR, RRi),
+    (symbol *, RRi, QQ),
+    (symbol *, RRi, RR),
+    (symbol *, RRi, RRi),
+    (symbol *, RRi, ZZ),
+    (symbol *, ZZ, RRi),
     (symbol*,  GradedModuleMap, GradedModuleMap),
     (symbol*,  RingElement, Matrix),
     (symbol*,  Ideal, CoherentSheaf),
@@ -145,6 +109,7 @@ document {
     (symbol*,  RingElement, RingElement),
     (symbol*,  Thing, List),
     (symbol*,  ZZ, ProjectiveHilbertPolynomial),
+    (symbol*,  ProjectiveHilbertPolynomial, ZZ),
     (symbol*,  RingElement, Vector)
 	  },
      Headline => "a binary operator, usually used for multiplication",
@@ -181,6 +146,13 @@ document {
 	  "N = I*M + a*R^2",
 	  "isHomogeneous N"
 	  },
+     HEADER3 "Intervals",
+     PARA { "If one of the factors is an ", TO "RRi", ", the output is an interval containing all products of pairs in the factors." },
+    EXAMPLE {
+    "2*interval(1,3)",
+    "interval(1,3)*interval(-1,2)",
+    "interval(-1,1)*interval(-1,1)"
+    },
      SeeAlso =>{ "times", "product"}
      }
 
@@ -199,12 +171,7 @@ document {
      	       integers ", TT "m", " and ", TT "n", " by logical 'and'."}
 	  },
      EXAMPLE "(2^15 + 2^13 + 2^42) & (2^15 + 2^23 + 2^42) == 2^15 + 2^42",
-     SeeAlso => {(symbol |,ZZ,ZZ),xor}
-     }
-
-document {
-     Key => symbol ^^,
-     Headline => "a binary operator"
+     SeeAlso => {(symbol |,ZZ,ZZ),(symbol ^^,ZZ,ZZ), (symbol ~, ZZ)}
      }
 
 undocumented {
@@ -216,6 +183,8 @@ document {
 	  (symbol +, ChainComplexMap, ChainComplexMap),
 	  (symbol +, Number, InfiniteNumber),
 	  (symbol +, ProjectiveHilbertPolynomial, ProjectiveHilbertPolynomial),
+	  (symbol +, ZZ, ProjectiveHilbertPolynomial),
+	  (symbol +, ProjectiveHilbertPolynomial, ZZ),
 	  (symbol +, MonomialIdeal, MonomialIdeal),
 	  (symbol +,CC),
 	  (symbol +,CC,CC),
@@ -243,7 +212,15 @@ document {
 	  (symbol +,ZZ,QQ),
 	  (symbol +,ZZ,RR),
 	  (symbol +,ZZ,ZZ),
-	  (symbol +, RingElement, GradedModuleMap),
+      (symbol +, QQ, RRi),
+      (symbol +, RR, RRi),
+      (symbol +, RRi, QQ),
+      (symbol +, RRi, RR),
+      (symbol +, RRi),
+      (symbol +, RRi, RRi),
+      (symbol +, RRi, ZZ),
+      (symbol +, ZZ, RRi),
+      (symbol +, RingElement, GradedModuleMap),
 	  (symbol +, Matrix, Number),
 	  (symbol +, ZZ, ChainComplexMap),
 	  (symbol +, ChainComplexMap, ZZ),
@@ -274,6 +251,13 @@ document {
      	  M = matrix{{1,2,3},{2,3,4},{3,4,6}}
 	  M+1, M+2
      ///,
+    HEADER3 "Intervals",
+    PARA { "If one of the addends is an ", TO "RRi", ", the output is an interval containing all sums of pairs in the addends." },
+    EXAMPLE {
+        "2+interval(1,3)",
+        "interval(1,3)+interval(-1,2)",
+        "interval(-1,1)+interval(-1,1)"
+    },
      SeeAlso =>{ "plus", "sum"}
      }
 
@@ -287,6 +271,8 @@ document {
 	  (symbol -, ChainComplexMap, ChainComplexMap),
 	  (symbol -, Minus),
 	  (symbol -, ProjectiveHilbertPolynomial, ProjectiveHilbertPolynomial),
+	  (symbol -, ProjectiveHilbertPolynomial, ZZ),
+	  (symbol -, ZZ, ProjectiveHilbertPolynomial),
 	  (symbol -, Number, InfiniteNumber),
 	  (symbol -, RingElement, GradedModuleMap),
 	  (symbol -, GradedModuleMap),
@@ -332,6 +318,14 @@ document {
 	  (symbol -,ZZ,QQ),
 	  (symbol -,ZZ,RR),
 	  (symbol -,ZZ,ZZ),
+      (symbol -, QQ, RRi),
+      (symbol -, RR, RRi),
+      (symbol -, RRi),
+      (symbol -, RRi, QQ),
+      (symbol -, RRi, RR),
+      (symbol -, RRi, RRi),
+      (symbol -, RRi, ZZ),
+      (symbol -, ZZ, RRi),
 	  (symbol -, Matrix, RingElement),
 	  (symbol -, Matrix),
 	  (symbol -, RingElement, Matrix),
@@ -351,6 +345,13 @@ document {
      	  M = matrix{{1,2,3},{2,3,4},{3,4,6}}
 	  M-1, M-2
      ///,
+     HEADER3 "Intervals",
+     PARA { "If one of the inputs is an ", TO "RRi", ", the output is an interval containing all differences of pairs in the inputs." },
+     EXAMPLE {
+          "2-interval(1,3)",
+          "interval(1,3)-interval(-1,2)",
+          "interval(-1,1)-interval(-1,1)"
+     },
      SeeAlso =>{ "difference", "minus"}
      }
 
@@ -384,8 +385,15 @@ document {
 	  (symbol /,ZZ,CC),
 	  (symbol /,ZZ,QQ),
 	  (symbol /,ZZ,RR),
-	  (symbol /,ZZ,ZZ)
-	  },
+	  (symbol /,ZZ,ZZ),
+      (symbol /, QQ, RRi),
+      (symbol /, RR, RRi),
+      (symbol /, RRi, QQ),
+      (symbol /, RRi, RR),
+      (symbol /, RRi, RRi),
+      (symbol /, RRi, ZZ),
+      (symbol /, ZZ, RRi)
+},
      Headline => "a binary operator, usually used for division",
      Usage => "x / y",
      "This operator is currently used in several ways in Macaulay2.",
@@ -399,6 +407,13 @@ document {
      2/3
      2./3
      ///,
+     HEADER3 "Intervals",
+     PARA { "If one of the inputs is an ", TO "RRi", ", the output is an interval containing all quotients of pairs in the inputs." },
+     EXAMPLE {
+         "2/interval(1,3)",
+         "interval(-1,2)/interval(1,3)",
+         "interval(1,2)/interval(1,2)"
+     },
      SeeAlso => { "//"}
      }
 
@@ -514,10 +529,7 @@ undocumented {
      }
 
 document {
-     Key => {symbol ^,
-	  (symbol ^,CC,ZZ),
-	  (symbol ^,InexactFieldFamily,ZZ)
-	  },
+     Key => {symbol ^},
      Headline => "a binary operator, usually used for powers",
      Usage => "x ^ y",
      PARA{},
@@ -545,6 +557,32 @@ document {
      TT "not x", " -- yields the negation of x, which must be true or false.",
      SeeAlso =>{ "and", "or" }
      }
+
+doc ///
+  Key
+    (symbol ~, ZZ)
+  Headline
+    logical not
+  Usage
+    n~
+  Inputs
+    n:ZZ
+  Outputs
+    :ZZ -- the bitwise complement of @TT "n"@
+  Description
+    Example
+      7~
+    Text
+      Note that @TT "~"@ has @TO2 {"precedence of operators",
+      "higher precedence"}@ than @TT "-"@, so enclose negative integers in
+      parentheses.
+    Example
+      (-12)~
+  SeeAlso
+    (symbol &, ZZ, ZZ)
+    (symbol |, ZZ, ZZ)
+    (symbol ^^, ZZ, ZZ)
+///
 
 document {
      Key => symbol |, 
@@ -585,7 +623,8 @@ document {
       	  ///x|"x"|x///,
 	  },
      "If one of the two arguments is an integer, it is converted to a string first.",
-     EXAMPLE ///"t = " | 333///
+     EXAMPLE ///"t = " | 333///,
+     SeeAlso => {horizontalJoin}
      }
 
 document {
@@ -598,7 +637,7 @@ document {
      	       integers ", TT "m", " and ", TT "n", " by logical 'or'."}
 	  },
      EXAMPLE "2^42 | 2^15 == 2^42 + 2^15",
-     SeeAlso => {(symbol &,ZZ,ZZ),xor}
+     SeeAlso => {(symbol &,ZZ,ZZ),(symbol ^^,ZZ,ZZ), (symbol ~, ZZ)}
      }
 
 document {
@@ -606,8 +645,8 @@ document {
 	  (symbol |, RingElement, Matrix),
 	  (symbol |, Matrix, RingElement),
 	  (symbol |, RingElement, RingElement),
-	  (symbol |, ZZ, Matrix),
-	  (symbol |, Matrix, ZZ)
+	  (symbol |, Number, Matrix),
+	  (symbol |, Matrix, Number)
 	  },
      Headline => "join matrices horizontally",
 	Usage => "f = g | h",
@@ -626,7 +665,7 @@ document {
       	  h = matrix {{m,n},{o,p}}
       	  f= g | h
 	  ///,
-     "If one of the arguments is a ring element or an integer, then it
+     "If one of the arguments is a ring element or a number, then it
      will be multiplied by a suitable identity matrix.",
 	EXAMPLE "f | (m-n)",
 	Caveat => {"It is assumed that the matrices ", TT "g", " and ", TT "h", " have the same ", TO Ring, "."},
@@ -659,8 +698,8 @@ document {
 	  (symbol ||, RingElement, Matrix),
 	  (symbol ||, Matrix, RingElement),
 	  (symbol ||, RingElement, RingElement),
-	  (symbol ||, Matrix, ZZ),
-	  (symbol ||, ZZ, Matrix)
+	  (symbol ||, Matrix, Number),
+	  (symbol ||, Number, Matrix)
 	  },
      Headline => "join matrices vertically",
 	Usage => "f = g || h",
@@ -679,7 +718,7 @@ document {
       	  h = matrix {{m,n},{o,p}}
       	  f= g || h
 	  ///,
-     "If one of the arguments is a ring element or an integer, then it
+     "If one of the arguments is a ring element or a number, then it
      will be multiplied by a suitable identity matrix.",
 	EXAMPLE "f || 33",
 	Caveat => {"It is assumed that the matrices ", TT "g", " and ", TT "h", " have the same ", TO Ring, "."},
@@ -761,11 +800,15 @@ document {
 document {
      Key => { symbol ==,
 	  (symbol==, Matrix, Matrix), (symbol==, ProjectiveHilbertPolynomial, ProjectiveHilbertPolynomial),
+	  (symbol==, ZZ, ProjectiveHilbertPolynomial), (symbol==, ProjectiveHilbertPolynomial, ZZ),
 	  (symbol==, ChainComplex, ChainComplex), (symbol==, RingElement, RingElement), (symbol==, GradedModuleMap, GradedModuleMap),
 	  (symbol==, Ideal, Ideal), (symbol==, MutableMatrix, MutableMatrix), (symbol ==,Boolean,Boolean),
 	  (symbol ==,CC,CC), (symbol ==,CC,QQ), (symbol ==,CC,RR), (symbol ==,CC,ZZ), (symbol ==,Matrix,Number),
 	  (symbol ==,Number,Matrix), (symbol ==,QQ,CC), (symbol ==,QQ,QQ), (symbol ==,QQ,RR), (symbol ==,RR,CC),
-	  (symbol ==,RR,QQ), (symbol ==,RR,RR), (symbol ==,RR,ZZ), (symbol ==,RingElement,ZZ), (symbol ==,Sequence,Sequence),
+	  (symbol ==,RR,QQ), (symbol ==,RR,RR), (symbol ==,RR,ZZ),
+      (symbol ==,QQ,RRi), (symbol ==,ZZ, RRi), (symbol ==, RR, RRi),
+      (symbol ==,RRi,QQ), (symbol ==,RRi, ZZ), (symbol ==,RRi, RR),
+      (symbol ==,RRi,RRi), (symbol ==,RingElement,ZZ), (symbol ==,Sequence,Sequence),
 	  (symbol ==,String,String), (symbol ==,Symbol,Symbol), (symbol ==,ZZ,CC), (symbol ==,ZZ,RR),
 	  (symbol ==,ZZ,RingElement), (symbol ==,ZZ,ZZ), (symbol==, Module, Module), (symbol==, Vector, Vector),
 	  (symbol==, BettiTally, BettiTally), (symbol==, VisibleList, VisibleList),
@@ -775,7 +818,6 @@ document {
 	  (symbol==, Ideal, MonomialIdeal),
 	  (symbol==, GradedModuleMap, ZZ),
 	  (symbol==, InfiniteNumber, InfiniteNumber),
-	  (symbol==, Equation, Expression),
 	  (symbol==, ZZ, Ring),
 	  (symbol==, ZZ, QQ),
 	  (symbol==, Matrix, ZZ),
@@ -801,7 +843,6 @@ document {
 	  (symbol==, MonomialIdeal, Ideal),
 	  (symbol==, ZZ, GradedModuleMap),
 	  (symbol==, GradedModule, GradedModule),
-	  (symbol==, Expression, Equation),
 	  (symbol==, Module, ZZ),
 	  (symbol==, ZZ, Module),
 	  (symbol==, ChainComplexMap, RingElement),
@@ -880,6 +921,13 @@ document {
       	  "image matrix {{2,a},{1,5}} == R^2",
       	  "image matrix {{2,a},{0,5}} == R^2"
 	  },
+     HEADER3 "Intervals",
+        PARA { "If either side of the equality is an ", TO "RRi", ", the equality is an equality of sets." },
+    EXAMPLE {
+        "interval(1,3) == interval(1,3)",
+        "interval(1/2) == 1/2",
+        "interval(1/3) == 1/3"
+    },
      PARA{
 	  "It may happen that for certain types of objects, there is no method installed (yet)
 	  for testing mathematical equality, in which case an error message will be
@@ -907,9 +955,8 @@ document {
      }
 
 undocumented {
-    (symbol**, OneExpression, Holder),
     (symbol**, QuotientRing, PolynomialRing),
-    (symbol**, Expression, NonAssociativeProduct),
+--    (symbol**, Expression, NonAssociativeProduct),
     (symbol**, QuotientRing, QuotientRing),
     (symbol**, Number, Matrix),
     (symbol**, Matrix, Number),
@@ -918,13 +965,12 @@ undocumented {
     (symbol **,RingElement,Number),
     (symbol **,RingElement,RingElement),
     (symbol **,Thing,InexactFieldFamily),
-    (symbol**, NonAssociativeProduct, NonAssociativeProduct),
-    (symbol**, Holder, OneExpression),
+--    (symbol**, NonAssociativeProduct, NonAssociativeProduct),
     (symbol**, PolynomialRing, PolynomialRing),
     (symbol**, PolynomialRing, QuotientRing),
-    (symbol**, NonAssociativeProduct, Expression),
-    (symbol**, NonAssociativeProduct, Holder),
-    (symbol**, Holder, NonAssociativeProduct),
+--    (symbol**, NonAssociativeProduct, Expression),
+--    (symbol**, NonAssociativeProduct, Holder),
+--    (symbol**, Holder, NonAssociativeProduct),
     (symbol**, Expression, OneExpression),
     (symbol**, OneExpression, Expression)
      }

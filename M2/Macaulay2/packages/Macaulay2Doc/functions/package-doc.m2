@@ -187,7 +187,7 @@ Node
       loadPackage FirstPackage
     Text
       In fact this version of the command is simply a convenient shortcut for @TT "loadPackage"@ with the option
-      @TT "Reload"@ overriden to true.
+      @TT "Reload"@ overridden to true.
   SeeAlso
     "packages"
     readPackage
@@ -229,7 +229,7 @@ Node
   Consequences
     Item
       loads the package @TT "PackageName"@ by loading the file @TT "PackageName.m2"@ which should appear
-      in one of the directories occuring in the list @TO "path"@, unless it has already been loaded, in
+      in one of the directories occurring in the list @TO "path"@, unless it has already been loaded, in
       which case it ensures that the package's dictionary of exported symbols occurs in @TO "dictionaryPath"@
       and are thus available to the user. In addition, the function @TO needsPackage@ is applied to each
       of the packages whose names are specified by the @TO [newPackage, PackageExports]@ option for the
@@ -433,6 +433,7 @@ Node
     [installPackage, MakeDocumentation]
     [installPackage, MakeHTML]
     [installPackage, MakeInfo]
+    [installPackage, MakePDF]
     [installPackage, MakeLinks]
     [installPackage, RemakeAllDocumentation]
     [installPackage, RerunExamples]
@@ -453,7 +454,7 @@ Node
       if true, then do not give the @TT "-q"@ option to the Macaulay2 executable when running examples, thereby
       allowing it to load the user's @TO "initialization file"@, allowing it to load packages previously installed
       in the user's @TO2 {"applicationDirectory", "application directory"}@, and allowing packages it loads to read
-      their configuration files from the the user's @TO2{"applicationDirectory", "application directory"}@.
+      their configuration files from the user's @TO2{"applicationDirectory", "application directory"}@.
       If false, then do give the option. If @TO "null"@, then propagate the option from the current @TO "commandLine"@,
       if one occurs there.
     DebuggingMode=>Boolean
@@ -474,6 +475,8 @@ Node
     MakeInfo=>Boolean
       whether to make the info pages. This is a form of the documentation that can be viewed using the
       Unix command @TT "info"@ or using @TT "emacs"@
+    MakePDF=>Boolean
+      whether to make PDF documentation
     InstallPrefix=>String
       the installation prefix for installation of the files of the package, in case encapsulation is not enabled,
       or for installation of the links to the files, in case encapsulation is enabled. The default value is the

@@ -7,6 +7,10 @@
 #include <utility>
 #include <vector>
 
+#include "ExponentList.hpp"
+#include "M2FreeAlgebra.hpp"
+#include "M2FreeAlgebraQuotient.hpp"
+
 #include "aring-CC.hpp"
 #include "aring-CCC.hpp"
 #include "aring-glue.hpp"
@@ -25,7 +29,7 @@
 #include "schur2.hpp"
 #include "schurSn.hpp"
 #include "tower.hpp"
-#include "varpower.hpp"
+#include "util.hpp"
 
 namespace M2 { class ARingRRR; }
 
@@ -69,6 +73,14 @@ const RingElement *IM2_RingElement_from_BigReal(const Ring *R, gmp_RR z)
   if (R->from_BigReal(z, f)) return RingElement::make_raw(R, f);
   ERROR("cannot create element of this ring from an element of RR");
   return 0;
+}
+
+const RingElement *IM2_RingElement_from_Interval(const Ring *R, gmp_RRi z)
+{
+   ring_elem f;
+   if (R->from_Interval(z, f)) return RingElement::make_raw(R, f);
+   ERROR("cannot create element of this ring from an element of RRi");
+   return 0;
 }
 
 gmp_ZZorNull IM2_RingElement_to_Integer(const RingElement *a)
@@ -118,18 +130,44 @@ gmp_RRorNull IM2_RingElement_to_BigReal(const RingElement *a)
       case M2::ring_RR:
         result = getmemstructtype(gmp_RRmutable);
         mpfr_init2(result, 53);
-        mpfr_set_d(result, a->get_value().get_double(), GMP_RNDN);
+        mpfr_set_d(result, a->get_value().get_double(), MPFR_RNDN);
         return moveTo_gmpRR(result);
       case M2::ring_RRR:
         R1 =
             dynamic_cast<const M2::ConcreteRing<M2::ARingRRR> *>(a->get_ring());
         result = getmemstructtype(gmp_RRmutable);
         mpfr_init2(result, R1->get_precision());
-        mpfr_set(result, a->get_value().get_mpfr(), GMP_RNDN);
+        mpfr_set(result, a->get_value().get_mpfr(), MPFR_RNDN);
         return moveTo_gmpRR(result);
       default:
         ERROR("expected an element of RRR");
         return nullptr;
+    }
+}
+
+gmp_RRiorNull IM2_RingElement_to_Interval(const RingElement *a)
+{
+    const Ring *R = a->get_ring();
+    gmp_RRimutable result;
+    const M2::ConcreteRing<M2::ARingRRi> *R1;
+          
+    switch (R->ringID())
+    {
+       case M2::ring_RR:
+          result = getmemstructtype(gmp_RRimutable);
+          mpfi_init2(result, 53);
+          mpfi_set_d(result, a->get_value().get_double());
+          return moveTo_gmpRRi(result);
+       case M2::ring_RRi:
+          R1 =
+          dynamic_cast<const M2::ConcreteRing<M2::ARingRRi> *>(a->get_ring());
+          result = getmemstructtype(gmp_RRimutable);
+          mpfi_init2(result, R1->get_precision());
+          mpfi_set(result, a->get_value().get_mpfi());
+          return moveTo_gmpRRi(result);
+       default:
+          ERROR("expected an element of RRi");
+          return nullptr;
     }
 }
 
@@ -139,21 +177,17 @@ gmp_CCorNull IM2_RingElement_to_BigComplex(const RingElement *a)
   auto RCCC = dynamic_cast<const M2::ConcreteRing<M2::ARingCCC> *>(R);
   if (RCCC != 0)
     {
-      M2::ARingCCC::ElementType b;
-      RCCC->ring().init(b);
-      RCCC->ring().from_ring_elem(b, a->get_value());
+      const M2::ARingCCC::ElementType &b =
+          RCCC->ring().from_ring_elem_const(a->get_value());
       gmp_CC result = RCCC->ring().toBigComplex(b);
-      RCCC->ring().clear(b);
       return result;
     }
   auto RCC = dynamic_cast<const M2::ConcreteRing<M2::ARingCC> *>(R);
   if (RCC != 0)
     {
-      M2::ARingCC::ElementType b;
-      RCC->ring().init(b);
-      RCC->ring().from_ring_elem(b, a->get_value());
+      const M2::ARingCC::ElementType &b =
+          RCC->ring().from_ring_elem_const(a->get_value());
       gmp_CC result = RCC->ring().toBigComplex(b);
-      RCC->ring().clear(b);
       return result;
     }
   ERROR("expected an element of CCC");
@@ -357,6 +391,8 @@ gmp_ZZpairOrNull rawWeightRange(M2_arrayint wts, const RingElement *a)
       p->b = newitem(__mpz_struct);
       mpz_init_set_si(const_cast<mpz_ptr>(p->a), static_cast<long>(lo));
       mpz_init_set_si(const_cast<mpz_ptr>(p->b), static_cast<long>(hi));
+      mpz_reallocate_limbs(const_cast<mpz_ptr>(p->a));
+      mpz_reallocate_limbs(const_cast<mpz_ptr>(p->b));
       return p;
   } catch (const exc::engine_error& e)
     {
@@ -396,31 +432,41 @@ IM2_RingElement_homogenize(const RingElement *a, int v, M2_arrayint wts)
 
 const RingElement /* or null */ *IM2_RingElement_term(const Ring *R,
                                                       const RingElement *a,
-                                                      const Monomial *m)
+                                                      const EngineMonomial *m)
 /* R must be a polynomial ring, and 'a' an element of the
    coefficient ring of R.  Returns a*m, if this is a valid
    element of R.  Returns NULL if not (with an error message). */
 {
-  try
-    {
-      const PolynomialRing *P = R->cast_to_PolynomialRing();
-      if (P == 0)
-        {
-          ERROR("requires a polynomial ring");
-          return 0;
-        }
-
-      int nvars0 = P->n_vars();
-      const PolynomialRing *K = a->get_ring()->cast_to_PolynomialRing();
-      if (K != 0 && K != P->getCoefficients()) nvars0 -= K->n_vars();
-      int *exp = newarray_atomic(int, nvars0);
-      varpower::to_ntuple(nvars0, m->ints(), exp);
-      ring_elem val = P->make_logical_term(a->get_ring(), a->get_value(), exp);
-      return RingElement::make_raw(R, val);
-  } catch (const exc::engine_error& e)
-    {
-      ERROR(e.what());
-      return NULL;
+  try {
+    const PolynomialRing *P = R->cast_to_PolynomialRing();
+    if (P != nullptr)
+      {
+        int nvars0 = P->n_vars();
+        const PolynomialRing *K = a->get_ring()->cast_to_PolynomialRing();
+        if (K != nullptr && K != P->getCoefficients()) nvars0 -= K->n_vars();
+        exponents_t exp = newarray_atomic(int, nvars0);
+        varpower::to_expvector(nvars0, m->ints(), exp);
+        ring_elem val = P->make_logical_term(a->get_ring(), a->get_value(), exp);
+        return RingElement::make_raw(R,val);
+      }
+    auto Q = dynamic_cast<const M2FreeAlgebraOrQuotient *>(R);
+    if (Q != nullptr)
+      {
+        if (Q->coefficientRing() != a->get_ring())
+          {
+            ERROR("wrong coefficient ring");
+            return nullptr;
+          }
+        return RingElement::make_raw(Q,
+                                     Q->makeTerm(a->get_value(),
+                                                 m->ints()));
+      }
+    ERROR("requires a polynomial ring");
+    return nullptr;
+  }
+  catch (exc::engine_error& e) {
+    ERROR(e.what());
+    return nullptr;
   }
 }
 
@@ -441,7 +487,7 @@ const RingElement /* or null */ *IM2_RingElement_get_terms(
 const RingElement /* or null */ *IM2_RingElement_get_coeff(
     const Ring *coeffRing, /* ring of the result */
     const RingElement *a,
-    const Monomial *m)
+    const EngineMonomial *m)
 /* Return (as an element of the coefficient ring) the coeff
      of the monomial 'm'.
   */
@@ -470,7 +516,7 @@ const RingElement /* or null */ *IM2_RingElement_lead_coeff(
   }
 }
 
-const Monomial /* or null */ *IM2_RingElement_lead_monomial(
+const EngineMonomial /* or null */ *IM2_RingElement_lead_monomial(
     int nvars, /* number of variables in an outermost monoid */
     const RingElement *a)
 {
@@ -495,24 +541,35 @@ engine_RawArrayPairOrNull IM2_RingElement_list_form(
     const Ring *coeffRing, /* ring of the result coefficients */
     const RingElement *f)
 {
-  try
-    {
-      const PolynomialRing *P = f->get_ring()->cast_to_PolynomialRing();
-      if (P != 0)
-        {
-          return P->list_form(coeffRing, f->get_value());
-        }
-      const SchurRing2 *S = f->get_ring()->cast_to_SchurRing2();
-      if (S != 0)
-        {
-          return S->list_form(coeffRing, f->get_value());
-        }
-      ERROR("expected a polynomial");
-      return 0;
-  } catch (const exc::engine_error& e)
-    {
-      ERROR(e.what());
-      return NULL;
+  try {
+    const PolynomialRing* P = f->get_ring()->cast_to_PolynomialRing();
+    if (P != nullptr)
+      {
+        return P->list_form(coeffRing, f->get_value());
+      }
+    const SchurRing2* S = f->get_ring()->cast_to_SchurRing2();
+    if (S != nullptr)
+      {
+        return S->list_form(coeffRing, f->get_value());
+      }
+    /* added by Frank */
+    const M2FreeAlgebra* ncP = dynamic_cast<const M2FreeAlgebra*>(f->get_ring());
+    if (ncP != nullptr)
+      {
+        return ncP->list_form(coeffRing, f->get_value());
+      }
+    /* added by Frank */
+    const M2FreeAlgebraQuotient* ncQ = dynamic_cast<const M2FreeAlgebraQuotient*>(f->get_ring());
+    if (ncQ != nullptr)
+      {
+        return ncQ->m2FreeAlgebra().list_form(coeffRing, f->get_value());
+      }
+    ERROR("expected a polynomial");
+    return nullptr;
+  }
+  catch (exc::engine_error& e) {
+    ERROR(e.what());
+    return nullptr;
   }
 }
 
@@ -537,7 +594,7 @@ engine_RawRingElementArray rawGetParts(const M2_arrayint wts,
       result->len = static_cast<int>(relems_len);
       for (int i = 0; i < result->len; i++)
         result->array[i] = RingElement::make_raw(P, relems[i]);
-      deletearray(relems);
+      freemem(relems);
       return result;
   } catch (const exc::engine_error& e)
     {

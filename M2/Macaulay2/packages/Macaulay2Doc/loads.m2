@@ -25,6 +25,7 @@ load "./doc11.m2"
 load "./doc12.m2"
 load "./doc13.m2"
 load "./doc14.m2"
+load "./doc15.m2"
 
 load "./changes.m2"
 
@@ -68,6 +69,7 @@ load "./functions.m2"
 load "./shared.m2"
 load "./types.m2"
 load "./methods.m2"
+load "./doc_iterators.m2"
 load "./options.m2" -- this must come last
 
 load "./M2-Singular-Book.m2"

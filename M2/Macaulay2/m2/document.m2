@@ -1,5 +1,12 @@
 --		Copyright 1994-2006 by Daniel R. Grayson
 
+needs "code.m2"
+needs "hypertext.m2"
+needs "methods.m2"
+needs "packages.m2"
+needs "reals.m2" -- for ImmutableType
+needs "validate.m2" -- for fixup
+
 -- TODO: deprecate
 rootPath = "";
 rootURI = "file://";
@@ -147,7 +154,7 @@ makeDocumentTag' := opts -> key -> (
     -- Try to detect the package
     pkg = if pkg =!= null                    then pkg
     else  if opts#Package =!= null           then opts#Package
-    else  if member(fkey, allPackages())     then fkey
+    else  if isMember(fkey, allPackages())     then fkey
     -- for these three types, the method package actually calls
     -- makeDocumentTag, so we can't use it, and need workarounds:
     else  if instance(nkey, Array)           then youngest toSequence(package \ splice nkey)
@@ -176,6 +183,7 @@ makeDocumentTag' := opts -> key -> (
 
 makeDocumentTag = method(Dispatch => Thing, Options => { Package => null })
 makeDocumentTag DocumentTag := opts -> identity
+makeDocumentTag List        := opts -> L   -> apply(L, key -> makeDocumentTag(key, opts))
 makeDocumentTag Thing       := opts -> key -> (makeDocumentTag' opts) key
 makeDocumentTag String      := opts -> key -> (
     local pkg;
@@ -189,8 +197,8 @@ makeDocumentTag String      := opts -> key -> (
 -- correct its package, if it is incorrect (e.g. truncate, quotient)
 -- TODO: can this be modified to fix the tag in-place? then we would only need to
 -- fix the tag in (validate, TO), rather than also in (info, TO) and (html, TO).
-fixup DocumentTag := DocumentTag => tag -> makeDocumentTag(
-    if instance(key := tag.Key, String) then return tag else key, Package => package key)
+fixup DocumentTag := DocumentTag => tag -> (
+    if (rawdoc := fetchAnyRawDocumentation tag) =!= null then rawdoc.DocumentTag else tag)
 
 -----------------------------------------------------------------------------
 -- formatting document tags
@@ -307,9 +315,13 @@ formatDocumentTag Sequence := s -> concatenate (
 storeRawDocumentation := (tag, rawdoc) -> (
     fkey := format tag;
     if currentPackage#rawKey#?fkey and signalDocumentationError tag then (
+	newloc := toString new FilePosition from (
+	    minimizeFilename rawdoc#"filename", rawdoc#"linenum", 0);
 	rawdoc = currentPackage#rawKey#fkey;
+	oldloc := toString locate rawdoc.DocumentTag;
 	printerr("error: documentation already provided for ", format tag);
-	printerr(rawdoc#"filename", ":", toString rawdoc#"linenum", ": ... here is the (end of the) previous documentation"));
+	printerr(newloc, ": ... here is the (end of the) new documentation");
+	printerr(oldloc, ": ... here is the (end of the) previous documentation"));
     currentPackage#rawKey#fkey = rawdoc)
 
 -----------------------------------------------------------------------------
@@ -377,27 +389,19 @@ isSecondaryTag   = tag -> ( d := fetchRawDocumentation tag; d =!= null and d#?Pr
 isUndocumented   = tag -> ( d := fetchRawDocumentation tag; d =!= null and d#?"undocumented" and d#"undocumented" === true )
 hasDocumentation = key -> null =!= fetchAnyRawDocumentation makeDocumentTag(key, Package => null)
 
-locate DocumentTag := tag -> (
-    rawdoc := fetchAnyRawDocumentation tag;
-    if rawdoc =!= null
-    then (rawdoc#"filename", rawdoc#"linenum",,,,,) -- TODO: (filename, start,startcol, stop,stopcol, pos,poscol)
-    else (currentFileName, currentLineNumber(),,,,,))
+-- TODO: is it possible to expand to (filename, start,startcol, stop,stopcol, pos,poscol)?
+locate DocumentTag := tag -> new FilePosition from (
+    if (rawdoc := fetchAnyRawDocumentation tag) =!= null
+    then (minimizeFilename rawdoc#"filename", rawdoc#"linenum",0)
+    else (currentFileName, currentRowNumber(), currentColumnNumber()))
 
 -----------------------------------------------------------------------------
 -- helpers for the document function
 -----------------------------------------------------------------------------
 
-headline = method(Dispatch => Thing)
-headline Thing := key -> (
-    s := fetchRawDocumentationNoLoad makeDocumentTag key;
-    if s =!= null and s#?Headline then s#Headline)
-headline DocumentTag := tag -> (
-    rawdoc := fetchRawDocumentation getPrimaryTag tag;
-    if rawdoc#?Headline then rawdoc#Headline)
-
 emptyOptionTable := new OptionTable from {}
 getOptionDefaultValues := method(Dispatch => Thing)
-getOptionDefaultValues Symbol   := x -> if value x =!= x then getOptionDefaultValues value x else emptyOptionTable
+getOptionDefaultValues Symbol   := x -> if instance(f := value x, Function) then getOptionDefaultValues f else emptyOptionTable
 getOptionDefaultValues Thing    := x -> emptyOptionTable
 getOptionDefaultValues Function := f -> (
      o := options f;
@@ -418,7 +422,8 @@ processSignature := (tag, fn) -> item -> (
     else if fn =!= null then fn else key;
 
     -- checking for various pieces of the synopsis item
-    isVariable   := y -> match(///\`[[:alnum:]']+\'///, y);
+    -- allow either a variable name or a visible list for rare exceptions
+    isVariable   := y -> match(///\`[[:alnum:]']+\'///, y) or match(///(\".+\")|(\(.+\))|(\[.+\])|(\{.+\})|(<\|.+\|>)///, y);
     isOptionName := y -> all({text, inpname, optsymb}, x -> x === null) and instance(y, Symbol);
     isInputName  := y -> all({text, inpname, optsymb}, x -> x === null) and instance(y, String) and isVariable y;
     -- putting null or Nothing as input type means don't display the type deduced from the description of the method
@@ -452,7 +457,8 @@ processSignature := (tag, fn) -> item -> (
 	opttag := getPrimaryTag makeDocumentTag([fn, optsymb], Package => package tag);
 	name := if tag === opttag then TT toString optsymb else TO2 { opttag, toString optsymb };
 	type  = if type =!= null and type =!= Nothing then ofClass type else TT "..."; -- type Nothing is treated as above
-	defval := SPAN{"default value ", reproduciblePaths replace("^-\\*Function.*?\\*-", "-*Function*-", toString opts#optsymb)};
+	maybeformat := if instance(opts#optsymb, String) then format else identity;
+	defval := SPAN{"default value ", maybeformat reproduciblePaths replace("^-\\*Function.*?\\*-", "-*Function*-", toString opts#optsymb)};
 	text = if text =!= null and #text > 0 then text else if tag =!= opttag then LATER {() -> headline opttag};
 	text = if text =!= null and #text > 0 then (", ", text);
 	-- e.g: Key => an integer, default value 42, the meaning of the universe
@@ -536,7 +542,7 @@ getUsage := val -> (
     if not instance(val, String) then error "Usage: expected a string";
     val = apply(nonempty separate val, u -> replace("^[[:space:]]*(.*)[[:space:]]*$", "\\1", u));
     if #val === 0 then error "Usage: expected content";
-    DL flatten { "class" => "element", DT "Usage: ", DD \ TT \ val } )
+    DL flatten { "class" => "element", DT "Usage: ", DD \ M2CODE \ val } )
 
 getHeadline   := (val, key)   -> (
     title := if instance(val, String) then fixup val else error("expected ", toString key, " option to be a string");
@@ -545,10 +551,10 @@ getHeadline   := (val, key)   -> (
     title)
 getSubsection := (val, title) -> fixup DIV { SUBSECTION title, val }
 getSourceCode :=  val         -> DIV {"class" => "waystouse",
-    fixup DIV {SUBSECTION "Code", PRE demark_newline unstack stack apply(enlist val, m -> (
+    fixup DIV {SUBSECTION "Code", PRE M2CODE demark_newline unstack stack apply(enlist val, m -> (
 		f := lookup m; if f === null then error("SourceCode: ", toString m, ": not a method");
 		c := code f;   if c === null then error("SourceCode: ", toString m, ": code for method not found");
-		reproduciblePaths toString c))}}
+		reproduciblePaths toString net c))}}
 getSubnodes := val -> (
     val = nonnull enlist val;
     if #val == 0 then error "encountered empty Subnodes list"
@@ -622,7 +628,7 @@ document List := opts -> args -> (
 	    if o#?key then error("option ", toString key, " encountered twice");
 	    o#key = arg#1));
     -- Set the description
-    o.Description = select(args, arg -> not instance(arg, Option));
+    o.Description = select(nonnull args, arg -> not instance(arg, Option));
     -- Set the primary key
     key := if o.?Key then o.Key else error "missing Key";
     rest := if instance(key, List) then (
@@ -635,7 +641,7 @@ document List := opts -> args -> (
     currentDocumentTag = o.DocumentTag = tag := makeDocumentTag(key, Package => currentPackage);
     fkey := format tag;
     verboseLog("Processing documentation for ", fkey);
-    if member(fkey, reservedNodeNames) then error("'document' encountered a reserved node name ", fkey);
+    if isMember(fkey, reservedNodeNames) then error("'document' encountered a reserved node name ", fkey);
     -- Check that all tags belong to this package and
     -- point the secondary keys to the primary one
     verfy := (key, tag) -> (
@@ -649,7 +655,7 @@ document List := opts -> args -> (
 		    PrimaryTag => tag, -- tag must be primary
 		    symbol DocumentTag => tag2,
 		    "filename" => currentFileName,
-		    "linenum" => currentLineNumber()
+		    "linenum" => currentRowNumber()
 		    })));
     -- Check BaseFunction
     assert(not o.?BaseFunction or instance(o.BaseFunction, Function));
@@ -668,7 +674,7 @@ document List := opts -> args -> (
     if #ino > 0 then o.Options = ino else remove(o, Options);
     -- Set the location of the documentation
     o#"filename" = currentFileName;
-    o#"linenum"  = currentLineNumber();
+    o#"linenum"  = currentRowNumber();
     currentDocumentTag = null;
     storeRawDocumentation(tag, new HashTable from o))
 
@@ -684,10 +690,10 @@ undocumented Thing := key -> if key =!= null then (
 	    symbol DocumentTag => tag,
 	    "undocumented"     => true,
 	    "filename"         => currentFileName,
-	    "linenum"          => currentLineNumber()
+	    "linenum"          => currentRowNumber()
 	    }))
 
--- TODO: what does this do?
+-- somehow, this is the very first method called by the Core!!
 undocumented keys undocumentedkeys
 undocumentedkeys = null
 undocumented' = x -> error "late use of function undocumented'"
@@ -763,9 +769,6 @@ tutorial = x -> (
 	  sublist -> EXAMPLE sublist,
 	  identity);
      x )
-
--- TODO: make this TT toString X
-synonym = X -> if X.?synonym then X.synonym else "object of class " | toString X
 
 findSynonyms = method()
 findSynonyms Symbol := x -> (

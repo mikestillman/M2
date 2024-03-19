@@ -10,8 +10,16 @@
 #  include <malloc.h>
 #endif
 
+#include "ExponentVector.hpp"
 #include "overflow.hpp"
 
+std::vector<bool> laurentVariables(const MonomialOrder* mo)
+{
+  std::vector<bool> result;
+  for (auto i = 0; i < mo->nvars; ++i)
+    result.push_back(mo->is_laurent[i] == 1);
+  return result;
+}
 /* TODO:
    -- negative exponent versions need to be included (at least for MO_LEX)
    -- non-commutative blocks should be added in
@@ -539,7 +547,7 @@ void monomialOrderEncodeFromActualExponents(const MonomialOrder *mo,
 
 void monomialOrderDecodeToActualExponents(const MonomialOrder *mo,
                                           const_monomial psums,
-                                          exponents expon)
+                                          exponents_t expon)
 {
   if (mo == 0) return;
   int *tmpexp = static_cast<int *>(alloca((mo->nvars + 1) * sizeof(int)));

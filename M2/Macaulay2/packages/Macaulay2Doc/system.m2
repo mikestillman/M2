@@ -1,4 +1,29 @@
--- TODO: GCstats
+document {
+     Key => GCstats,
+     Headline => "information about the status of the garbage collector",
+     PARA {
+	  "Macaulay2 uses the Hans Boehm ", TO2 {"GC garbage collector", "garbage collector"}, " to reclaim unused memory.  The function ", TT "GCstats", " 
+	  provides information about its status."
+	  },
+     EXAMPLE lines ///
+     s = GCstats()
+     ///,
+     PARA {
+	  "The value returned is a hash table, from which individual bits of information can be
+	  easily extracted, as follows."
+	  },
+     EXAMPLE lines ///
+     s#"heap size"
+     ///,
+     PARA {
+	  "The entries whose keys are upper case give the values of environment variables affecting the operation of the 
+	  garbage collector that have been specified by the user."
+	  },
+     PARA {
+	  "For further information about the individual items in the table, we refer the user to the source code and documentation of the garbage collector."
+	  },
+     SeeAlso => { "GC garbage collector" }
+     }
 
 document {
     Key => "system facilities",
@@ -636,7 +661,7 @@ document {
      BR{},
      TT "exit", " -- terminates the program and returns 0 as return code.",
      PARA{},
-     "Files are flushed and closed.  Functions registered with ", TO "addStartFunction", "
+     "Files are flushed and closed.  Functions registered with ", TO "addEndFunction", "
      are called, unless a nonzero return value has been provided.  Another
      way to exit is to type the end of file character, which is typically
      set to Control-D in unix systems, and is Control-Z under Windows.",
@@ -728,7 +753,7 @@ document {
 	  for your system."
 	  },
      PRE replace(regexQuote homeDirectory, "/home/m2user/",
-	   concatenate between_"\n" apply(value Core#"private dictionary"#"userpath",s -> (5,s))),
+	   concatenate between_"\n" apply(core "userpath", s -> (5, s))),
      EXAMPLE {
 	  "stack path",
 	  ///path = append(path, "~/resolutions/"); stack path///
@@ -789,7 +814,7 @@ document {
      Headline => "time a computation",
      TT "timing e", " evaluates ", TT "e", " and returns a list of type ", TO "Time", "
      of the form ", TT "{t,v}", ", where ", TT "t", " is the number of seconds
-     of cpu timing used, and ", TT "v", " is the value of the the expression.",
+     of cpu timing used, and ", TT "v", " is the value of the expression.",
      PARA{},
      "The default method for printing such timing results is to display the
      timing separately in a comment below the computed value.",
@@ -813,7 +838,7 @@ document {
      Headline => "time a computation using time elapsed",
      TT "elapsedTiming e", " evaluates ", TT "e", " and returns a list of type ", TO "Time", "
      of the form ", TT "{t,v}", ", where ", TT "t", " is the number of seconds
-     of time elapsed, and ", TT "v", " is the value of the the expression.",
+     of time elapsed, and ", TT "v", " is the value of the expression.",
      PARA{},
      "The default method for printing such timing results is to display the
      timing separately in a comment below the computed value.",
@@ -838,7 +863,7 @@ document {
      TT "Time", " is the class of all timing results.  Each timing result
      is ", ofClass BasicList, " of the form ", TT "{t,v}", ", where ", TT "t", "
      is the number of seconds of cpu time used, and ", TT "v", " is the value
-     of the the expression.",
+     of the expression.",
      SeeAlso => {"timing", "time", "cpuTime", "elapsedTiming", "elapsedTime"}
      }
 document {
@@ -918,10 +943,8 @@ document {
 	  when that object is collected as garbage"
 	  },
      EXAMPLE lines ///
-	  R = QQ[a..d];
-	  makeGB = (n) -> (g := gb((ideal vars R)^4); registerFinalizer(g, "gb("|n|")"););
-	  for i from 1 to 10 do (makeGB i);
-	  collectGarbage()
+	  for i from 1 to 9 do (x := 0 .. 10000 ; registerFinalizer(x, "-- finalizing sequence #"|i|" --"))
+	  collectGarbage() -* no-capture-flag *-
 	  ///,
      Caveat => "This function should mainly be used for debugging.  Having a large number of finalizers
      might degrade the performance of the program.  Moreover, registering two or more objects that are members of a circular chain
@@ -1386,7 +1409,7 @@ document {
      "In the case of an output file, any buffered output is first
      written to the file, and the return value is an integer,
      normally 0, or -1 on error, or the return status of the child
-     process in case the the file was a pipe.",
+     process in case the file was a pipe.",
      PARA{},
      "If the file was open for both input and output, both directions
      are closed.",
@@ -1445,7 +1468,7 @@ document {
      "Any buffered output is first written to the file,
      and the return value is an integer, normally 0, or -1
      on error, or the return status of the child process
-     in case the the file was a pipe.",
+     in case the file was a pipe.",
      PARA{},
      "If the file was open only for output, then ", TO "close", " is
      easier to use and has the same effect.",
@@ -1724,118 +1747,6 @@ doc ///
 	     </pre></body>
    SeeAlso
      getWWW
-///
-
-TEST ///
-str = "HTTP/1.1 200 OK\r
-Date: Thu, 23 Jun 2016 13:10:59 GMT\r
-Server: Apache/2.2\r
-Vary: Accept-Encoding\r
-Connection: close\r
-Transfer-Encoding: chunked\r
-Content-Type: text/html; charset=UTF-8\r
-\r
-2b\r
-<head><title>SEARCH RESULTS</title></head>
-\r
-b\r
-<body><pre>\r
-17\r
-<b>Search command:</b>
-\r
-1e\r
-class.x -di x -He EH10:MVNFL5
-\r
-10\r
-
-<b>Result:</b>
-\r
-436\r
-4 9  M:22 9 N:14 8 H:10,18 [-16]
-   1   0   1   0   2   0  -2  -2  -2
-   0   1   0   0  -1   1   1  -1   1
-   0   0   2   0   1   1  -3  -1  -4
-   0   0   0   1   1   1  -1  -1  -2
-4 10  M:23 10 N:15 10 H:10,18 [-16]
-    1    0    0    0   -1    1   -2    2    0   -1
-    0    1    0    0    1   -1    2   -1   -2    0
-    0    0    1    0   -1    1   -1    0    2   -2
-    0    0    0    1    1   -1    0   -2   -1    2
-4 9  M:24 9 N:14 8 H:10,20 [-20]
-   1   0   1   0   1  -1  -2   1  -2
-   0   1   0   0   0   2  -2  -1   2
-   0   0   2   0  -1  -1   0  -2  -2
-   0   0   0   1  -1  -1   1  -1  -1
-4 11  M:25 11 N:15 10 H:10,20 [-20]
-   1   0   0   0   2  -2   0   2  -2  -2   2
-   0   1   0   0  -1   1   1  -1   0   1  -2
-   0   0   1   0  -1   1  -1   0   2   0  -2
-   0   0   0   1  -1   1   1  -2   1   0  -1
-4 10  M:25 10 N:15 10 H:10,20 [-20]
-    1    0    0    0   -1    0   -1   -1    2    1
-    0    1    0    0    0    0    2    0   -1   -2
-    0    0    1    0    0   -2    2    2   -2   -2
-    0    0    0    1    0   -1    0    2    0   -2
-Exceeded limit of 5
-\r
-e\r
-</pre></body>
-\r
-0\r
-\r
-"
-(head,body) = splitWWW str;
-
-assert(head === "HTTP/1.1 200 OK\r
-Date: Thu, 23 Jun 2016 13:10:59 GMT\r
-Server: Apache/2.2\r
-Vary: Accept-Encoding\r
-Connection: close\r
-Transfer-Encoding: chunked\r
-Content-Type: text/html; charset=UTF-8")
-
-assert(body === "<head><title>SEARCH RESULTS</title></head>
-<body><pre><b>Search command:</b>
-class.x -di x -He EH10:MVNFL5
-
-<b>Result:</b>
-4 9  M:22 9 N:14 8 H:10,18 [-16]
-   1   0   1   0   2   0  -2  -2  -2
-   0   1   0   0  -1   1   1  -1   1
-   0   0   2   0   1   1  -3  -1  -4
-   0   0   0   1   1   1  -1  -1  -2
-4 10  M:23 10 N:15 10 H:10,18 [-16]
-    1    0    0    0   -1    1   -2    2    0   -1
-    0    1    0    0    1   -1    2   -1   -2    0
-    0    0    1    0   -1    1   -1    0    2   -2
-    0    0    0    1    1   -1    0   -2   -1    2
-4 9  M:24 9 N:14 8 H:10,20 [-20]
-   1   0   1   0   1  -1  -2   1  -2
-   0   1   0   0   0   2  -2  -1   2
-   0   0   2   0  -1  -1   0  -2  -2
-   0   0   0   1  -1  -1   1  -1  -1
-4 11  M:25 11 N:15 10 H:10,20 [-20]
-   1   0   0   0   2  -2   0   2  -2  -2   2
-   0   1   0   0  -1   1   1  -1   0   1  -2
-   0   0   1   0  -1   1  -1   0   2   0  -2
-   0   0   0   1  -1   1   1  -2   1   0  -1
-4 10  M:25 10 N:15 10 H:10,20 [-20]
-    1    0    0    0   -1    0   -1   -1    2    1
-    0    1    0    0    0    0    2    0   -1   -2
-    0    0    1    0    0   -2    2    2   -2   -2
-    0    0    0    1    0   -1    0    2    0   -2
-Exceeded limit of 5
-</pre></body>
-")
-
-///
-
-///
--- example for use with splitWWW
-str = getWWW "http://quark.itp.tuwien.ac.at/cgi-bin/cy/cydata.cgi?h11=10&L=5";
-(head,body) = splitWWW str;
-head
-body
 ///
 
 document { Key => symbol applicationDirectorySuffix,

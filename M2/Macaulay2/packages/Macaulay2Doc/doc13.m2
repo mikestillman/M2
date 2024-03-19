@@ -96,6 +96,18 @@ document { Key => {permutations, (permutations, ZZ), (permutations, VisibleList)
 	  }
      }
 
+document { Key => {uniquePermutations, (uniquePermutations, ZZ), (uniquePermutations, VisibleList)},
+     Headline => "produce all unique permutations of a list",
+     Usage => "uniquePermutations x",
+     Inputs => { "x" => { ofClass {VisibleList, ZZ} } },
+     Outputs => { { "a list of all distinct permutations of the visible list ", TT "x", ", or, if ", TT "x", " is an integer, of the list of
+	       integers from 0 through ", TT "n-1"
+	       } },
+     EXAMPLE {
+	  "uniquePermutations {a,b,a,b}",
+	  }
+     }
+
 document { Key => tutorial,
      Headline => "convert documentation from tutorial format",
      Usage => "tutorial x",
@@ -110,18 +122,6 @@ R = QQ[x,y]
      	  "tutorial oo",
 	  "peek oo"
 	  }}
-document { Key => {preimage,(preimage, RingMap, Ideal)},
-     Headline => "preimage of an ideal under a ring map",   -- hopefully more general later
-     Usage => "preimage(f,I)",
-     Inputs => { "I" => { "an ideal in the target ring of ", TT "f" }, "f" },
-     Outputs => { { "the preimage of ", TT "I", " under the map ", TT "f" } },
-     EXAMPLE lines /// 
-	  R = QQ[x,y,z]
-	  S = QQ[t,u]
-	  f = map(R,S,{x*y,y*z})
-	  preimage_f ideal(x^2,y^2)
-     	  ///
-     }
 document { Key => {round,(round,QQ),(round,RR),(round,ZZ,RR),(round,ZZ),(round,CC)},
      Headline => "round a number",
      SYNOPSIS (
@@ -144,28 +144,6 @@ document { Key => {round,(round,QQ),(round,RR),(round,ZZ,RR),(round,ZZ),(round,C
 	  ///
 	  ),
      SeeAlso => { floor, ceiling }
-     }
-document { Key => {URL,(NewFromMethod, URL, String)},
-     Headline => "a type representing a URL",
-     Usage => "URL h",
-     Inputs => { "h" => String => "a URL" },
-     Outputs => {{ "an object of type ", TT "URL" }},
-     PARA {
-	  "The function ", TO "show", " knows how display entities of various types, including URLs."
-	  }}
-document { Key => {show, (show, URL)},
-     Headline => "display various TeX, hypertext, or a URL, in an external application",
-     Usage => "show x",
-     Inputs => { "x" => { ofClass{ Hypertext, TEX, URL } }},
-     Consequences => {{ "an external viewer, such as a web browser, is started to view the object ", TT "x" }},
-     SeeAlso => { showTex, showHtml }}
-document { Key => showHtml,
-     Headline => "convert hypertext to html and display with a browser",
-     Usage => "showHtml x",
-     Inputs => { "x" => Hypertext },
-     Consequences => {{ "an external viewer, such as a web browser, is started to view the object ", TT "x" }},
-     "The result is the same as ", TT "show x", ".",
-     Caveat => "This function may be phased out."
      }
 
 undocumented {(isConstant, Number)}
@@ -257,7 +235,7 @@ document { Key => NumberedVerticalList,
 
 document { Key => {LowerBound,(symbol SPACE,CoherentSheaf,LowerBound),(symbol SPACE,SheafOfRings,LowerBound)},
      Headline => "the class of lower bound objects",
-     "This is a type of list that represents a lower bound.  The single element of the list is an integer, and the object represents the condititon
+     "This is a type of list that represents a lower bound.  The single element of the list is an integer, and the object represents the condition
      that some other integer, such as the index in a direct sum, should be at least as large.",
      EXAMPLE {
 	  "LowerBound {4}",

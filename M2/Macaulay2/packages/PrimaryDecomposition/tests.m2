@@ -31,6 +31,10 @@ TEST ///
   assert isPrime I
   assert(minimalPrimes I == {ideal(0_R)})
   assert(all(minimalPrimes I, f -> class f === MonomialIdeal))
+  
+  M = comodule ideal(0_R)
+  assert(associatedPrimes M == {ideal(0_R)})
+  assert(primaryDecomposition M == {0})
 ///
 
 TEST get(currentFileDirectory | "associatedPrimes-test.m2")
@@ -144,7 +148,7 @@ TEST /// -- tests for localize
   outcome == P1
   P2 = ideal (x,y);
   outcome = localize(I,P2)
-  outcome == I
+  assert(outcome == I)
 
   R = ZZ/(31991)[x,y,z];
   I = ideal(x^2,x*z,y*z);
@@ -154,26 +158,38 @@ TEST /// -- tests for localize
   P2 = ideal(x,z);
   outcome = localize(I,P2)
   trueanswer = ideal(x^2,z);
-  outcome == trueanswer
+  assert(outcome == trueanswer)
+///
+
+TEST /// -- another test for localize, cf. https://github.com/Macaulay2/M2/issues/923
+  R = QQ[x]
+  P = ideal(x)
+  I = ideal(x^3+x^2)
+  IP = localize(I, P)
+  assert(IP == first select(primaryDecomposition I, Q -> radical Q == P))
 ///
 
 TEST /// -- tests for primaryComponent
   R = ZZ/(101)[x,y];
   I = ideal (x^2,x*y);
   P1 = ideal (x);
-  primaryComponent(I,P1)
+  Q1 = primaryComponent(I,P1)
+  assert(any(primaryDecomposition I, Q -> Q == Q1))
   P2 = ideal (x,y);
-  primaryComponent(I,P2)
+  Q2 = primaryComponent(I,P2)
+  assert(I == intersect(Q1, Q2)) -- embedded components are not unique!
 
   R = ZZ/(31991)[x,y,z];
   I = ideal(x^2,x*z,y*z);
   P1 = ideal(x,y);
-  primaryComponent(I,P1)
+  Q1 = primaryComponent(I,P1)
+  assert(any(primaryDecomposition I, Q -> Q == Q1))
   P2 = ideal(x,z);
-  primaryComponent(I,P2)
+  Q2 = primaryComponent(I,P2)
+  assert(any(primaryDecomposition I, Q -> Q == Q2))
 ///
 
-TEST /// -- tests for EisenbudHunekeVasconcelos
+TEST /// -- tests for EisenbudHunekeVasconcelos (no asserts?!)
   R = ZZ/(101)[x,y,z];
   I = ideal(x^2, x*y);
   associatedPrimes(ideal I_*, Strategy => 1)
@@ -235,6 +251,17 @@ TEST /// -- modules over iterated quotient rings
   assert(intersect comps == 0 and all(comps, isPrimary_N))
 ///
 
+TEST /// -- modules over quotient rings, II
+R = QQ[x,y,z]/(x^2 - y*z)
+P = ideal(x, z)
+associatedPrimes comodule P^2
+M = comodule P^2
+associatedPrimes(M, CodimensionLimit => 2)
+assert(associatedPrimes(M, CodimensionLimit => 2) == {P, ideal gens R})
+elapsedTime comps = primaryDecomposition M
+assert(intersect comps == 0 and all(comps, isPrimary_M))
+///
+
 TEST /// -- multiply embedded prime
   R = QQ[x_0..x_3]
   I = intersect((ideal(x_0..x_3))^5, (ideal(x_0..x_2))^4, (ideal(x_0..x_1))^3)
@@ -255,6 +282,18 @@ TEST /// -- tough example for old primaryDecomposition, good on new code for mod
   assert(sum(comps, Q -> degree(I + ideal gens Q)) == degree I)
 ///
 
+TEST /// -- testing Strategy => Hybrid
+-- Has 2 embedded primes
+-- One embedded prime will need to increase bracket power at least once
+-- On bracket power increase, minimalPresentation Q (quotient by candidate) is slow
+  R = QQ[h,l,s,z,y,x]
+  I = ideal(h*l-l^2-4*l*s+h*y,h^2*s-6*l*s^3+h^2*z,x*h^2-l^2*s-h^3)
+  M = comodule I
+  elapsedTime AP = associatedPrimes M
+  elapsedTime comps = primaryDecomposition(M, Strategy => Hybrid{"Hom"});
+  assert(intersect comps == 0 and all(comps, isPrimary_M))
+///
+
 TEST /// -- cf. https://groups.google.com/g/macaulay2/c/dFPzfS3tR2E
   R = ZZ/2[Z_1..Z_9];
   I = ideal(Z_6*Z_8+Z_5*Z_9,Z_3*Z_8+Z_2*Z_9,Z_6*Z_7+Z_4*Z_9,Z_4^3+Z_5^3+Z_6^3,Z_1*Z_2^2+Z_4*Z_5^2+Z_7*Z_8^2,Z_1^3+Z_5^3+Z_6^3+Z_8^3+Z_9^3,Z_1*Z_2*Z_4^2*Z_5*Z_9+Z_2^2*Z_5^3*Z_9+Z_2^2*Z_6^3*Z_9+Z_1^2*Z_7*Z_8^2*Z_9+Z_2^2*Z_8^3*Z_9+Z_2^2*Z_9^4);
@@ -269,7 +308,7 @@ TEST /// -- cf. https://groups.google.com/g/macaulay2/c/dFPzfS3tR2E
 ///
 
 TEST /// -- [associatedPrimes, CodimensionLimit] test
-  importFrom_PrimaryDecomposition {"AssociatedPrimesOptions"}
+  importFrom_PrimaryDecomposition {"AssociatedPrimesContext"}
   R = QQ[x_0..x_5]
   exps = {6,7}
   supps = {ideal(R_0,R_1,R_2), ideal(R_0,R_3,R_4,R_5)}
@@ -279,13 +318,13 @@ TEST /// -- [associatedPrimes, CodimensionLimit] test
   elapsedTime AP = associatedPrimes(M, CodimensionLimit => 4) -- ~ 3 seconds
   -- elapsedTime associatedPrimes(M, CodimensionLimit => infinity) -- > 40 seconds (computing unnecessary Ext)
   assert(all(AP, P -> any(supps, Q -> Q == P)) and all(supps, P -> any(AP, Q -> Q == P)))
-  M.cache#(AssociatedPrimesOptions{}).CodimensionLimit = infinity
+  M.cache#(AssociatedPrimesContext{}).CodimensionLimit = infinity
   elapsedTime comps = primaryDecomposition M; -- ~ 4 seconds
   assert(intersect comps == 0 and all(comps, isPrimary_M))
 ///
 
 TEST /// -- Optimizing cases for associatedPrimes without computing res
-  importFrom_PrimaryDecomposition {"AssociatedPrimesOptions"}
+  importFrom_PrimaryDecomposition {"AssociatedPrimesContext"}
   R = QQ[x_1..x_5]
   I = intersect apply(10, i -> ideal apply(gens R, v -> v - random QQ)); -- 10 points in A^5
   M = comodule I;
@@ -296,7 +335,7 @@ TEST /// -- Optimizing cases for associatedPrimes without computing res
   I = intersect apply(10, i -> ideal apply(delete(first random gens R, gens R), v -> v - random QQ)); -- 10 lines in A^5
   M = comodule I;
   elapsedTime AP = associatedPrimes(M, CodimensionLimit => codim M) -- < 2 seconds
-  M.cache#(AssociatedPrimesOptions{}).CodimensionLimit = infinity
+  M.cache#(AssociatedPrimesContext{}).CodimensionLimit = infinity
   elapsedTime comps = primaryDecomposition M; -- ~ 3 seconds
   assert(intersect comps == 0 and all(comps, isPrimary_M))
 ///

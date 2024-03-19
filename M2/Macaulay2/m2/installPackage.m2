@@ -2,6 +2,16 @@
 --		Copyright 1993-2002 by Daniel R. Grayson
 -- TODO: add regex option to readDirectory
 -- TODO: add relative directory to minimizeFilename
+-- TODO: generate parent nodes for orphan nodes based on their type
+-- TODO: make orphan overview nodes subnodes of the top node
+-- TODO: not reentrant yet, see resetCounters
+
+needs "document.m2"
+needs "examples.m2"
+needs "hypertext.m2"
+needs "packages.m2"
+needs "printing.m2"
+needs "validate.m2"
 
 -----------------------------------------------------------------------------
 -- Generate the html documentation
@@ -26,8 +36,9 @@ installPrefix   = applicationDirectory() | "local/"  -- default the installation
 installLayout   = Layout#2			     -- the layout of the installPrefix, global for communication to document.m2
 htmlDirectory   = ""	      -- relative path to the html directory, depends on the package
 
-indexFileName  := "master.html"   -- file name for master index of topics in a package
-tocFileName    := "toc.html"      -- file name for the table of contents of a package
+  topFileName   = "index.html"	-- top node's filename, constant
+indexFileName  := "master.html"	-- file name for master index of topics in a package
+  tocFileName  := "toc.html"	-- file name for the table of contents of a package
 
 -----------------------------------------------------------------------------
 -- Local utilities
@@ -141,7 +152,7 @@ makeTree := (parent, graph, visits, node) -> (
     new TreeNode from {node, tree})
 
 -- pre-compute the list of orphan nodes in a graph, with parent
--- node (typcally topDocumentTag) appearing in the beginning
+-- node (typically topDocumentTag) appearing in the beginning
 orphanNodes := (parent, graph) -> (
     nonLeaves := set keys graph - set flatten values graph;
     if not nonLeaves#?parent and signalDocumentationWarning parent then printerr("warning: top node ", parent, " not a root");
@@ -196,7 +207,7 @@ assembleTree := (pkg, nodes) -> (
 	    and pkg#"raw documentation"#fkey.?Subnodes then (
 		subnodes := pkg#"raw documentation"#fkey.Subnodes;
 		subnodes  = select(deepApply(subnodes, identity), DocumentTag);
-		subnodes  = select(subnodes, node -> package node === pkg);
+		subnodes  = select(fixup \ subnodes, node -> package node === pkg);
 		tag => getPrimaryTag \ subnodes)
 	    else tag => {}));
     -- build the forest
@@ -229,6 +240,7 @@ BACKWARD  := tag -> if PREV#?tag then BACKWARD0 PREV#tag else if UP#?tag then UP
 topNodeButton  := (htmlDirectory, topFileName)   -> HREF {htmlDirectory | topFileName,   "top" };
 indexButton    := (htmlDirectory, indexFileName) -> HREF {htmlDirectory | indexFileName, "index"};
 tocButton      := (htmlDirectory, tocFileName)   -> HREF {htmlDirectory | tocFileName,   "toc"};
+pkgButton      := TO2 {"packages provided with Macaulay2", "packages"};
 homeButton     := HREF {"http://macaulay2.com/", "Macaulay2 website"};
 
 nextButton     := tag -> if NEXT#?tag then HREF { htmlFilename NEXT#tag, "next" }     else "next"
@@ -241,7 +253,7 @@ topButton      := tag -> if tag =!= topDocumentTag then topNodeButton(htmlDirect
 -- TODO: revamp this using Bootstrap
 buttonBar := tag -> TABLE { "class" => "buttons", TR { TD { DIV splice between_" | " {
 		nextButton tag, prevButton tag, forwardButton tag, backwardButton tag, upButton tag, topButton tag,
-		indexButton(htmlDirectory, indexFileName), tocButton(htmlDirectory, tocFileName), homeButton}}}}
+		indexButton(htmlDirectory, indexFileName), tocButton(htmlDirectory, tocFileName), pkgButton, homeButton}}}}
 
 -----------------------------------------------------------------------------
 -- makePackageIndex
@@ -306,6 +318,11 @@ makePackageIndex List := path -> (
     htmlDirectory = null;)
 
 -----------------------------------------------------------------------------
+-- install PDF documentation for package
+-----------------------------------------------------------------------------
+-- see book.m2
+
+-----------------------------------------------------------------------------
 -- install info documentation for package
 -----------------------------------------------------------------------------
 
@@ -346,7 +363,8 @@ installInfo := (pkg, installPrefix, installLayout, verboseLog) -> (
 	    if PREV#?tag then infofile << ", Prev: " << infoTagConvert' format PREV#tag;
 	    -- nodes without an Up: link tend to make the emacs info reader unable to construct the table of contents,
 	    -- and the display isn't as nice after that error occurs
-	    infofile << ", Up: " << if UP#?tag then infoTagConvert' format UP#tag else "Top";
+	    infofile << ", Up: " << if UP#?tag then infoTagConvert' format UP#tag else
+		if fkey == infotitle then "(dir)" else "Top";
 	    infofile << endl << endl << info fetchProcessedDocumentation(pkg, fkey) << endl));
     infofile << "\037" << endl << "Tag Table:" << endl;
     scan(values byteOffsets, b -> infofile << b << endl);
@@ -370,7 +388,7 @@ makeSortedIndex := (nodes, verboseLog) -> (
      fn << html validate HTML {
 	  defaultHEAD title,
 	  BODY nonnull {
-	       DIV { topNodeButton(htmlDirectory, topFileName), " | ", tocButton(htmlDirectory, tocFileName), -* " | ", directoryButton, *- " | ", homeButton },
+	       DIV { topNodeButton(htmlDirectory, topFileName), " | ", tocButton(htmlDirectory, tocFileName), " | ", pkgButton, " | ", homeButton },
 	       HR{},
 	       HEADER1 title,
 	       DIV between(LITERAL "&nbsp;&nbsp;&nbsp;",apply(alpha, c -> HREF {"#"|c, c})),
@@ -388,7 +406,7 @@ makeTableOfContents := (pkg, verboseLog) -> (
      fn << html validate HTML {
 	  defaultHEAD title,
 	  BODY {
-	       DIV { topNodeButton(htmlDirectory, topFileName), " | ", indexButton(htmlDirectory, indexFileName), -* " | ", directoryButton, *- " | ", homeButton },
+	       DIV { topNodeButton(htmlDirectory, topFileName), " | ", indexButton(htmlDirectory, indexFileName), " | ", pkgButton, " | ", homeButton },
 	       HR{},
 	       HEADER1 title,
 	       toDoc unbag pkg#"table of contents"
@@ -442,10 +460,6 @@ installHTML := (pkg, installPrefix, installLayout, verboseLog, rawDocumentationC
 -- helper functions for installPackage
 -----------------------------------------------------------------------------
 
-dispatcherMethod := m -> m#-1 === Sequence and (
-    f := lookup m;
-    any(dispatcherFunctions, g -> functionBody f === functionBody g))
-
 reproduciblePaths = outstr -> (
      if topSrcdir === null then return outstr;
      srcdir := regexQuote toAbsolutePath topSrcdir;
@@ -488,34 +502,48 @@ generateExampleResults := (pkg, rawDocumentationCache, exampleDir, exampleOutput
 	if m =!= null then value substring(m#1, f));
     changeFunc := fkey -> () -> remove(rawDocumentationCache, fkey);
 
-    possiblyCache := (outf, outf') -> fkey -> (
+    possiblyCache := (outf, outf', fkey) -> () -> (
 	if opts.CacheExampleOutput =!= false and pkgopts.CacheExampleOutput === true
 	and ( not fileExists outf' or fileExists outf' and fileTime outf > fileTime outf' ) then (
 	    verboseLog("caching example results for ", fkey, " in ", outf');
 	    if not isDirectory exampleDir then makeDirectory exampleDir;
 	    copyFile(outf, outf', Verbose => true)));
 
+    cmphash := (cachef, inputhash) -> (
+	cachehash := gethash cachef;
+	samehash := cachehash === inputhash;
+	if not samehash then verboseLog("warning: cached example file " |
+	    cachef | " does not have expected hash" | newline |
+	    "expected: " | toString inputhash |", actual: " |
+	    toString cachehash);
+	samehash);
+
+    usermode := if opts.UserMode === null then not noinitfile else opts.UserMode;
     scan(pairs pkg#"example inputs", (fkey, inputs) -> (
 	    inpf  := inpfn  fkey; -- input file
 	    outf' := outfn' fkey; -- cached file
 	    outf  := outfn  fkey; -- output file
 	    errf  := errfn  fkey; -- error file
+	    desc  := "example results for " | format fkey;
+	    data  := if pkg#"example data files"#?fkey then pkg#"example data files"#fkey else {};
 	    inputhash := hash inputs;
 	    -- use cached example results
 	    if  not opts.RunExamples
-	    or  not opts.RerunExamples and fileExists outf  and gethash outf  === inputhash then (
-		(possiblyCache(outf, outf'))(fkey))
+	    or  not opts.RerunExamples and fileExists outf  and cmphash(outf, inputhash) then (
+		(possiblyCache(outf, outf', fkey))())
 	    -- use distributed example results
 	    else if pkgopts.UseCachedExampleOutput
-	    and not opts.RerunExamples and fileExists outf' and gethash outf' === inputhash then (
-		if fileExists errf then removeFile errf; copyFile(outf', outf))
+	    and not opts.RerunExamples and fileExists outf' and cmphash(outf', inputhash) then (
+		if fileExists errf then removeFile errf;
+		copyFile(outf', outf);
+		verboseLog("using cached " | desc)
+		)
 	    -- run and capture example results
-	    else elapsedTime captureExampleOutput(
-		pkg, fkey, demark_newline inputs,
-		possiblyCache(outf, outf'),
-		inpf, outf, errf,
-		inputhash, changeFunc,
-		if opts.UserMode === null then not noinitfile else opts.UserMode, verboseLog);
+	    else if elapsedTime captureExampleOutput(
+		desc, demark_newline inputs, pkg,
+		inpf, outf, errf, data,
+		inputhash, changeFunc fkey,
+		usermode) then (possiblyCache(outf, outf', fkey))();
 	    storeExampleOutput(pkg, fkey, outf, verboseLog)));
 
     -- check for obsolete example output files and remove them
@@ -524,6 +552,16 @@ generateExampleResults := (pkg, rawDocumentationCache, exampleDir, exampleOutput
 	scan(readDirectory exampleOutputDir, fn -> (
 		fn = exampleOutputDir | fn;
 		if match("\\.out$", fn) and not exampleOutputFiles#?fn then removeFile fn)));
+    )
+
+getErrors = fn -> (
+    -- show several lines before the error and everything afterward
+    err := get fn;
+    pat := ///(internal error|:[0-9][0-9]*:[0-9][0-9]*:\([0-9][0-9]*\):|/// |
+	///^GC|^0x|^out of mem|non-zero status|^Command terminated|/// |
+	///user.*system.*elapsed|^[0-9]+\.[0-9]+user|SIGSEGV| \*\*\* )///;
+    m := regex(///(.*\n){0,9}.*/// | pat | ///(.*\n)*///, err);
+    if m =!= null then substring(m#0, err) else get("!tail " | fn)
     )
 
 -----------------------------------------------------------------------------
@@ -543,6 +581,7 @@ installPackage = method(
 	MakeDocumentation      => true,
 	MakeHTML               => true,
 	MakeInfo               => true,
+	MakePDF                => false,
 	MakeLinks              => true,
 	-- until we get better dependency graphs between documentation
 	-- nodes, "false" here will confuse users
@@ -680,11 +719,14 @@ installPackage Package := opts -> pkg -> (
 	(hadError, numErrors) = (false, 0); -- declared in run.m2
 	generateExampleResults(pkg, rawDocumentationCache, exampleDir, exampleOutputDir, verboseLog, pkgopts, opts);
 
-	if not opts.IgnoreExampleErrors and hadError
-	then error("installPackage: ", toString numErrors, " error(s) occurred running examples for package ", pkg#"pkgname",
+	if hadError then (
+	    errmsg := ("installPackage: ", toString numErrors, " error(s) occurred running examples for package ", pkg#"pkgname",
 	    if opts.Verbose or debugLevel > 0 then ":" | newline | newline |
 	    concatenate apply(select(readDirectory exampleOutputDir, file -> match("\\.errors$", file)), err ->
-		err | newline |	concatenate(width err : "*") | newline | get("!tail " | exampleOutputDir | err)) else "");
+		err | newline |	concatenate(width err : "*") | newline | getErrors(exampleOutputDir | err)) else "");
+	    if opts.IgnoreExampleErrors
+	    then stderr << " -- warning: " << concatenate errmsg << endl
+	    else error errmsg);
 
 	-- if no examples were generated, then remove the directory
 	if length readDirectory exampleOutputDir == 2 then removeDirectory exampleOutputDir;
@@ -702,7 +744,7 @@ installPackage Package := opts -> pkg -> (
 
 	-- should this be here, or farther up? Note: assembleTree resets the counters, so stay above that.
 	if chkdoc and hadDocumentationError then error(
-	    toString numDocumentationErrors, " errors(s) occurred in processing documentation for package ", toString pkg);
+	    toString numDocumentationErrors, " error(s) occurred in processing documentation for package ", toString pkg);
 
 	if pkg#?rawKeyDB and isOpen pkg#rawKeyDB then close pkg#rawKeyDB;
 
@@ -724,7 +766,8 @@ installPackage Package := opts -> pkg -> (
 	-- ~22s for Macaulay2Doc
 	if chkdoc then (
 	    resetCounters();
-	    scan((if pkg#"pkgname" == "Macaulay2Doc" then Core else pkg)#"exported symbols", s -> (
+	    srcpkg := if pkg#"pkgname" == "Macaulay2Doc" then Core else pkg;
+	    scan(join (srcpkg#"exported symbols", srcpkg#"exported mutable symbols"), s -> (
 		    tag := makeDocumentTag s;
 		    if  not isUndocumented tag
 		    and not hasDocumentation tag
@@ -736,7 +779,6 @@ installPackage Package := opts -> pkg -> (
 				tag := makeDocumentTag m;
 				if  not isUndocumented tag
 				and not hasDocumentation tag
-				and not dispatcherMethod m
 				and signalDocumentationWarning tag then printerr(
 				    "warning: method has no documentation: ", toString tag,
 				    ", key ", toExternalString tag.Key,
@@ -745,7 +787,7 @@ installPackage Package := opts -> pkg -> (
 			))));
 
 	if chkdoc and hadDocumentationError then error(
-	    toString numDocumentationErrors, " errors(s) occurred in documentation for package ", toString pkg);
+	    toString numDocumentationErrors, " error(s) occurred in documentation for package ", toString pkg);
 
 	-- make info documentation
 	-- ~60 -> ~70s for Macaulay2Doc
@@ -757,6 +799,10 @@ installPackage Package := opts -> pkg -> (
 	if opts.MakeHTML then installHTML(pkg, installPrefix, installLayout, verboseLog, rawDocumentationCache, opts)
 	else verboseLog("not making documentation in HTML format");
 
+	-- make pdf documentation
+	if opts.MakePDF then installPDF(pkg, installPrefix, installLayout, verboseLog)
+	else verboseLog("not making documentation in PDF format");
+
 	if chkdoc and hadDocumentationWarning then printerr("warning: ",
 	    toString numDocumentationWarnings, " warning(s) occurred in documentation for package ", toString pkg);
 
@@ -766,6 +812,7 @@ installPackage Package := opts -> pkg -> (
     if not hadError then (
 	libDir := pkg#"package prefix" | replace("PKG", pkg#"pkgname", installLayout#"packagelib");
 	iname := libDir|".installed";
+	if not fileExists libDir then makeDirectory libDir;
 	iname << close;
 	verboseLog("file created: ", minimizeFilename iname);
 	);

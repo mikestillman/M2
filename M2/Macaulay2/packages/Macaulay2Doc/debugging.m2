@@ -81,7 +81,11 @@ document { Key => "debugError",
      }
 
 document { Key => "stopIfError",
-     Headline => "whether to stop the program when an error occurs"
+     Headline => "whether to stop the program when an error occurs",
+     PARA {
+	  "This can be useful for showing code in documentation examples that results
+	  in an error being raised.  For an example, see ", TO "assert", "."
+	  }     
      }
 document { Key => "interpreterDepth",
      Headline => "nesting depth of the interpreter",
@@ -209,8 +213,8 @@ document {
      TT "FilePosition", " -- a type of list designed to represent a position
      in a file.",
      PARA{},
-     "It's implemented as a list whose three elements are the file name,
-     the line number, and the column number."
+     "It's implemented as a list with 3, 5 or 7 elements. The first part is the file name, then each pair is a row/column position.
+     A single pair is a position, two form a range. The last pair is the central point of interest in that range."
      }
 
 
@@ -286,7 +290,7 @@ document {
 	  GenerateAssertions => Boolean => {
 	       "whether to print assertion statements that can be used as input to Macaulay2 to
 	       check the behavior of the function remains the same.  Arguments and values are prepared
-	       with ", TO "toExternalString", ", failure of which is sliently ignored."
+	       with ", TO "toExternalString", ", failure of which is silently ignored."
 	       }
 	  },
      Outputs => { Function => {"a new function that returns the same values that ", TT "f", " would have returned, but has a few side effects
@@ -299,7 +303,7 @@ document {
 	  are write-protected; fortunately, their methods are not, and can be replaced."
 	  },
      EXAMPLE lines ///
-     ker Matrix := on(lookup(ker,Matrix),GenerateAssertions=>true,Name=>"ker");
+     ker Matrix := on(lookup(ker,Matrix),GenerateAssertions=>true,Name=>"ker"); -* no-capture-flag *-
      f = x -> kernel (x|x);
      R = QQ[a..c];
      f vars R
@@ -307,16 +311,34 @@ document {
      SeeAlso => {"lookup"}
      }
 
-document {
-     Key => assert,
-     Headline => "assert something is true",
-	   Usage => "assert x",
-     TT "assert x", " prints an error message if x isn't true.",
-     EXAMPLE lines ///
-     assert( (2+2) === 4 )
-     ///,
-     SeeAlso => {"generateAssertions"}
-     }
+doc ///
+  Key
+    assert
+    (assert, Thing)
+    (assert, Expression)
+  Headline
+    check whether something is true, raise an error if not
+  Usage
+    assert x
+  Inputs
+    x:Thing
+  Description
+    Text
+      @TT "assert x"@ raises an error if @TT "x"@ isn't true.
+    Example
+      stopIfError = false;
+      assert( (2+2) === 4)
+      assert(rank matrix {{1, 2}, {2, 4}} == 2)
+    Text
+      If @TT "x"@ is an @TO Expression@ that evaluates to false, then
+      a partially evaluated form is printed with the error message to
+      assist in debugging.
+    Example
+      assert Equation(rank matrix {{1, 2}, {2, 4}}, 2)
+  SeeAlso
+    generateAssertions
+    "stopIfError"
+///
 
 document {
      Key => notImplemented,
@@ -384,20 +406,18 @@ document {
      beforehand.",
      }
 
-
--- TODO
-undocumented {
-    (code, ZZ),
-	  (code, List),
-	  (code, Sequence),
-	  (code, Function),
-	  (code, Symbol),
-	  (code, Command),
-	  (code, Pseudocode),
-	  (code, Nothing)}
+undocumented {(code, Nothing)}
 
 document {
-     Key => code,
+  Key => {
+    code,
+   (code, Symbol),
+   (code, Command),
+   (code, Function),
+   (code, Sequence),
+   (code, Pseudocode),
+   (code, List),
+   (code, ZZ)},
      Headline => "display source code",
      SYNOPSIS (
 	  Usage => "code f",
@@ -464,7 +484,8 @@ document {
 		    Such a list can be obtained, for example, with ", TO "methods", "."
 		    }},
 	  EXAMPLE "code methods use"
-	  }
+	  },
+     SeeAlso => {"edit", "methods"}
      }
 
 document {
@@ -541,6 +562,8 @@ document {
   Key => {
     methods,
    (methods, Command),
+   (methods, Manipulator),
+   (methods, Package),
    (methods, Sequence),
    (methods, Thing),
    (methods, ScriptedFunctor),
@@ -551,7 +574,7 @@ document {
      SYNOPSIS (
 	  Usage => "methods x",
 	  Inputs => {
-	       "x" => { ofClass{Function,Type,Keyword} }
+	       "x" => { ofClass{Function,Type,Keyword,Package} }
 	       },
 	  Outputs => {{
 		    ofClass VerticalList, " of those methods associated with ", TT "x"
@@ -590,7 +613,11 @@ document {
      "This function operates by examining those types that are values of
      global symbols for keys that appear to be storing references to
      methods.  Types that don't appear as values of global variables will
-     not be examined, so perhaps not all methods will be found."
+     not be examined, so perhaps not all methods will be found.",
+     SeeAlso => {
+	 (options, ZZ), (code, ZZ), (code, List),
+	 (locate, List), (makeDocumentTag, List)
+	 }
      }
 
 document { Key => "backtrace",

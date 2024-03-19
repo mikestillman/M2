@@ -3,11 +3,11 @@ newPackage(
         Version => "0.1", 
         Date => "",
         Authors => {{Name => "Ayah Almousa", 
-                Email => "", 
-                HomePage => ""}
+                Email => "almou007@umn.edu", 
+                HomePage => "http://sites.google.com/view/ayah-almousa"},
             {Name => "Mike Stillman", 
                 Email => "mike@math.cornell.edu", 
-                HomePage => "http://pi.math.cornell.edu/~mike"}},
+                HomePage => "http://pi.math.cornell.edu/~mike"}
         },
         Headline => "functions for investigating Hilbert schemes",
         PackageExports => {
@@ -30,7 +30,9 @@ export {
     "dimHilbTangentSpace",
     "randomPtOnLex",
     "canonicalDistraction",
-    "randomCanonicalDistraction"
+    "randomCanonicalDistraction",
+    "makeRandomCanonicalDistractionHyperplanes",
+    "fanComponents"
     }
 
 -- Utility routines --
@@ -326,7 +328,7 @@ TEST ///
   Slex = ZZ/101[a..e, MonomialOrder => Lex]
   gJlex = sub(gJ, Slex)
   groebnerBasis(gJlex, Strategy=>"F4");
-  gens gb gJlex
+--  gens gb gJlex --very slow
 
 
   S = ZZ/101[a..d]
@@ -473,8 +475,7 @@ TEST ///
   hilbertRepresentatives(S, {4,7,11,16,21,25});
   hilbertRepresentatives(S, {3,6,10,15,21,25});
   hilbertRepresentatives(S, {3,6,10,15,20,25});
-  
-  
+    
 
   Slex = (coefficientRing S)[gens S, MonomialIdeal => Lex]
   
@@ -564,9 +565,354 @@ TEST ///
 -- Part 6. Radius of the Hilbert scheme?
 ------------------------------
 
+
+-----------------------------
+-- Documentation
+-----------------------------
+
 beginDocumentation()
 
+doc ///
+    Key
+      HilbertSchemes
+    Headline
+      a package for investigating Hilbert schemes
+    Description
+      Text
+       This package provides functions for investigating Hilbert schemes. For example, it allows one to study Hilbert polynomials or saturated
+       lex ideals associated to Macaulay or Gotzmann partitions.
+      Example
+       S = ZZ/101[a..f];
+       M = genericSymmetricMatrix(S, a, 3);
+       I = minors(2, M) --Veronese in P4
+       f = HP(I) --non-Projective Hilbert polynomial of I
+       m = mVector f --Macaulay decomposition for f
+       A = MtoA m -- A-vector for lex ideal with Hilbert polynomial f    
+      Text
+      	  In addition, this package contains methods to study Hartshorne fans and canonical distractions of monomial ideals,
+	  as well as to study the dimension of the tangent space at a point on the Hilbert scheme.
+      Example
+      	  m = new Partition from {4,3}
+      	  L = monomialIdeal lexIdeal(m,S)
+	  netList fanComponents L
+	  netList{decompose canonicalDistraction(L, symbol t), decompose randomCanonicalDistraction(L)}
+///
 
+doc ///
+    Key
+    	HP
+	(HP,Ideal)
+	(HP,Ideal,RingElement)
+	(HP,Module)
+	(HP,Module,RingElement)
+	(HP,Partition,RingElement)
+    Headline
+    	Compute the Hilbert Polynomial of an ideal or module
+    Usage
+    	HP(I)
+	HP(I,z)
+	HP(M)
+	HP(M,z)
+	HP(mvec,z)
+    Inputs
+    	I:Ideal
+	z:RingElement
+	    variable used in output of Hilbert polynomial
+	M:Module
+	mvec:Partition
+    Description
+    	Text
+	    Given an ideal, module, or partition, HP outputs the (non-projective) Hilbert polynomial associated to it.
+	    Inputting a RingElement changes the variable used in the polynomial.
+	Example
+	    S = ZZ/101[a..d];
+	    I = monomialCurveIdeal(S, {1,2,3});
+  	    HP I
+  	    HP(I, c)
+	Text
+	    Given a partition, HP outputs the Hilbert polynomial associated to it using Macaulay's theorem.
+	Example
+	    p = new Partition from {4,3}
+    	    HP(p,c)
+///
+
+doc ///
+    Key
+    	fanComponents
+	(fanComponents,MonomialIdeal)
+	
+    Headline
+    	computes Hartshorne fan components of a monomial ideal
+    Usage
+    	fancomponents(I)
+    Inputs
+    	I:MonomialIdeal
+    Description
+    	Text
+	    Given a monomial ideal J, fanComponents computes the irreducible (linear) components of the Hartshorne fan of J. 
+	    See Reeves 1995 or Hartshorne 1966.   
+	Example
+	    S = ZZ/101[a..d];
+  	    J = monomialIdeal"a,b4,b3c"
+  	    netList fanComponents J
+///
+
+doc ///
+    Key
+    	randomPtOnLex
+	(randomPtOnLex,Partition,Ring)
+    Headline
+    	Outputs random point on the lex component of the Hilbert scheme
+    Usage
+    	randomPtOnLex(M,S)
+    Inputs
+    	M:Partition
+	S:Ring
+    Outputs
+    	:Ideal
+    Description
+    	Text
+	    Given a Macaulay partition associated to a Hilbert polynomial of an ideal in the ring S,
+	    randomPtOnLex outputs a random point on the lexicographic component of the Hilbert Scheme associated to
+	    the polynomial with that Macaulay partition.
+	Example
+	    S = ZZ/101[a..d];
+  	    p = new Partition from {4,3}
+  	    J = randomPtOnLex(p, S)
+///
+
+doc///
+    Key
+    	macaulayHP
+	(macaulayHP,List,RingElement)
+	(macaulayHP,Partition,RingElement)
+    Headline
+    	Computes a Hilbert polynomial associated to a Macaulay partition
+    Usage
+    	macaulayHP(L,z)
+	macaulayhP(M,z)
+    Inputs
+    	L:List
+	M:Partition
+	z:RingElement
+    Description
+    	Text
+	    Computes a Hilbert polynomial associated to a Macaulay partition
+    	Example
+	    A = ZZ/101[t];
+  	    p = new Partition from {4,3};
+	    macaulayHP(p, t)
+    	Text
+	    Observe that the Hilbert polynomial computed from a Macaulay partition is
+	    equal to the Gotzmann Hilbert polynomial of the conjugate partition.
+	Example
+	     gotzmannHP(conjugate p, t)
+///
+
+doc///
+    Key
+    	MtoA
+	(MtoA,List)
+	(MtoA,Partition)
+    Headline
+    	Converts an M-vector into its associated A-vector
+    Usage
+    	MtoA(L)
+	MtoA(p)
+    Inputs
+    	L:List
+	p:Partition
+    Description
+    	Text
+	    The A-vector gives rise to a unique, saturated lexicographic ideal associated to that Hilbert polynomial;
+	    see e.g. Reeves-Stillman 1997. MtoA gives the associated A-vector corresponding to the M-vector satisfying Macaulay's theorem.
+    	Example
+	    M = {4,3};
+	    MtoA(M)
+///
+
+doc///
+    Key
+    	gotzmannHP
+	(gotzmannHP,List,RingElement)
+	(gotzmannHP,Partition,RingElement)
+    Headline
+    	Computes a Hilbert polynomial associated to a partition using Gotzmann's theorem
+    Usage
+    	gotzmannHP(L,z)
+	gotzmannHP(M,z)
+    Inputs
+    	L:List
+	M:Partition
+	z:RingElement
+    Description
+    	Text
+	    Computes a Hilbert polynomial associated to a partition using Gotzmann's theorem.
+    	Example
+	    A = ZZ/101[t];
+  	    p = new Partition from {4,3};
+	    gotzmannHP(p, t)
+    	Text
+	    Observe that the Hilbert polynomial computed from a Gotzmann decomposition is
+	    equal to the Hilbert polynomial computed using Macaulay's theorem on the conjugate partition.
+	Example
+	     macaulayHP(conjugate p, t)
+///
+
+doc///
+    Key
+    	canonicalDistraction
+	(canonicalDistraction,MonomialIdeal,Thing)
+    Headline
+    	Computes the canonical distraction of a monomial ideal
+    Usage
+    	canonicalDistraction(I,t)
+    Inputs
+    	I:MonomialIdeal
+	t:Thing
+    Outputs
+    	:Ideal
+	    canonical distraction of I
+    Description
+    	Text
+	    Let J be the standard polarization of an ideal I. The canonical distraction of I is the image of J under the map
+	    $z_{i,j} \mapsto x_i - t_{i,j} x_n$. 
+	    By Theorem 4.9 of [Harshrone 1996], the canonical distraction of $I$ is an intersection of prime ideals of the form
+	    $
+	    (x_{i_1}-t_{i_1, j_1} x_0, \dots, x_{i_s}-t_{i_s, j_s} x_0)
+	    $
+	    with $i_1 < i_2 < \dots < i_s$.
+	Example
+	    S = ZZ/101[a..d];
+	    I = monomialIdeal"a,b4,b3c"
+	    dist = canonicalDistraction(I, symbol t)
+	    netList decompose dist
+	    netList fanComponents I
+    Caveat
+    	It is assumed that the input ideal I does not have any generators involving the last variable in S = ring I.
+///
+
+doc///
+    Key
+    	HF
+	(HF,Ideal,ZZ)
+	(HF,Ideal,ZZ,ZZ)
+	(HF,Module,ZZ,ZZ)
+	(HF,Ring,ZZ,ZZ)
+///
+
+doc///
+    Key
+    	dimHilbTangentSpace
+	(dimHilbTangentSpace,Ideal)
+    Headline
+    	Computes the dimension of the tangent space of the Hilbert Scheme at a point
+    Usage
+    	dimHilbTangentSpace(I)
+    Inputs
+    	I:Ideal
+    Description
+    	Text
+	    Given an ideal I, dimHilbTangentSpace outputs the dimension of the tangent space of the Hilbert Scheme
+	    on which I lies at the point I.
+	Example
+	    S = ZZ/101[a..d];
+  	    A = QQ[t];
+  	    hp = macaulayHP(new Partition from {4,3}, t) --Hilbert polynomial for the twisted cubic curve
+  	    Bs = stronglyStableIdeals(hp, S) --list of Borel-fixed ideals with Hilbert polynomial hp
+	    Bs/dimHilbTangentSpace
+///
+
+doc///
+    Key
+    	mVector
+	(mVector,Ideal)
+	(mVector,RingElement)
+    Headline
+    	Compute Macaulay decomposition of a Hilbert polynomial
+    Usage
+    	mVector(I)
+	mVector(hp)
+    Inputs
+    	I:Ideal
+	hp:RingElement
+	    non-projective Hilbert polynomial
+    Outputs
+    	:Partition
+	    M-vector associated to a Hilbert polynomial
+    Description
+    	Text
+    	    Given an ideal or a Hilbert polynomial, mVector computes the Macaulay partition associated to the Hilbert polynomial.
+	Example
+	    S = ZZ/101[a..d];
+  	    I = monomialCurveIdeal(S, {1,2,3}) --twisted cubic curve
+	    mVector(I)
+	    mVector(HP(I))
+///
+
+doc///
+    Key
+    	randomCanonicalDistraction
+	(randomCanonicalDistraction,MonomialIdeal)
+	(randomCanonicalDistraction,MonomialIdeal,HashTable)
+    Headline
+    	Compute a random canonical distraction of a monomial ideal
+    Usage
+    	randomCanonicalDistraction(I)
+	randomCanonicalDistraction(I,H)
+    Inputs
+    	I:Ideal
+	H:HashTable
+    Description
+    	Text
+	    Given a monomial ideal J, produces a random canonical distraction of J.
+	Example
+	    S = ZZ/101[a..d];
+	    I = monomialIdeal"a,b4,b3c"
+	    dist = canonicalDistraction(I, symbol t)
+	    randomDist = randomCanonicalDistraction(I)
+	    netList{decompose dist, decompose randomDist}
+///
+
+doc///
+    Key
+    	AtoM
+	(AtoM,List)
+    Headline
+    	Converts an A-vector into its associated M-vector
+    Usage
+    	AtoM(L)
+    Inputs
+    	L:List
+    Description
+    	Text
+	    The A-vector gives rise to a unique, saturated lexicographic ideal associated to that Hilbert polynomial;
+	    see e.g. Reeves-Stillman 1997. AtoM gives the associated M-vector corresponding to the Macaulay partition
+	    corresponding to the Hilbert polynomial of the lexicographic ideal associated to the vector A.
+	Example
+	    A = {11,3,4}
+	    AtoM(A)
+///
+
+doc///
+    Key
+	(lexIdeal,Partition,Ring)
+    Headline
+    	Computes the saturated lex ideal associated to a Macaulay partition
+    Usage
+    	lexIdeal(M,S)
+    Inputs
+    	M:Partition
+	S:Ring
+    Description
+    	Text
+	    Given a Macaulay partition, computes the unique saturated lex ideal with a Hilbert polynomial corresponding to that partition.
+	Example
+	      S = ZZ/101[a..d];
+  	      p = new Partition from {4,3};
+  	      L = lexIdeal(p, S)
+	      HP(L)
+///
 end---------------------------------------------------------------
 
 
@@ -628,3 +974,17 @@ hilbViaPartition {3,3,3,3,2,2,2,1,1,1,1,1,1,1,1,1,1,1} -- veronese: lex has regu
 L = lexIdeal(S, new Partition from {18, 7, 4})
 hp = hilbertPolynomial(L, Projective => false)
 netList for d from 0 to 30 list {d, hilbertFunction(d, L), sub(hp, {(ring hp)_0 => d})}
+
+
+------------------------------------
+--Development Section
+------------------------------------
+
+restart
+uninstallPackage "HilbertSchemes"
+restart
+installPackage "HilbertSchemes"
+restart
+needsPackage "HilbertSchemes"
+elapsedTime check "HilbertSchemes"
+viewHelp "HilbertSchemes"

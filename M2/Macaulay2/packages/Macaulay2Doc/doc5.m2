@@ -26,7 +26,7 @@ document {
      	  of optional arguments for method functions that accept them."
 	  },
      EXAMPLE {
-	  "defs = new HashTable from { a => 1, b => 2 };",
+	  "defs = new OptionTable from { a => 1, b => 2 };",
 	  "override(defs, (4,b=>6,5))"
 	  }
      }
@@ -129,40 +129,6 @@ document {
      }
 
 document {
-     Key => tally,
-     Headline => "tally the elements of a list or sequence",
-     TT "tally x", " tallies the frequencies of items in a list or sequence x.",
-     SeeAlso => "Tally"
-     }
-
-TEST ///
-assert( toString tally {1,1,1,2,1,3,2} === "new Tally from {1 => 4, 2 => 2, 3 => 1}" )
-assert( tally {1,1,1,2,1,3,2} === new Tally from {(1,4),(2,2),(3,1)} )
-///
-
-document {
-	Key => (tally, VisibleList),
-	Headline => "tally the elements of a list, sequence, or array",
-	Usage => "y = tally x",
-	Inputs => {
-		"x" => {}
-		},
-	Outputs => {
-		"y" => "a listing of tallied results"
-		},
-	"It produces an hash table (multiset) ", TT "y", " which tallies the
-     frequencies of occurrences of items in the list ", TT "x", ", i.e.,
-     ", TT "y_i", " is the number of times ", TT "i", " appears in ", TT "x", ", or is ", TT "0", " if
-     ", TT "i", " doesn't appear in the list.",
-     EXAMPLE {
-	  "y = tally {1,2,3,a,b,1,2,a,1,2,{a,b},{a,b},a}",
-       	  "y_2",
-	  "y_5",
-	  "y_{a,b}",
-	  }
-  }
-
-document {
      Key => Set, 
      Headline => "the class of all sets",
      "Elements of sets may be any immutable object, such as integers, ring elements
@@ -173,7 +139,7 @@ document {
 	  "B = set{a^2-b*c,b*d}"
 	  },
      "Set operations, such as ", 
-     TO2((member,Thing,Set),"membership"), ", ",     
+     TO2((isMember,Thing,Set),"membership"), ", ",     
      TO2((symbol+,Set,Set),"union"), ", ",
      TO2((symbol*,Set,Set),"intersection"), ", ",
      TO2((symbol-,Set,Set),"difference"), ", ",

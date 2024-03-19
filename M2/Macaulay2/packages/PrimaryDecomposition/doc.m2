@@ -205,16 +205,16 @@ Node
       apply(comps, Q -> ideal mingens(I + ideal gens Q))
       I == intersect oo
     Text
-      The results of the computation are stored in @TT "M.cache#\"primaryComponents\""@,
-      which is a @TO "HashTable"@ whose keys are associated primes and values are the
+      The results of the computation are stored inside @TT "M.cache"@,
+      as a @TO "MutableHashTable"@ whose keys are associated primes and values are the
       corresponding primary components.
-      The list of all associated prime ideals is also cached can be obtained with @TT "associatedPrimes M"@.
+      The list of all associated prime ideals is also cached, and can be obtained with @TT "associatedPrimes M"@.
       The computation may be interrupted at any point, and can be resumed later without recomputing already
       known primary components. To display detailed information throughout the computation, set the global variable
       @TO "debugLevel"@ to a value greater than 0, e.g. @TT "debugLevel=1"@ (or @TT "debugLevel=2"@ for even more detail).
 
       This function has one optional input @TT "Strategy"@, which accepts 3
-      values that determine the algorithm for finding embedded components.
+      possible values that determine the algorithm for finding embedded components.
 
 -- FIXME
       @UL {
@@ -562,7 +562,7 @@ Node
       To use this strategy, the field @TT "Strategy"@ should be a list of two integers, indicating the
       strategy to use for finding associated primes and localizing, respectively.
 
-      {\bf Warning:} Setting the second paramter to 1 works only if the ideal is homogeneous and equidimensional.
+      {\bf Warning:} Setting the second parameter to 1 works only if the ideal is homogeneous and equidimensional.
     Example
       Q = QQ[x,y];
       I = intersect(ideal(x^2), ideal(y^2))

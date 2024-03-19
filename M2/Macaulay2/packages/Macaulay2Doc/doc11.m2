@@ -41,45 +41,6 @@ document {
 	  ///,
      SeeAlso => { directSum, (symbol ++, Module, Module), (symbol **, Module, Module), (Hom,Module,Module), Expression, FunctionApplication}
      }
-TEST ///
-     assert( (     M = ZZ^2 ++ ZZ^3) === ZZ^5 );
-     assert( (     formation M) === new FunctionApplication from {directSum,(ZZ^2,ZZ^3)} );
-     assert( (     M = directSum(ZZ^2, ZZ^3, ZZ^4)) === ZZ^9 );
-     assert( (     formation M) === new FunctionApplication from {directSum,(ZZ^2,ZZ^3,ZZ^4)} );
-     assert( (     M = ZZ^2 ** ZZ^3) === ZZ^6 );
-     assert( (     formation M) === new FunctionApplication from {tensor,(ZZ^2,ZZ^3)} );
-///
-
-document {
-     Key => html,
-     Headline => "convert to html format",
-	Usage => "html x",
-	Inputs => {"x" => {}},
-	Outputs => {String => {}},
-     TT "html x", " converts ", TT "x", " from ", TO "hypertext", " to html format",
-     PARA{},
-     "The return value is a string that is suitable for use in an
-     html file, readable by a world wide web client.
-     When no html conversion is available,", TO "tex", "is called.
-     (La)TeX can be rendered in the browser using MathJax or Katex.
-     ",
-     SeeAlso => "mathML"
-     }
-
-document {
-     Key => {EXAMPLE,(EXAMPLE, VisibleList),(EXAMPLE, String)},
-     Headline => "hypertext EXAMPLE item",
-     Usage => "EXAMPLE x",
-     Inputs => {"x" => {"a string or list of strings or objects of class ", TO "PRE", "."}},
-     Outputs => {TABLE => {"a table containing the examples.  Each string
-	       will be interpreted by ", TO "installPackage", ", if the table is included in the input provided to ", TO "document", ",
-	       as example input to be evaluated so the result can be displayed
-	       in the documentation.  Each object of class ", TO "PRE", " will be inserted unchanged into the documentation
-	       as example output."}},
-     "For example, the code", PRE ///EXAMPLE { "1+1"}///, "produces a display that looks like this:",
-     EXAMPLE {"1+1"},
-     SeeAlso => "hypertext"
-     }
 
 document {
      Key => {Command,(symbol SPACE,Command,Thing)},
@@ -108,7 +69,7 @@ document {
      Outputs => {{ "a list equivalent to ", TT "x", ", in which runs and sequences have been expressed 
 	       symbolically as ", TO2{Expression,"expressions"}}},
      PARA {"The result is useful in printed displays, as a way of making them more compact.  The original list can
-	  be recovered by appying ", TO "value", " to the elements of the result, and then using ", TO "deepSplice", ",
+	  be recovered by applying ", TO "value", " to the elements of the result, and then using ", TO "deepSplice", ",
 	  provided that ", TT "x", " contains no entries that are sequences."},
      EXAMPLE lines ///
      x = {1,2,3,a,b,c,a,b,c,4,4,4,"asdf"};
@@ -122,8 +83,6 @@ document {
      }
 
 undocumented { 
-     (texMath,BettiTally),
-     (toExternalString,RingElement), (toExternalString,RingMap),
      (symbol ==, Constant, RingElement),
      (symbol ==, RingElement, Constant),
      ((symbol SPACE, symbol =), Function, Thing),

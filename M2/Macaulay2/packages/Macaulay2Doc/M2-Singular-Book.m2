@@ -88,7 +88,7 @@ document {
      Key => "Singular Book 1.1.8",
      Headline => "computation in fields",
      SUBSECTION "Computation over ZZ and QQ",
-     "In Macaulay2, Integers are arbitary precision.  The ring of integers is denoted ZZ.",
+     "In Macaulay2, Integers are arbitrary precision.  The ring of integers is denoted ZZ.",
      EXAMPLE {
 	  "123456789^5",
 	  "matrix{{123456789^5}}",
@@ -898,7 +898,7 @@ document {
      "H is a subquotient module.  In Macaulay2, the most general form of a
      module is as a subquotient: a submodule of a cokernel module.  For more about
      subquotient modules, see ", TO "modules", ".  ",
-     -- Mike wanted this: "For more about Hom and their corresponding homorphisms, see ", TO "Hom and homomorphisms", ".",
+     -- Mike wanted this: "For more about Hom and their corresponding homomorphisms, see ", TO "Hom and homomorphisms", ".",
      EXAMPLE {
 	  "f = homomorphism H_{0}",
           "target f === N",

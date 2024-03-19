@@ -8,7 +8,7 @@ Node
   Description
     Text
       Here is a list of the packages that are distributed with Macaulay2.
-      The ones that have been refereed are marked with a star.
+      The ones that have been refereed and published are marked with a star.
     Code
       star := IMG {"src" => replace("PKG", "Style", currentLayout#"package") | "GoldStar.png", "alt" => "a gold star"};
       categories := new MutableHashTable from {};
@@ -63,7 +63,7 @@ Node
 	      ));
       -- TODO: simplify this when sort takes a SortStrategy
       c := 0;
-      htmlLiteral := value Core#"private dictionary"#"htmlLiteral";
+      htmlLiteral := core "htmlLiteral";
       PARA{between_", \n" (last \ sort apply(pairs authors, (name, entry) -> (
 		      link := ANCHOR{htmlLiteral name,
 			  "href"  => htmlLiteral entry#"href",
@@ -161,7 +161,7 @@ Node
     Text
       Creating a package is the most common way of contributing to Macaulay2. Packages can contain
       code for working with objects of a certain category, generating examples for testing a conjecture,
-      or an implemention of algorithms introduced in the literature.
+      or an implementation of algorithms introduced in the literature.
 
     Tree
       :There are five parts to a Macaulay2 package

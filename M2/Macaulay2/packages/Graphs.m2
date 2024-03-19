@@ -24,34 +24,32 @@ of the License, or any later version.
 ------------------------------------------
 ------------------------------------------
 
-newPackage select((
+newPackage (
     "Graphs",
-        Version => "0.3.3",
-        Date => "21. August 2020",
+        Version => "0.3.4",
+        Date => "May 15, 2021",
         Authors => {
             {Name => "Jack Burkart", Email => "jburkar1@nd.edu"},
-            {Name => "David Cook II", Email => "dwcook@eiu.edu", HomePage => "http://ux1.eiu.edu/~dwcook/"},
-            {Name => "Caroline Jansen", Email => "cjansen@nd.edu"},
-            	{Name => "Amelia Taylor", Email => "originalbrickhouse@gmail.com"},
+            {Name => "David Cook II", Email => "dcook.math@gmail.com", HomePage => "http://ux1.eiu.edu/~dwcook/"},
+            {Name => "Caroline Jansen", Email => "cjansen@alumni.nd.edu"},
+            {Name => "Amelia Taylor", Email => "originalbrickhouse@gmail.com"},
             {Name => "Augustine O'Keefe", Email => "aokeefe@tulane.edu"},
-            {Name => "Contributers of note: Carlos Amendola, Alex Diaz, Luis David Garcia Puente, Roser Homs Pons, Olga Kuznetsova,  Shaowei Lin, Sonja Mapes, Harshit J Motwani, Mike Stillman, Doug Torrance"}
+            {Name => "Contributors of note: Carlos Amendola, Alex Diaz, Luis David Garcia Puente, Roser Homs Pons, Olga Kuznetsova,  Shaowei Lin, Sonja Mapes, Harshit J Motwani, Mike Stillman, Doug Torrance"}
         },
         Headline => "graphs and directed graphs (digraphs)",
 	Keywords => {"Graph Theory"},
         Configuration => {
-            "DotBinary" => "dot",
-            "JpgViewer" => "display"
+            "DotBinary" => "dot"
             },
 	PackageImports => { "PrimaryDecomposition" },
         PackageExports => {
             "SimplicialComplexes"
             },
-        DebuggingMode => false,
-        ), x -> x =!= null)
+        DebuggingMode => false
+        )
 
 -- Load configurations
 graphs'DotBinary = if instance((options Graphs).Configuration#"DotBinary", String) then (options Graphs).Configuration#"DotBinary" else "dot";
-graphs'JpgViewer = if instance((options Graphs).Configuration#"JpgViewer", String) then (options Graphs).Configuration#"JpgViewer" else "display";
 
 -- Exports
 export {
@@ -67,6 +65,7 @@ export {
     -- Basic data
     "adjacencyMatrix",
     "degreeMatrix",
+    "degreeSequence",
     "edges",
     "incidenceMatrix",
     "laplacianMatrix",
@@ -129,7 +128,6 @@ export {
     "cliqueNumber",
     "closedNeighborhood",
     "clusteringCoefficient",
-    "connectedComponents",
     "coverIdeal",
     "criticalEdges",
     "degeneracy",
@@ -141,7 +139,6 @@ export {
     "DFS",
     "descendants",
     "descendents",
-    "diameter",
     "distance",
     "distanceMatrix",
     "eccentricity",
@@ -197,7 +194,6 @@ export {
     --
     -- Graph operations
     "cartesianProduct",
-    "directProduct",
     "disjointUnion",
     "graphComposition",
     "graphPower",
@@ -250,6 +246,9 @@ runcmd := cmd -> (
 ------------------------------------------
 Digraph = new Type of HashTable
 Graph = new Type of Digraph
+
+Digraph.synonym = "digraph"
+Graph.synonym = "graph"
 
 digraph = method(Options => {symbol Singletons => null, symbol EntryMode => "auto"})
 digraph List := Digraph => opts -> L -> (
@@ -363,6 +362,9 @@ degree (Digraph,Thing) := ZZ => (D,v) -> #(children(D,v) + parents(D,v))
 degreeMatrix = method()
 degreeMatrix Digraph := Matrix => G -> diagonalMatrix apply(entries transpose adjacencyMatrix G, a -> #positions(a, j -> j != 0))
 
+degreeSequence = method()
+degreeSequence Graph := List => G -> rsort \\ sum \ entries adjacencyMatrix G
+
 edges = method()
 edges Digraph := List => D -> (
     V := vertexSet D;
@@ -395,7 +397,7 @@ displayGraph = method()
 displayGraph (String, String, Digraph) := (dotfilename, jpgfilename, G) -> (
      writeDotFile(dotfilename, G);
      runcmd(graphs'DotBinary  | " -Tjpg " | dotfilename | " -o " | jpgfilename);
-     runcmd(graphs'JpgViewer  | " " | jpgfilename|" &");
+     show URL("file://" | toAbsolutePath jpgfilename);
      )
 displayGraph (String, Digraph) := (dotfilename, G) -> (
      jpgfilename := temporaryFileName() | ".jpg";
@@ -415,15 +417,29 @@ showTikZ Digraph := opt -> G -> (
      get output
      )
 
+html Digraph := G -> if G.cache#?"svg" then G.cache#"svg" else (
+     dotfilename := temporaryFileName() | ".dot";
+     writeDotFile(dotfilename, G);
+     svgfilename := temporaryFileName() | ".svg";
+     runcmd(graphs'DotBinary  | " -Tsvg " | dotfilename | " -o " | svgfilename);
+     G.cache#"svg" = get svgfilename
+     )
+
 writeDotFile = method()
-writeDotFile (String, Graph) := (filename, G) -> (
+writeDotFile (String, Graph) := (filename, G) ->
+    writeDotFileHelper(filename, G, "graph", "--")
+writeDotFile (String, Digraph) := (filename, G) ->
+    writeDotFileHelper(filename, G, "digraph", "->")
+
+writeDotFileHelper = (filename, G, type, op) -> (
     fil := openOut filename;
-    fil << "graph G {" << endl;
+    fil << type << " G {" << endl;
     V := vertexSet G;
-    scan(#V, i -> fil << "\t" | toString i | " [label=\""|toString V_i|"\"];" << endl);
-    A := adjacencyMatrix G;
-    E := flatten for i from 0 to #V - 1 list for j from i+1 to #V - 1 list if A_(i,j) == 1 or A_(j,i) == 1 then {i, j} else continue;
-    scan(E, e -> fil << "\t" | toString e_0 | " -- " | toString e_1 | ";" << endl);
+    I := hashTable apply(#V, i -> V_i => i);
+    scan(V, v -> fil << "\t" << I#v << " [label=\"" << toString v << "\"];" << endl);
+    E := toList \ edges G;
+    scan(E, e -> fil << "\t" << I#(e_0) << " " << op << " " << I#(e_1) << ";"
+	<< endl);
     fil << "}" << endl << close;
     )
 
@@ -454,9 +470,9 @@ lineGraph Graph := Graph => (G) -> (
             );   
          ); 
       );
-   --non-singeltons
+   --non-singletons
    nS:=unique flatten EE;
-   --singeltons
+   --singletons
    S:=for e in E list if member(e,nS)===false then e else continue;
    return graph(EE,Singletons=>S);
 )
@@ -574,7 +590,7 @@ lollipopGraph (ZZ, ZZ) := Graph => (m,n) -> (
 
 monomialGraph = method()
 monomialGraph (MonomialIdeal, ZZ) := Graph => (I, d) -> (
-    V := first entries basis(d, quotient I);
+    V := first entries lift(basis(d, quotient I),ring I);
     E := {};
     for v in V do(
         L := select(V, i -> first degree lcm (v,i) == d+1);
@@ -727,8 +743,9 @@ chromaticNumber = method()
 chromaticNumber Graph := ZZ => G -> (
     if #edges G == 0 and #vertexSet G == 0 then 0
     else if #edges G == 0 and #vertexSet G != 0 then 1
+    else if isBipartite G then 2
     else (
-        chi := 2;
+        chi := 3;
         J := coverIdeal G;
         m := product gens ring J;
         while ((m^(chi - 1) % J^chi) != 0) do chi = chi+ 1;
@@ -757,7 +774,7 @@ clusteringCoefficient (Graph, Thing) := QQ => (G,v) -> (
     2 * #edges G' / (#N * (#N - 1))
     )
 
-connectedComponents = method()
+-- the 'conneectedComponents' methods is defined in 'SimplicialComplexies'
 connectedComponents Graph := List => G -> (
     V := vertexSet G;
     while #V != 0 list (
@@ -879,7 +896,6 @@ descendants = method()
 descendants (Digraph, Thing) := Set => (D,v) -> set flatten breadthFirstSearch(D, v)
 descendents = descendants
 
-diameter = method()
 diameter Graph := ZZ => G -> (
     allEntries := flatten entries distanceMatrix G;
     if member(-1, allEntries) then infinity else max allEntries
@@ -1234,7 +1250,8 @@ hasOddHole = method()
 hasOddHole Graph := Boolean => G -> any(ass (coverIdeal G)^2, i -> codim i > 3)
 
 isBipartite = method()
-isBipartite Graph := Boolean => G -> chromaticNumber G <= 2
+isBipartite Graph := Boolean => G ->
+    try bipartiteColoring G then true else false
 
 isCM = method()
 isCM Graph := Boolean => G -> (
@@ -1351,7 +1368,7 @@ cartesianProduct(Graph, Graph) := Graph => (G, H) -> (
     graph(V, E, EntryMode => "edges")
     )
 
-directProduct = method()
+-- the 'directProduct' method is defined in 'Polyhedra'
 directProduct(Graph,Graph) := Graph => (G, H) -> (
     V := toList(set vertexSet G ** set vertexSet H);
     E := flatten for u in V list for v in V list
@@ -1466,7 +1483,6 @@ bipartiteColoring Graph := List => G -> (
     n := # vertexSet G;
     v := 0;
     if n == 0 then return {{},{}};
-    if not isBipartite G then error "graph must be bipartite";
     D := new MutableList from toList(n: infinity);
     while v != n do (
         uncolored := {position(toList D, i -> i == infinity)};
@@ -1481,7 +1497,8 @@ bipartiteColoring Graph := List => G -> (
                     D#y = 1 + D#x;
                     v = v + 1;
                     uncolored = append(uncolored, y);
-                    );
+                    ) else if (D#x - D#y) % 2 == 0 then
+                        error "graph must be bipartite";
                 );
             );
         );
@@ -1807,6 +1824,7 @@ doc ///
         (graph, Matrix)
         [graph, Singletons]
         [graph, EntryMode]
+	EntryMode
     Headline
         Constructs a simple graph
     Usage
@@ -1855,7 +1873,7 @@ doc ///
             The hash table with a graph's vertices as keys and list of neighbors as values.
     Description
         Text
-            A graph consists of two sets, a vertex set and an edge set which is a subset of the collection of subsets of the vertex set. Edges in graphs are symmetric or two-way; if u and v are vertices then if {u,v} is an edge connecting them, {v,u} is also an edge (which is implicit in the definition, we will almost always just use one of the pairs). The options for EntryMode are "neighbors" (the default) and "edges."  This method returns a hash table where the keys are vertices of a given graph or digraph and the values are their children (or neighbors, in the case of undirected graphs).
+            A graph consists of two sets, a vertex set and an edge set which is a subset of the collection of subsets of the vertex set. Edges in graphs are symmetric or two-way; if u and v are vertices then if {u,v} is an edge connecting them, {v,u} is also an edge (which is implicit in the definition, we will almost always just use one of the pairs). The options for EntryMode are "neighbors" (the default) and "edges".  This method returns a hash table where the keys are vertices of a given graph or digraph and the values are their children (or neighbors, in the case of undirected graphs).
         Example
             G = graph digraph({{1,2},{2,1},{3,1}}, EntryMode => "edges")
             G = graph digraph(matrix {{0,1,1},{1,0,0},{1,0,0}})
@@ -1884,7 +1902,7 @@ doc ///
         A:Matrix
     Description
         Text
-            The adjacency matrix is the n by n matrix (where n is the number of vertices in graph/digraph G) with rows and columns indexed by the vertices of G. Entry A_(u,v) is 1 if and only if {u,v} is an edge of G and 0 otherwise. It is easy to observe that if we just use a simple graph G, then its adjacency matrix must be symmetric, but if we us a digraph, then it is not necesarrily symmetric.
+            The adjacency matrix is the n by n matrix (where n is the number of vertices in graph/digraph G) with rows and columns indexed by the vertices of G. Entry A_(u,v) is 1 if and only if {u,v} is an edge of G and 0 otherwise. It is easy to observe that if we just use a simple graph G, then its adjacency matrix must be symmetric, but if we use a digraph, then it is not necessarily symmetric.
         Example
             D = digraph({{1,2},{2,3},{3,4},{4,3}},EntryMode=>"edges");
             adjacencyMatrix D
@@ -1947,6 +1965,26 @@ doc ///
         adjacencyMatrix
         laplacianMatrix
         degree
+///
+
+doc ///
+    Key
+        degreeSequence
+        (degreeSequence, Graph)
+    Headline
+        the degree sequence of a graph
+    Usage
+        degreeSequence G
+    Inputs
+        G:Graph
+    Outputs
+        :List -- the degree sequence of G
+    Description
+        Text
+            The degree sequence of a graph is the list of the degrees of its
+            vertices sorted in nonincreasing order.
+        Example
+            degreeSequence pathGraph 5
 ///
 
 --edges
@@ -2115,11 +2153,62 @@ doc ///
         displayGraph
 ///
 
+-- html
+doc ///
+    Key
+        (html, Digraph)
+    Headline
+        Create an .svg representation of a graph or digraph
+    Usage
+        html G
+    Inputs
+        G:Digraph
+    Description
+        Text
+            Uses graphviz to create an .svg representation of @TT "G"@,
+            which is returned as a string.
+        CannedExample
+            i2 : html completeGraph 2
+            -- running: dot -Tsvg /tmp/M2-2729721-0/0.dot -o /tmp/M2-2729721-0/1.svg
+
+            o2 = <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+                 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+                  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+                 <!-- Generated by graphviz version 2.43.0 (0)
+                  -->
+                 <!-- Title: G Pages: 1 -->
+                 <svg width="62pt" height="116pt"
+                  viewBox="0.00 0.00 62.00 116.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 112)">
+                 <title>G</title>
+                 <polygon fill="white" stroke="transparent" points="-4,4 -4,-112 58,-112 58,4 -4,4"/>
+                 <!-- 0 -->
+                 <g id="node1" class="node">
+                 <title>0</title>
+                 <ellipse fill="none" stroke="black" cx="27" cy="-90" rx="27" ry="18"/>
+                 <text text-anchor="middle" x="27" y="-86.3" font-family="Times,serif" font-size="14.00">0</text>
+                 </g>
+                 <!-- 1 -->
+                 <g id="node2" class="node">
+                 <title>1</title>
+                 <ellipse fill="none" stroke="black" cx="27" cy="-18" rx="27" ry="18"/>
+                 <text text-anchor="middle" x="27" y="-14.3" font-family="Times,serif" font-size="14.00">1</text>
+                 </g>
+                 <!-- 0&#45;&#45;1 -->
+                 <g id="edge1" class="edge">
+                 <title>0&#45;&#45;1</title>
+                 <path fill="none" stroke="black" d="M27,-71.7C27,-60.85 27,-46.92 27,-36.1"/>
+                 </g>
+                 </g>
+                 </svg>
+///
+
 -- writeDotFile
 doc ///
     Key
         writeDotFile
         (writeDotFile, String, Graph)
+        (writeDotFile, String, Digraph)
     Headline
         Writes a graph to a dot file with a specified filename
     Usage
@@ -2180,7 +2269,7 @@ doc ///
             The complement graph of G
     Description
         Text
-            The complement graph of a graph G is the graph G^c where any two vertcies are adjacent in G^c iff they are not adjacent in G. The original vertex set is preserved, only the edges are changed.
+            The complement graph of a graph G is the graph G^c where any two vertices are adjacent in G^c iff they are not adjacent in G. The original vertex set is preserved, only the edges are changed.
         Example
             G = cycleGraph 4
             complementGraph G
@@ -2366,7 +2455,7 @@ doc ///
             a complete multipartite graph
     Description
         Text
-            A complete multipartite graph is a graph that is first and foremost multi-partite. That is, the vertex set of a complete multipartite graph can be partitioned into k sets such that within each set, none of the vertices are connected by an edge.  The second condition is that each vertex is connected to ever vertex except for those in its partition so that it is "almost" a complete graph. For programming this graph, the input is a list P. The length of the list P will be the number of groups of vertices. For example, in a complete bipartite graph, the length of the list would be 2. The entry P_i will determine how many vertices are in each partition; necisarrily, we see that the entries of the list must be positive integers.
+            A complete multipartite graph is a graph that is first and foremost multi-partite. That is, the vertex set of a complete multipartite graph can be partitioned into k sets such that within each set, none of the vertices are connected by an edge.  The second condition is that each vertex is connected to ever vertex except for those in its partition so that it is "almost" a complete graph. For programming this graph, the input is a list P. The length of the list P will be the number of groups of vertices. For example, in a complete bipartite graph, the length of the list would be 2. The entry P_i will determine how many vertices are in each partition; necessarily, we see that the entries of the list must be positive integers.
         Example
             G = completeMultipartiteGraph {1,2,3}
 ///
@@ -2675,7 +2764,7 @@ doc ///
         G:Graph
     Description
         Text
-            The star graph is a special class of the general windmill graph class, in particular, it is windmill(2,n). A star graph is best visualized having one vertix in the center of a circle of other vertices.  The edge set is formed by connecting this center vertex to each of the outside vertices. The outside vertices are only connected to the center vertex.
+            The star graph is a special class of the general windmill graph class, in particular, it is windmill(2,n). A star graph is best visualized having one vertex in the center of a circle of other vertices.  The edge set is formed by connecting this center vertex to each of the outside vertices. The outside vertices are only connected to the center vertex.
         Example
             starGraph 5
     SeeAlso
@@ -2698,7 +2787,7 @@ doc ///
         G:Graph
     Description
         Text
-            A threshold graph is a graph that is constructed by starting with an isolated vertex and iteratively adding another isolated vertex or a vertex that shares an edge with each vertex generated before it (the dominating vertices). The isolated vertices are represented by 0's and the dominating vertices are rerpresented by 1's. In this method, the initial vertex is implicit and by default is constructed, so the first entry need not always be 0 in the list.
+            A threshold graph is a graph that is constructed by starting with an isolated vertex and iteratively adding another isolated vertex or a vertex that shares an edge with each vertex generated before it (the dominating vertices). The isolated vertices are represented by 0's and the dominating vertices are represented by 1's. In this method, the initial vertex is implicit and by default is constructed, so the first entry need not always be 0 in the list.
         Example
             L = {1,0,0,1,0,1}
             thresholdGraph L
@@ -3062,7 +3151,7 @@ doc ///
             the clique number of G
     Description
         Text
-            The clique number is the maximum number of vertices comprising a clique in G. A clique in a graph G is a set of vertices such that all the the vertices are mutually adjacent (they are all connected to each other).
+            The clique number is the maximum number of vertices comprising a clique in G. A clique in a graph G is a set of vertices such that all the vertices are mutually adjacent (they are all connected to each other).
         Example
             G = graph({{1, 2}, {1, 3}, {2, 3}, {3, 4}},EntryMode=>"edges");
             cliqueNumber G
@@ -3101,7 +3190,6 @@ doc ///
 --connectedComponents
 doc ///
     Key
-        connectedComponents
         (connectedComponents, Graph)
     Headline
         Computes the connected components of a graph
@@ -3349,9 +3437,9 @@ doc ///
     Description
         Text
             The descendants of a directed graph are all the vertexSet u of D such that u is reachable from v.
-            Another way to more intuitively see what the descendants are is to see the descandants of a vertex v
+            Another way to more intuitively see what the descendants are is to see the descendants of a vertex v
             can be found by first taking the children of v. Then if you take the children of each of the
-            children, and continue the process until the list stops growing, this will form all the descandants of v.
+            children, and continue the process until the list stops growing, this will form all the descendants of v.
         Example
             D = digraph({a,b,c,d,e},{{a,b},{b,c},{b,d},{e,b}});
             descendants (D, a)
@@ -3364,7 +3452,6 @@ doc ///
 --diameter
 doc ///
     Key
-        diameter
         (diameter, Graph)
     Headline
         Computes the diameter of a graph
@@ -3413,7 +3500,7 @@ doc ///
             G = graph({1,2,3,4},{{2,3},{3,4}});
             d = distance(G, 1, 4)
     SeeAlso
-        diameter
+        (diameter, Graph)
         distanceMatrix
 ///
 
@@ -3440,7 +3527,7 @@ doc ///
             G = digraph({1,2,3,4},{{2,3},{3,4}},EntryMode=>"edges");
             d = distanceMatrix G
     SeeAlso
-        diameter
+        (diameter, Graph)
         distance
 ///
 
@@ -3588,8 +3675,9 @@ doc ///
     Key
         forefathers
         (forefathers,Digraph,Thing)
+	symbol foreFathers
     Headline
-        returns the forefathers of a digrah
+        returns the forefathers of a digraph
     Usage
         L = forefathers (D, v)
     Inputs
@@ -3601,7 +3689,7 @@ doc ///
             a set of all the forefathers of v in D
     Description
         Text
-            The forefathers of a vertex v in a digraph D are all the vertexSet u in D such that v is reachable from u. Another way to more intuitively see what the forefathers are is to see the forefathers of a vertex v can be found by first taking the parents of v. Then if you find the parents of each of the parents of v, and continue the process until the list stops growing, this will form all the descandants of v.
+            The forefathers of a vertex v in a digraph D are all the vertexSet u in D such that v is reachable from u. Another way to more intuitively see what the forefathers are is to see the forefathers of a vertex v can be found by first taking the parents of v. Then if you find the parents of each of the parents of v, and continue the process until the list stops growing, this will form all the descendants of v.
         Example
             D = digraph({a,b,c,d,e},{{a,b},{b,c},{b,d},{e,b}});
             forefathers (D, d)
@@ -3650,7 +3738,7 @@ doc ///
             the independence complex of G
     Description
         Text
-            The independece complex of a graph G is the set of all the independent sets of G.
+            The independence complex of a graph G is the set of all the independent sets of G.
         Example
             G = graph({{1,2},{2,3},{3,4},{4,5}},EntryMode=>"edges");
             independenceComplex G
@@ -4043,7 +4131,7 @@ doc ///
         L:List
     Description
         Text
-            The spectrum of a graph G is the set of the eigenvalues of the adjacency matrix A corresponding to G. For simple graphs, these eigenvalues are all real since A must be symmetric. The user should be aware that Macauly 2 does not give exact values for these eigenvalues, they are numerical approximations, but it is still a good tool to use to check if two graphs are isomorphic; isomorphic graphs share the same spectrum although the converse is not necesarrily true.
+            The spectrum of a graph G is the set of the eigenvalues of the adjacency matrix A corresponding to G. For simple graphs, these eigenvalues are all real since A must be symmetric. The user should be aware that Macaulay 2 does not give exact values for these eigenvalues, they are numerical approximations, but it is still a good tool to use to check if two graphs are isomorphic; isomorphic graphs share the same spectrum although the converse is not necessarily true.
         Example
             spectrum completeGraph 6
             spectrum graphLibrary "petersen"
@@ -4122,7 +4210,7 @@ doc ///
             whether G or D has an Eulerian trail
     Description
         Text
-            A graph has an Eulerian trail if there is a path in the graph that visits each edge exactly once.  A digraph has a Eulerian trail if tehre is a directed path in the graph that visits each edge exacly once.  An Eulerian trail is also called an Eulerian path.  Unconnected graphs can have a Eulerian trail, but all vertices of degree greater than 0 of a graph (or all vertices of degree greater than 0 in the underlying graph of a digraph) must belong to a single connected component.
+            A graph has an Eulerian trail if there is a path in the graph that visits each edge exactly once.  A digraph has a Eulerian trail if there is a directed path in the graph that visits each edge exactly once.  An Eulerian trail is also called an Eulerian path.  Unconnected graphs can have a Eulerian trail, but all vertices of degree greater than 0 of a graph (or all vertices of degree greater than 0 in the underlying graph of a digraph) must belong to a single connected component.
         Example
             G = cycleGraph 5;
             hasEulerianTrail G
@@ -4327,7 +4415,7 @@ doc ///
             whether G or D is Eulerian
     Description
         Text
-            A graph is Eulerian if it has a path in the graph that visits each vertex exactly once.  A digraph is Eulerian if it has a directed path in the graph that visits each vertex exactly once.  Such a path is called an Eulerian circut.  Unconnected graphs can be Eulerian, but all vertices of degree greater than 0 of a graph (or all vertices of degree greater than 0 in the underlying graph of a digraph) must belong to a single connected component.
+            A graph is Eulerian if it has a path in the graph that visits each vertex exactly once.  A digraph is Eulerian if it has a directed path in the graph that visits each vertex exactly once.  Such a path is called an Eulerian circuit.  Unconnected graphs can be Eulerian, but all vertices of degree greater than 0 of a graph (or all vertices of degree greater than 0 in the underlying graph of a digraph) must belong to a single connected component.
         Example
             bridges = graph ({{0,1},{0,2},{0,3},{1,3},{2,3}}, EntryMode => "edges");
             E = isEulerian bridges
@@ -4691,6 +4779,7 @@ doc ///
     Key
         directProduct
         (directProduct, Graph, Graph)
+	symbol tensorProduct
     Headline
         Computes the direct product of two graphs
     Usage
@@ -4789,10 +4878,10 @@ doc ///
             graphPower(G,2)
     SeeAlso
         distance
-        diameter
+        (diameter, Graph)
 ///
 
---strongProuduct
+--strongProduct
 doc ///
     Key
         strongProduct
@@ -4809,7 +4898,7 @@ doc ///
             The Strong Product of G and H
     Description
         Text
-            This method will take in any two graphs and output the strong proudct of the two graphs. The vertex set of 
+            This method will take in any two graphs and output the strong product of the two graphs. The vertex set of 
             the strong product of G and H is the cartesian product of the vertex sets of G and H. The keys for each 
             vertex will be output as a sequence to represent this clearly. The edge set of the strong product of G and H 
             is formed by the rule any two distinct vertices (u,u') and (v,v') are adjacent in G and H if and only if u' 
@@ -5195,7 +5284,7 @@ doc ///
         (topSort, Digraph) 
 	(topSort, Digraph, String)
     Headline
-        outputs a hashtable containing orginal digraph, new digraph with vertices topologically sorted and a map from vertices of original digraph to new digraph.
+        outputs a hashtable containing original digraph, new digraph with vertices topologically sorted and a map from vertices of original digraph to new digraph.
     Usage
         topSort(D)
 	topSort(D,S)
@@ -5208,7 +5297,7 @@ doc ///
         Text
 	    This method outputs a HashTable with keys digraph, map and newDigraph, where digraph is the original digraph,
 	    map is the relation between old ordering and the new ordering of vertices and newDigraph is the Digraph with 
-	    topologically sorted vertices. This method needs the input to be directed adyclic graph (DAG).
+	    topologically sorted vertices. This method needs the input to be directed acyclic graph (DAG).
 	    S provides the preference given to the vertices in order to break ties and provide unique topological sorting to the DAG.
 	    
 	    Permissible values of S are: "random", "max", "min", "degree".
@@ -5277,9 +5366,33 @@ doc ///
    ///
 
 
-
-
-
+doc ///
+    Key
+        clusteringCoefficient
+        (clusteringCoefficient, Graph)  
+        (clusteringCoefficient, Graph, Thing)
+    Headline
+        a method for computing the clustering coefficient of a Graph
+    Usage
+        c = clusteringCoefficient(G, v)
+        g = clusteringCoefficient(G)
+    Inputs
+        G:Graph
+        v:Thing
+            v should be a member of the vertex set of G
+    Outputs
+        c:ZZ
+            The local clustering coefficient for G relative to v.
+        g:ZZ
+            The global clustering coefficient for G.
+    Description
+        Text
+            The clustering coefficient is a measure of the degree to which nodes in a graph tend to cluster together. The global clustering coefficient gives an overall
+            indication of the interconnectedness of the graph. The local clustering coefficient gives an indication of how embedded a single vertex is in the graph.
+        Example
+            clusteringCoefficient cycleGraph 4
+            clusteringCoefficient completeGraph 4
+///
 
 
 TEST ///
@@ -5392,6 +5505,9 @@ TEST ///
   digraph ({2, 1, 3}, {{2, 1}, {3, 1}})})
 ///
 
+TEST ///
+assert Equation(degreeSequence pathGraph 5, {2, 2, 2, 1, 1})
+///
 
 end;
 

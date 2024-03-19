@@ -13,6 +13,7 @@ Node
      TEST
     (TEST, String)
     (TEST, List)
+    [TEST, FileName]
   Headline
     add a test for a package
   Usage
@@ -20,6 +21,10 @@ Node
   Inputs
     s:String
       or list of strings, containing Macaulay2 code
+    FileName=>Boolean
+      if true, then @TT "s"@ (or each element of @TT "s"@, if it is a
+      list) is interpreted as the name of a file containing a test as
+      opposed to the test itself.
   Consequences
     Item
       registers the string @TT "s"@ as a test of the @TO2 {"currentPackage", "current package"}@.
@@ -29,6 +34,10 @@ Node
       Use @TO check@ to run all of the tests associated to a package.
 
       For an example, see @TO "SimpleDoc :: docExample"@ and @TO "an example of a package"@.
+
+      If a test should be skipped when running @TO "check"@, e.g., it is
+      known to fail under certain circumstances, then the comment
+      @TT "-* no-check-flag *-"@ may be added to @TT "s"@.
   Caveat
     When creating tests, try to ensure that they run relatively quickly.
   SeeAlso
@@ -45,6 +54,8 @@ Node
     (check, String)
     (check, ZZ, Package)
     (check, ZZ, String)
+    (check, List, Package)
+    (check, List, String)
     [check, UserMode]
     [check, Verbose]
   Headline
@@ -52,11 +63,14 @@ Node
   Usage
     check pkg
     check(i, pkg)
+    check(L, pkg)
   Inputs
     pkg:Package
       or String, the package to test
     i:ZZ
-      the index of the test to run or -1 to run all tests
+      the index of a test to run
+    L:List
+      containing indices of tests to run, or {\tt {}} to run all tests
     UserMode=>Boolean
       if true, do not use the @TT "-q"@ in arguments to the Macaulay2 executable when running tests,
       thereby allowing it to load the user's @TO "initialization file"@, allowing it to load packages

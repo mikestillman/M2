@@ -29,7 +29,7 @@
 -- extensions to handle the non $S_2$-case.
 --
 -- An example that we will use throughout is the plane
--- cubic curve $E$, whose homogenoeus coordinate ring is {\tt SE}:
+-- cubic curve $E$, whose homogeneous coordinate ring is {\tt SE}:
 
 KK = ZZ/31991
 SE = KK[x,y,z]/(y^2*z - x*(x-z)*(x+3*z))
@@ -90,7 +90,7 @@ SE = KK[x,y,z]/(y^2*z - x*(x-z)*(x+3*z))
 -- method we know, which has the additional 
 -- advantage of throwing away all components
 -- not of codimension 1.  That is, we define
--- {\tt purify1S2(I)}, a function that takes an arbitary
+-- {\tt purify1S2(I)}, a function that takes an arbitrary
 -- ideal $I$ in a ring satisfying $S_2$, and returns
 -- the ideal which is the intersection of the
 -- codimension 1 primary components of $I$.

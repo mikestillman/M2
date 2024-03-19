@@ -8,31 +8,35 @@ document {
      Headline => "a binary operator (file output, ...)",
      }
 document {
-     Key => {"left shift", (symbol <<, ZZ, ZZ), (symbol <<, RR, ZZ), (symbol <<, CC, ZZ)},
-     Usage => "x << j",
-     Inputs => { "x", "j" },
-     Outputs => {{ "the number obtained from ", TT "x", " by shifting its binary representation leftward ", TT "j", " places" }},
+     Key => {"left shift", (symbol <<, ZZ, ZZ), (symbol <<, RR, ZZ), (symbol <<, CC, ZZ), (symbol <<, RRi, ZZ)},
+     Usage => "x << j\nI << j",
+     Inputs => { "x", "j", "I" => RRi },
+     Outputs => {{ "the number obtained from ", TT "x", " by shifting its binary representation leftward ", TT "j", " places" },
+    RRi => {"an interval containing all shifts of the binary representations elements of ", TT "I", " by ", TT "j", " places leftward" }
+},
      EXAMPLE {"256 << 5","256. << 555"},
      SeeAlso => {"right shift"}
      }
 
 document {
-     Key => {"right shift", (symbol >>, ZZ, ZZ), (symbol >>, RR, ZZ), (symbol >>, CC, ZZ)},
-     Usage => "x >> j",
-     Inputs => { "x", "j" },
-     Outputs => {{ "the integer obtained from ", TT "x", " by shifting its binary representation rightward ", TT "j", " places" }},
+     Key => {"right shift", (symbol >>, ZZ, ZZ), (symbol >>, RR, ZZ), (symbol >>, CC, ZZ), (symbol >>, RRi, ZZ)},
+     Usage => "x >> j\nx >> I",
+     Inputs => { "x", "j", "I" => RRi },
+     Outputs => {{ "the integer obtained from ", TT "x", " by shifting its binary representation rightward ", TT "j", " places" },
+    RRi => {"an interval containing all shifts of the binary representations elements of ", TT "I", " by ", TT "j", " places rightward" }
+},
      EXAMPLE {"256 >> 5","256. >> 555"},
      SeeAlso => {"left shift"}
      }
 
 document {
-     Key => { (symbol <<, File, Thing),(symbol <<, String, Thing), (symbol <<, File, Manipulator),(symbol <<, List, Thing),
+     Key => { (symbol <<, File, Thing),(symbol <<, String, Thing), (symbol <<, File, Manipulator),
 	  (symbol <<, Nothing, Thing),(symbol <<, Nothing, Manipulator), (symbol <<, Thing),
 	  (symbol <<, File, Symbol),(symbol <<, File, Net),(symbol <<,File,String) },
      Headline => "print to a file",
      Usage => "f << x\n  << x",
      Inputs => { 
-	  "f" => Nothing => { ofClass {File, String, List, Nothing} },
+	  "f" => Nothing => { ofClass {File, String, Nothing} },
 	  "x"
 	  },
      Outputs => {
@@ -68,6 +72,16 @@ document {
      ///,
      SeeAlso => { stdio, stderr, endl, close }
      }
+
+document {
+    Key => (symbol <<, List, List),
+    Headline => "component-wise comparison of lists",
+    Usage => "L1 << L2",
+    Inputs => { "L1" => List, "L2" => List },
+    Outputs => { Boolean => "whether the first list is less than or equal to the second list in each component" },
+    SourceCode => (symbol <<, List, List),
+    SeeAlso => (symbol ?, List, List)
+    }
 
 document {
      Key => symbol >>, 
@@ -177,7 +191,7 @@ document {
 	  tally {1,1,2} ? tally {1,2,3}
 	  tally {1,1,2} ? tally {1,1,2,3}
      ///,
-     SeeAlso => {sort, rsort}
+     SeeAlso => {sort, rsort, (symbol?, Symbol)}
      }
 
 protect incomparable
@@ -253,13 +267,17 @@ document {
 document {
      Key => combine,
      Headline => "combine hash tables",
-     Usage => "z = combine(x,y,f,g,h)",
+     Usage => "z = combine(x,y,f,g,h) or z=combine(x,y,f,t,g,h)",
      Inputs => {
 	  "x" => "a hash table",
 	  "y" => {"a hash table of the same class as ", TT "x"},
 	  "f" => { "a function of two variables to be used for combining a key
 	       of ", TT "x", " with a key of ", TT "y", " to make a new key
 	       for ", TT "z", "." },
+	  "t" => { "a function combining two keys and returning a value, twisting
+	       the value returned by ", TT "g", " based on which keys were used. This argument
+	       may be omitted, in which case the ", TT "t(p,q)", " term in the output
+	       below is omitted."},
 	  "g" => { "a function of two variables to be used for combining a value
 	       of ", TT "x", " with a value of ", TT "y", " to make a new value
 	       for ", TT "z", "." },
@@ -267,13 +285,12 @@ document {
 	       values returned by ", TT "g", " when the corresponding keys
 	       returned by ", TT "f", " turn out to be equal.  Its first argument
 	       will be the value accumulated so far, and its second argument will
-	       be a value just provided by ", TT "g", "."
-	       }
+	       be a value just provided by ", TT "g", "."}
 	  },
      Outputs => {
 	  "z" => {
 	       "a new hash table, of the same class as ", TT "x", " and ", TT "y", ",
-	       containing the pair ", TT "f(p,q) => g(b,c)", "
+	       containing the pair ", TT "f(p,q) => g(t(p,q),g(b,c))", "
 	       whenever ", TT "x", " contains the pair ", TT "p => b", "
 	       and ", TT "y", " contains the pair ", TT "q => c", ",
 	       except that ", TT "h", " is used to combine values when two keys
@@ -292,7 +309,7 @@ document {
      "The function ", TT "h", " should be an associative function, for otherwise 
      the result may depend on internal details about the implementation of hash 
      tables that affect the order in which entries are encountered.  If ", TT "f", ",
-     ", TT "g", ", and ", TT "h", " are commutative functions as well, then the 
+     ", TT "t", " (if present), ", TT "g", ", and ", TT "h", " are commutative functions as well, then the 
      result ", TT "z", " is a commutative function of ", TT "x", " and ", TT "y", ".",
      PARA{},
      "The result is mutable if and only if ", TT "x", " or ", TT "y", " is.",
@@ -300,7 +317,7 @@ document {
      "This function can be used for multiplying polynomials, where it
      can be used in code something like this:", 
      PRE "     combine(x, y, monomialTimes, coeffTimes, coeffPlus)",
-     "We illustrate that with a simple-minded implmentation of the free ring on the English alphabet, representing words
+     "We illustrate that with a simple-minded implementation of the free ring on the English alphabet, representing words
      as string and polynomials as hash tables that associate coefficients to words.",
      EXAMPLE lines ///
      	  Poly = new Type of HashTable
@@ -308,6 +325,17 @@ document {
 	  Poly * Poly := (p,q) -> combine(p,q,concatenate,times,plus);
 	  p*p
      ///,
+     "One may also use this function for multiplying divided powers in a similar manner:",
+     PRE "     combine(x, y, monomialTimes, divPowCoeff, coeffTimes, coeffPlus)",
+     "For example:",
+     EXAMPLE lines ///
+     	  DivPowPoly = new Type of HashTable
+	  divPowCoeff = (i,j) -> binomial(i+j,i)
+     	  p = new DivPowPoly from { 0 => 1, 1 => 1 }
+	  DivPowPoly * DivPowPoly := (p,q) -> combine(p,q,plus,divPowCoeff,times,plus);
+	  p*p
+     ///,
+     PARA{},
      SeeAlso => {merge}
      }
 

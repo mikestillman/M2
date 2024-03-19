@@ -53,6 +53,7 @@ document {
 	  TO "MPIR",
 	  TO "GNU MP",
 	  TO "MPFR",
+      TO "MPFI",
 	  TO "GC garbage collector",
 	  TO "LAPACK",
 	  TO "BLAS",
@@ -222,6 +223,18 @@ document {
      }
 
 document {
+     Key => "MPFI",
+     PARA {
+	  "The ", TT "MPFI", " library is used by Macaulay2 for its arbitrary precision real interval arithmetic
+	  and associated transcendental functions.  It is available at ", HREF "https://gforge.inria.fr/projects/mpfi/", ".  The
+	  library is based on the ", TO "MPFR", " library.  The library is remarkable for the care taken to return correctly rounded
+	  results.  It is hoped that this will form a good base for experimentation
+	  with algebraic algorithms that mix symbolic and numeric techniques.
+	  It is licensed under the GNU Lesser General Public License, version 3 or later."
+	  }
+     }
+
+document {
      Key => "GC garbage collector",
      PARA {
 	  "Macaulay2 uses the excellent garbage collector GC, version ", version#"gc version", ",
@@ -271,7 +284,7 @@ document {
       sometimes one can just start Macaulay2 by setting the GC_INITIAL_HEAP_SIZE environment variable 
       to some larger value with an environment setting prefix on the M2 command line, e.g., ", TT "GC_INITIAL_HEAP_SIZE=20G M2", ".",
 	  },
-     SeeAlso => { collectGarbage }
+     SeeAlso => { collectGarbage, GCstats }
      }
 
 doc /// 
@@ -610,7 +623,7 @@ document {
 	  2006 Eisenbud was elected a Fellow of the American Academy of Arts and
 	  Sciences. Eisenbud is Chair of the Editorial Board of the Algebra and Number
 	  Theory journal, which he helped found in 2006, and serves on the editorial
-	  boards of the Bulletin du Société Mathematique de France, Springer-Verlag's
+	  boards of the Bulletin du Société Mathématique de France, Springer-Verlag's
 	  book series Algorithms and Computation in Mathematics, and the Journal of
 	  Software for Algebraic Geometry."
 	  },

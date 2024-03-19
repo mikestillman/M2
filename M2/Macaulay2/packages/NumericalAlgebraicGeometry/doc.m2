@@ -219,7 +219,7 @@ document {Key => { (track, List, List, List), track, (track,PolySystem,PolySyste
 	     "T" => {" contains the polynomials in the target system"},
 	     "solsS" => {" contains start solutions"},
 	     },
-	Outputs => {{ TT "solsT", " is a list of ", TO2{Point,"points"}, " that are solutions of ", TT "T=0", " obtained by continuing ", TT "solsS", " of ", TT "S=0" }},
+	Outputs => {{ TT "solsT", " is a list of ", TO2{AbstractPoint,"points"}, " that are solutions of ", TT "T=0", " obtained by continuing ", TT "solsS", " of ", TT "S=0" }},
 	"Polynomial homotopy continuation techniques are used to obtain solutions 
 	of the target system given a start system. ",
 	"For an introduction to the subject see ", UL{
@@ -243,7 +243,7 @@ document {Key => { (track, List, List, List), track, (track,PolySystem,PolySyste
 	PARA {
 	     "Another outcome of tracking a path is divergence (established heuristically). 
 	     In that case the divergent paths are marked with an ", TT "I", 
-	     " (", TO2{Point, "status"}, " is set to ", TO Infinity, "). "
+	     " (", TO2{AbstractPoint, "status"}, " is set to ", TO Infinity, "). "
 	     },
         EXAMPLE lines ///
      	R = CC[x,y];
@@ -255,7 +255,7 @@ document {Key => { (track, List, List, List), track, (track,PolySystem,PolySyste
 	PARA {
 	     "Some divergent paths as well as most of the paths ending in singular (multiplicity>1) 
 	     or near-singular (clustered) solutions are marked with an ", TT "M", 
-	     " (", TO2{Point, "status"}, " is set to ", TO MinStepFailure, "). "
+	     " (", TO2{AbstractPoint, "status"}, " is set to ", TO MinStepFailure, "). "
 	     },
 	EXAMPLE lines ///
      	R = CC[x,y];
@@ -277,7 +277,7 @@ document {Key => { (track, List, List, List), track, (track,PolySystem,PolySyste
 	track(S,T,solsS,Predictor=>Certified,Normalize=>true)
 	///,
 	PARA {
-	     "Note that the projective tracker is invoked either if the target system is a homogenous system or if ", TO "Projectivize", TT"=>true",
+	     "Note that the projective tracker is invoked either if the target system is a homogeneous system or if ", TO "Projectivize", TT"=>true",
 	     " is specified. "
 	     },
 	SeeAlso => {solveSystem, setDefault, Point},
@@ -293,22 +293,23 @@ document {
      Headline => "specifies whether to postprocess the solutions",
      "Postprocessing includes refinement and clustering the solutions.",
      Caveat=>{"Postprocessing is coded in top-level M2 language 
-	  and can be much slower than the homotopy contination done without postprocessing."},
+	  and can be much slower than the homotopy continuation done without postprocessing."},
      SeeAlso=>{refine}
      }
 
 document {
 	Key => {
 	     (refine, List, List), refine, 
-	     (refine,Point), (refine,PolySystem,List), (refine,PolySystem,Point),
+	     (refine,AbstractPoint), (refine,PolySystem,List), (refine,PolySystem,AbstractPoint),
 	     },
 	Headline => "refine numerical solutions to a system of polynomial equations",
 	Usage => "solsR = refine(T,sols)",
 	Inputs => { 
 	     "T" => {"contains the polynomials of the system (may be of type ", TO PolySystem, ")"},
-	     "sols" => {"contains (a) solution(s) (", TO2{Point,"points"}," or lists of coordinates or ", TO2{Point,"points"}, ")"},
+	     "sols" => {"contains (a) solution(s) (", TO2{AbstractPoint,"points"},
+		 " or lists of coordinates of points)"},
 	     },
-	Outputs => {"solsR" => {"contains refined solutions (as ", TO2{Point, "points"}, ")" }},
+	Outputs => {"solsR" => {"contains refined solutions (as ", TO2{AbstractPoint, "points"}, ")" }},
 	"Uses Newton's method to correct the given solutions so that the resulting approximation 
 	has its estimated relative error bounded by min(", TO "ErrorTolerance", ",2^(-", TO "Bits", ")). ",
 	"The number of iterations made is at most ", TO "Iterations", ".",
@@ -510,7 +511,7 @@ M = track(S,T,solsS,gamma=>0.6+0.8*ii,Software=>M2)
 
 document {
 	Key => {(goodInitialPair, List), goodInitialPair, [goodInitialPair,GeneralPosition], GeneralPosition},
-	Headline => "make an intial pair conjectured to be good by Shub and Smale",
+	Headline => "make an initial pair conjectured to be good by Shub and Smale",
 	Usage => "(S,sol) = goodInitialPair T",
 	Inputs => { 
 	     "T" => {"contains homogeneous polynomials"},
@@ -579,7 +580,7 @@ document {
 	Usage => "Ws = regeneration F",
 	Inputs => { "F"=>"contains polynomials with complex coefficients" },
 	Outputs => { "Ws"=>{"contains ", TO2{WitnessSet,"witness sets"}, " for equidimensional components of the variety ", TT "{x|F(x)=0}" }},
-     	"Regeneration is a blackbox method that obtains a numerical describtion of an algebraic variety. ",
+     	"Regeneration is a blackbox method that obtains a numerical description of an algebraic variety. ",
 	"Note that ", TT "Ws", " are not necessarily irreducible witness sets; use ", 
 	TO (decompose, WitnessSet), " to decompose into irreducibles. ",
 	EXAMPLE lines ///
@@ -647,14 +648,14 @@ numericalIrreducibleDecomposition I
 
 
 document {
-    Key => {isOn, (isOn,Point,Ideal), (isOn,Point,NumericalVariety), 
-	(isOn,Point,RingElement), (isOn,Point,WitnessSet), (isOn,Point,WitnessSet,ZZ),
+    Key => {isOn, (isOn,AbstractPoint,Ideal), (isOn,AbstractPoint,NumericalVariety), 
+	(isOn,AbstractPoint,RingElement), (isOn,AbstractPoint,WitnessSet), (isOn,AbstractPoint,WitnessSet,ZZ),
 	[isOn,Tolerance]
 	},
     Headline => "determines if a point belongs to a variety",
     Usage => "B = isOn(P,V)",
     Inputs => { 
-	"P"=>Point,  
+	"P"=>AbstractPoint,  
 	"V"=>{ofClass NumericalVariety, ", ", ofClass WitnessSet, ", ", ofClass Ideal, ", or ", ofClass RingElement}
 	},
     Outputs => { "B"=>Boolean },
@@ -671,7 +672,7 @@ isOn(point {{sqrt 5*ii,sqrt 3}},W)
     }
 
 document {
-    Key => {newton, (newton,PolySystem,Matrix), (newton,PolySystem,Point)},
+    Key => {newton, (newton,PolySystem,Matrix), (newton,PolySystem,AbstractPoint)},
     Headline => "Newton-Raphson method",
     "Performs one step of the Newton-Raphson method.",
     Caveat=>{"Works for a regular square or overdetermined system."}
@@ -684,7 +685,7 @@ document {
     Inputs => { "V","W" },
     Outputs => { "VW"=>NumericalVariety },
     "Constructs the union of numerical varieties", 
-    Caveat => {"The rusulting numerical variety may have redundant components."},
+    Caveat => {"The resulting numerical variety may have redundant components."},
     SeeAlso=>{removeRedundantComponents}
     }
 
@@ -706,7 +707,7 @@ document {
     "Gets a random point on a component represented numerically.", 
     EXAMPLE lines ///
 R = CC[x,y,z]
-W = new WitnessSet from { Equations => ideal {x^2+y^2+z^2-1, z^2}, Slice => matrix "1,0,0,0", Points => {{{0,1,0_CC}},{{0,-1,0_CC}}}/point } 
+W = witnessSet(ideal {x^2+y^2+z^2-1, z^2}, matrix "1,0,0,0", {{{0,1,0_CC}},{{0,-1,0_CC}}}/point ) 
 P := sample(W, Tolerance=>1e-15)   
 isOn(P,W)
     ///,
@@ -716,12 +717,12 @@ isOn(P,W)
 
 document {
     Key => {deflate,(deflate,Ideal),(deflate,PolySystem,List),(deflate,PolySystem,Matrix),
-	(deflate,PolySystem,Point),(deflate,PolySystem,Sequence),(deflate,PolySystem,ZZ),
+	(deflate,PolySystem,AbstractPoint),(deflate,PolySystem,Sequence),(deflate,PolySystem,ZZ),
 	Deflation, DeflationSequence, DeflationRandomMatrix, -- attached to a PolySystem
-	liftPointToDeflation,(liftPointToDeflation,Point,PolySystem,ZZ),
+	liftPointToDeflation,(liftPointToDeflation,AbstractPoint,PolySystem,ZZ),
 	LiftedSystem, LiftedPoint, SolutionSystem, DeflationSequenceMatrices, -- attached to a Point
-	deflateInPlace, (deflateInPlace,Point,PolySystem), 
-	SquareUp, [deflateInPlace,SquareUp], -- whether to square up at each step
+	deflateAndStoreDeflationSequence, (deflateAndStoreDeflationSequence,AbstractPoint,PolySystem), 
+	SquareUp, [deflateAndStoreDeflationSequence,SquareUp], -- whether to square up at each step
 	[deflate,Variable]
 	},
     Headline => "first-order deflation",
@@ -730,7 +731,7 @@ document {
     Outputs => { "r"=>ZZ=>"the rank used in the (last) deflation"},
     PARA{
 	"The purpose of deflation is to restore quadratic convergence of Newton's method in a neighborhood of a singular 
-    isolated solution P. This is done by constructing an augemented polynomial system with a solution of strictly lower multiplicity projecting to P."},
+    isolated solution P. This is done by constructing an augmented polynomial system with a solution of strictly lower multiplicity projecting to P."},
     Consequences => {{"Attaches the keys ", TO Deflation, " and ", TO DeflationRandomMatrix, 
 	" which are MutableHashTables that (for rank r, a potential rank of the jacobian J of F) store ",
 	" the deflated system DF and a matrix B used to obtain it. ", 
@@ -745,7 +746,7 @@ document {
 	{ofClass Matrix, " ", TT "B", " specifies a fixed (r+1)-by-n matrix to use in the deflation construction."},
 	{"a pair of matrices ", TT "(B,M)", " specifies additionally a matrix that is used to ", TO squareUp, "."},
 	{"a list", TT "{(B1,M1),(B2,M2),...}", 
-	    " prompts a chain of successive delations using the provided pairs of matrices."},
+	    " prompts a chain of successive deflations using the provided pairs of matrices."},
 	},
     "The option ", TT "Variable", " specifies the base name for the augmented variables.",
     EXAMPLE lines ///
@@ -818,7 +819,7 @@ document {
     }
 
 document {
-    Key => {(isSolution,Point,PolySystem), isSolution, [isSolution,Tolerance] },
+    Key => {(isSolution,AbstractPoint,PolySystem), isSolution, [isSolution,Tolerance] },
     Headline => "check if a point satisfies a polynomial system approximately",
     Caveat => {"Either rewrite or phase out!!!"}
     }
@@ -840,7 +841,7 @@ document {
     f2 = (x-11)*(x-12)*(x-13)
     try parameterHomotopy({f1,f2},{u1,u2,u3},{{1,0,0},{0,1+2*ii,0}}, Software=>BERTINI) else "need to install Bertini to run these lines"
 ///,
-    Caveat => {"Avalaible only with Software=>BERTINI at the moment..."}
+    Caveat => {"Available only with Software=>BERTINI at the moment..."}
     }
 
 -*
@@ -996,8 +997,8 @@ undocumented {
     (toExternalString,GateSystem),
     (evaluateJacobian,GateSystem,Matrix),
     (evaluateJacobian,GateSystem,Matrix,Matrix),    
-    (evaluateJacobian,GateSystem,Point),
-    (evaluateJacobian,GateSystem,Point,Point)
+    (evaluateJacobian,GateSystem,AbstractPoint),
+    (evaluateJacobian,GateSystem,AbstractPoint,AbstractPoint)
     }
 
 doc ///
@@ -1011,7 +1012,7 @@ Headline
 doc ///
     Key
     	endGameCauchy
-	(endGameCauchy,GateHomotopy,Number,Point)
+	(endGameCauchy,GateHomotopy,Number,AbstractPoint)
 	(endGameCauchy,GateHomotopy,Number,MutableMatrix)
     Headline
         Cauchy end game for getting a better approximation of a singular solution 
@@ -1021,12 +1022,12 @@ doc ///
     Inputs
 	H:GateHomotopy
 	t'end:Number
-	p0:Point
+	p0:AbstractPoint
 	points:MutableMatrix
     Description
     	Text 
-            Refines an approximation of a (singular) solution to a polynomial system which was obtained via homotopy contiuation.
-	    This method is used for posprocessing in the blackbox solver implmented in @TO solveSystem@.  
+            Refines an approximation of a (singular) solution to a polynomial system which was obtained via homotopy continuation.
+	    This method is used for posprocessing in the blackbox solver implemented in @TO solveSystem@.  
         Example
             CC[x,y]
 	    T = {(x-2)^3,y-x+x^2-x^3}
@@ -1034,7 +1035,7 @@ doc ///
 	    p0 = first sols;
 	    peek p0
 	    t'end = 1
-    	    p = endGameCauchy(p0#"H",t'end,p0)
+    	    p = endGameCauchy(p0.cache#"H",t'end,p0)
     SeeAlso
     	refine
 ///
@@ -1068,7 +1069,7 @@ doc ///
     SeeAlso
     	GateHomotopy
 	segmentHomotopy
-    	Point	    
+    	AbstractPoint	    
 ///
 
 doc ///

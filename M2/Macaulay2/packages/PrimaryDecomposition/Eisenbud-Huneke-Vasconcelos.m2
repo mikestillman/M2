@@ -88,7 +88,8 @@ SYlocalize = (assroutine) -> (I,P) ->(
      then ret = I
      else (
       if debugLevel >= 1 then (<< endl << "Finding a separator polynomial" << endl);
-      f := lift((flatten entries generators gb IOPrp)#0, polyRing);
+      -- f := lift((flatten entries generators gb IOPrp)#0, polyRing);
+      f := first select(flatten entries generators gb IntersectionOfPrimes, g -> g % P1 != 0);
       if debugLevel >= 2 then (<< endl << "It equals " << f << endl);
       f = substitute (f,RI);
       if debugLevel >= 1 then (<< endl << "Saturating with respect to the separator polynomial" << endl);
@@ -197,7 +198,7 @@ bracketPower = (I, n) -> ideal apply(I_*, f -> f^n)
 getEmbeddedComponent = method(Options => { Strategy => null })
 getEmbeddedComponent (Module, Ideal, Function) := o -> (M, p, checkFunction) -> (
      foundValidComponent := false;
-     j := max(2, ceiling(max((ann M)_*/degree/sum) / min(p_*/degree/sum)));
+     j := if ann M == 0 then 2 else max(2, ceiling(max((ann M)_*/degree/sum) / min(p_*/degree/sum)));
      while not foundValidComponent do (
           if debugLevel > 0 then printerr("Trying bracket power " | toString(j) | " for candidate embedded component...");
           N := bracketPower(p, j)*M;

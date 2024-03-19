@@ -684,7 +684,7 @@ doc ///
       Each 4D reflexive polytope in the Kreuzer-Skarke database
       contains summary information about the polytope.
       Here, we explain this information.  A 3D polytope description line
-      is similar, but somehwat simpler.
+      is similar, but somewhat simpler.
       
       We will do this on an example, and see how to
       obtain this information directly.
@@ -924,7 +924,7 @@ Key
   (generateOffline,ZZ,ZZ)
   Expected
 Headline
-  generate tables of reflexive 4d poytopes from the Kreuzer-Skarke list
+  generate tables of reflexive 4d polytopes from the Kreuzer-Skarke list
 Usage
   filename = generateOffline(h11,h12)
   filename = generateOffline h11

@@ -164,7 +164,7 @@ documentationValue(Symbol, Type)  := (S, T) -> (
     -- objects of type T
     e := smenu(toString \ select(syms, y -> not isMutable y and instance(value y, T)));
     DIV nonnull splice ( "class" => "waystouse",
-	if #b > 0 then ( SUBSECTION {"Types of ", TT if T.?synonym then T.synonym else toString T, " :"}, b),
+	if #b > 0 then ( SUBSECTION {"Types of ", if T.?synonym then T.synonym else TT toString T, " :"}, b),
 	if #a > 0 then ( SUBSECTION {"Functions and methods returning ",     indefinite synonym T, " :"}, a),
 	if #c > 0 then ( SUBSECTION {"Methods that use ",                    indefinite synonym T, " :"}, c),
 	if #e > 0 then ( SUBSECTION {"Fixed objects of class ",                     TT toString T, " :"}, e)))
@@ -252,8 +252,9 @@ documentationValue(Symbol, Package)         := (S, pkg) -> if pkg =!= Core then 
 		    " in ",     HREF{cert#"volume URI", "volume " | cert#"volume number"},
 		    " of ",     HREF{cert#"journal URI",            cert#"journal name"},
 		    " on ",          cert#"acceptance date", ", in the article ",
-		                HREF{cert#"published article URI",  cert#"article title"}, ".",
-		    " That version can be obtained",
+		                HREF{cert#"published article URI",  cert#"article title"},
+		    " (DOI: ",  HREF{"https://doi.org/" | cert#"published article DOI", cert#"published article DOI"},
+		    "). That version can be obtained",
 		    " from ",   HREF{cert#"published code URI", "the journal"}, " or",
 		    " from ",   HREF{commit, SPAN{"the ", EM "Macaulay2", " source code repository"}},
 		    "."}}
@@ -454,7 +455,7 @@ viewHelp = method(Dispatch => Thing)
 viewHelp String := key -> viewHelp makeDocumentTag key
 viewHelp Thing  := key -> (
     if key === () then (
-        if fileExists frontpage then show URL(rootURI | frontpage)
+        if fileExists frontpage then show URL urlEncode(rootURI | frontpage)
 	-- TODO: generate this on-demand
         else error("missing documentation index: ", frontpage, ". Run makePackageIndex() or start M2 without -q"))
     else viewHelp makeDocumentTag key)
@@ -462,7 +463,7 @@ viewHelp DocumentTag := tag -> (
     rawdoc := fetchAnyRawDocumentation tag;
     if ( tag' := getOption(rawdoc, symbol DocumentTag) ) =!= null
     and fileExists( docpage := concatenate htmlFilename tag' )
-    then show URL(rootURI | docpage) else show help tag)
+    then show URL urlEncode(rootURI | docpage) else show help tag)
 viewHelp ZZ := i -> seeAbout(viewHelp, i)
 
 viewHelp = new Command from viewHelp

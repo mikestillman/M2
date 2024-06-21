@@ -269,3 +269,6 @@ PlaneCurveLinearSeries
 Valuations
 SchurVeronese
 VNumber
+TropicalToric
+MultigradedBGG
+MultigradedImplicitization

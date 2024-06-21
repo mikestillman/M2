@@ -14,7 +14,7 @@ recursionLimit = 300
 -- initialize the trivial monoid, see rawMonoid()
 degreesRing 0;
 
-setIOUnSynchronized()					    -- try to avoid deadlocks when running examples
+-- setIOUnSynchronized()					    -- try to avoid deadlocks when running examples
 
 addEndFunction(() -> scan(openFiles(), f -> if isOutputFile f then flush f))
 addEndFunction(() -> path = {})
@@ -76,6 +76,10 @@ addStartFunction( () -> if not noinitfile then (
 	  ))
 
 addStartFunction( () -> if version#"gc version" < "7.0" then error "expected libgc version 7.0 or larger; perhaps our shareable library is not being found" )
+
+copyright = new Command from(() -> help "Copyright and license")
+if fullCopyright then addStartFunction(() -> print copyright())
+
 unexportedSymbols = () -> hashTable apply(pairs Core#"private dictionary", (n,s) -> if not Core.Dictionary#?n then (s => class value s => value s))
 Function.GlobalReleaseHook = (X,x) -> (
      if dictionary X =!= User#"private dictionary" then warningMessage(X," redefined");

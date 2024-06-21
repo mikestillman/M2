@@ -8,7 +8,8 @@ newPackage(
 		  HomePage => "eisenbud.io.github.com"}},
 	  PackageExports => {"IntegralClosure","PrimaryDecomposition"},
           AuxiliaryFiles => false,
-          DebuggingMode => false
+          DebuggingMode => false,
+	  Keywords => {"Projective Algebraic Geometry"}
           )
       export {
 	  "canonicalSeries",
@@ -266,7 +267,7 @@ projectiveImage(List, Ring) := Matrix => o -> (D0List, C) ->(
 
 
 projectiveImage Matrix := Ring => o -> M -> (
- -- in this case M is a 1-m matrix respresenting a
+ -- in this case M is a 1-m matrix representing a
  --linear series.
     R := ring M;
     kk := coefficientRing R;

@@ -26,13 +26,14 @@ newPackage(
 	       HomePage => "http://math.galetto.org"}},
      Headline => "finite group characters on free resolutions and graded modules",
      DebuggingMode => false,
+     Keywords => {"Commutative Algebra"},
      Certification => {
 	 "journal name" => "Journal of Software for Algebra and Geometry",
 	 "journal URI" => "https://msp.org/jsag/",
 	 "article title" => "Setting the scene for Betti characters",
 	 "acceptance date" => "2023-05-30",
 	 "published article URI" => "https://msp.org/jsag/2023/13-1/p04.xhtml",
-	 "published article DOI" => "https://doi.org/10.2140/jsag.2023.13.45",
+	 "published article DOI" => "10.2140/jsag.2023.13.45",
 	 "published code URI" => "https://msp.org/jsag/2023/13-1/jsag-v13-n1-x04-BettiCharacters.m2",
 	 "repository code URI" => "https://github.com/Macaulay2/M2/blob/master/M2/Macaulay2/packages/BettiCharacters.m2",
 	 "release at publication" => "a446af4424af33c06ab97694761a4d5bbc4d535f",
@@ -202,12 +203,8 @@ Character Array := Character => (C,A) -> (
 	}
     )
 
--- character dual
--- borrowing default options from alexander dual method
-alexopts = {Strategy=>0};
-
 -- character of dual/contragredient representation with conjugation
-dual(Character,RingMap) := Character => alexopts >> o -> (c,phi) -> (
+dual(Character,RingMap) := Character => {} >> o -> (c,phi) -> (
     -- check characteristic
     R := c.ring;
     if char(R) != 0 then (
@@ -235,7 +232,7 @@ dual(Character,RingMap) := Character => alexopts >> o -> (c,phi) -> (
     )
 
 -- character of dual/contragredient representation without conjugation
-dual(Character,List) := Character => alexopts >> o -> (c,perm) -> (
+dual(Character,List) := Character => {} >> o -> (c,perm) -> (
     n := c.numActors;
     if #perm != n then (
 	error "dual: expected permutation size to match character length";
@@ -465,7 +462,7 @@ action(ChainComplex,List,List,ZZ):=ActionOnComplex=>op->(C,l,l0,i) -> (
 	    error "action: expected ring actor matrix to be a one-row substitution matrix";
 	    );
     	--convert variable substitutions to matrices
-	l=apply(l,g->(vars R)\\lift(g,R));
+	l=apply(l,g->lift(g,R)//(vars R));
 	) else (
 	--if ring actors are matrices they must be square
     	if not all(l,g->numRows(g)==n) then (
@@ -556,7 +553,7 @@ actors(ActionOnComplex,ZZ) := List => (A,i) -> (
 	    -- given a map of free modules C.dd_i : F <-- F',
 	    -- the inverse group action on the ring (as substitution)
 	    -- and the group action on F, computes the group action on F'
-	    (gInv,g0) -> sub(C.dd_i,gInv)\\(g0*C.dd_i)
+	    (gInv,g0) -> (g0*C.dd_i)//sub(C.dd_i,gInv)
 	    );
     	-- make cache function from f and run it on A
     	((cacheValue (symbol actors,i)) f) A
@@ -568,7 +565,7 @@ actors(ActionOnComplex,ZZ) := List => (A,i) -> (
 	    -- and the group action on F', computes the group action on F
 	    -- it is necessary to transpose because we need a left factorization
 	    -- but M2's command // always produces a right factorization
-	    transpose(transpose(C.dd_(i+1))\\transpose(sub(C.dd_(i+1),gInv)*g0))
+	    transpose(transpose(sub(C.dd_(i+1),gInv)*g0)//transpose(C.dd_(i+1)))
 	    );
     	-- make cache function from f and run it on A
     	((cacheValue (symbol actors,i)) f) A
@@ -656,7 +653,7 @@ action(Module,List,List):=ActionOnGradedModule=>op->(M,l,l0) -> (
 	    error "action: expected ring actor matrix to be a one-row substitution matrix";
 	    );
     	--convert variable substitutions to matrices
-	l=apply(l,g->(vars R)\\lift(g,R));
+	l=apply(l,g->lift(g,R)//(vars R));
 	) else (
 	--if ring actors are matrices they must be square
     	if not all(l,g->numRows(g)==n) then (

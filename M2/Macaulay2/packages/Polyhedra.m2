@@ -39,7 +39,8 @@ newPackage("Polyhedra",
      }
      },
     PackageExports=>{"FourTiTwo"},
-    PackageImports=>{"IntegralClosure", "ReesAlgebra", "LLLBases"}
+    --PackageImports=>{"IntegralClosure", "ReesAlgebra", "LLLBases"}
+    PackageImports=>{"LLLBases"}
     )
 
 ---------------------------------------------------------------------------

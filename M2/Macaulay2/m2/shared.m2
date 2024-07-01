@@ -21,6 +21,10 @@ truncate = method(Options => true)
 
 isEmpty = method(TypicalValue => Boolean)
 
+isNormal = method()
+
+normalCone = method(Options => true)
+
 -- symbols
 
 protect Base

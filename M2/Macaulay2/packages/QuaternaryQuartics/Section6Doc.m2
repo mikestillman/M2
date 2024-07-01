@@ -34,7 +34,7 @@ doc ///
     "[QQ]"
     (quarticType, RingElement)
     inverseSystem
-    minimalBetti
+    "Complexes::minimalBetti"
 ///
 
 
@@ -89,5 +89,5 @@ doc ///
     "[QQ]"
     (quarticType, RingElement)
     inverseSystem
-    minimalBetti
+    "Complexes::minimalBetti"
 ///

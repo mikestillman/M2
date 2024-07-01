@@ -246,7 +246,7 @@ Node
         (weighted) degree @TT "i+j"@ in the free module @TT " C_j"@. When the chain complex is the
         resolution of a module the entries are the total and the graded Betti numbers of the module.
   SeeAlso
-    minimalBetti
+    "Complexes::minimalBetti"
     multigraded
     regularity
     pdim
@@ -256,7 +256,6 @@ Node
     (multigraded, BettiTally)
     (betti, BettiTally)
     [betti, Minimize]
-    minimalBetti
 
 Node
   Key
@@ -329,13 +328,13 @@ Node
     Text
       This command is useful if the non-minimal free resolution has already been computed. However,
       to get the minimal betti numbers of an ideal or module, it is recommended to use the function
-      @TO "minimalBetti"@ as that avoids much computation and allows the use of length and degree limits.
+      @TO "Complexes::minimalBetti"@ as that avoids much computation and allows the use of length and degree limits.
    Caveat
      Released in M2 1.9, still experimental.  Only works over finite prime field.
      If the complex is the resolution of a non-homogeneous or multi-homogeneous object,
      then this function will result in an error.
    SeeAlso
-     minimalBetti
+     "Complexes::minimalBetti"
      betti
      resolution
      [resolution, FastNonminimal]

@@ -19,7 +19,7 @@ doc ///
        of cores (often the maximum available).  Note that the default
        behavior is to use multiple cores.
 
-       In @TO "minimalBetti"@, and in @TO "Complexes::freeResolution"@
+       In @TO "Complexes::minimalBetti"@, and in @TO "Complexes::freeResolution"@
        with the {\tt Strategy => Nonminimal} option, more aggressive
        parallelism that sometimes uses a lot of memory but can
        sometimes produce answers in less time can be enabled using the
@@ -35,6 +35,7 @@ doc ///
        reduce the requisite matrices is large compared to creating
        these matrices.
      Example
+       needsPackage "Complexes"
        numTBBThreads
        I = Grassmannian(1, 6, CoefficientRing => ZZ/101)
        S = ring I
@@ -45,7 +46,6 @@ doc ///
        numTBBThreads = 1
        elapsedTime minimalBetti(I)
      Example
-       needsPackage "Complexes"
        numTBBThreads = 0
        I = ideal I_*;
        elapsedTime freeResolution(I, Strategy => Nonminimal)
@@ -81,7 +81,7 @@ doc ///
        numTBBThreads = 1
        elapsedTime NCGB(I, 22);
    SeeAlso
-     minimalBetti
+     "Complexes::minimalBetti"
      resolution
      "Complexes::freeResolution"
      groebnerBasis

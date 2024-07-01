@@ -1330,7 +1330,7 @@ document {
 	  --     },
 	  LI { "functionality added or improved:",		    -- get this with : git diff version-1.8.2 ../../m2/exports.m2
 	       UL {
-		   LI { "The new function ", TO "minimalBetti", " finds minimal Betti numbers of an ideal or module
+		   LI { "The new function ", TO "Complexes::minimalBetti", " finds minimal Betti numbers of an ideal or module
 		       using the new ", TO "FastNonminimal", " functionality, avoiding unneeded computation of matrices in the
 		       free resolution."},
 		   LI { "The new function ", TO "roots", ", provided by Guillem Blanco, finds roots of univariate polynomials numerically." },

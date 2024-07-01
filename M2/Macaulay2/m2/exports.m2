@@ -911,7 +911,7 @@ export {
 	"minPosition",
 	"mingens",
 	"mingle",
-	"minimalBetti",
+	--"minimalBetti",
 	"minimalPresentation",
 	"minimalPresentationMap",
 	"minimalPresentationMapInv",

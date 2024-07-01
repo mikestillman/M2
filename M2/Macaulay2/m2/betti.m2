@@ -6,7 +6,7 @@
 *-
 
 needs "gb.m2" -- for GroebnerBasis
-needs "res.m2" -- needed by minimalBetti
+--needs "res.m2" -- needed by minimalBetti
 needs "chaincomplexes.m2"
 needs "gradedmodules.m2"
 needs "hilbert.m2"
@@ -197,62 +197,6 @@ betti GradedModule := opts -> C -> (
 	(i,F) -> (
 	    if not isFreeModule F then error("betti: expected module at spot ", toString i, " in chain complex to be free");
 	    apply(pairs tally degrees F, (d,n) -> (i,d,heftfn d) => n))))
-
------------------------------------------------------------------------------
--- minimalBetti
------------------------------------------------------------------------------
-
-minimalBetti = method(
-    TypicalValue => BettiTally,
-    Options => {
-	DegreeLimit => null,
-	LengthLimit => infinity,
-	Weights => null,
-    ParallelizeByDegree => false -- currently: only used over primes fields of positive characteristic
-	})
-minimalBetti Module := BettiTally => opts -> M -> (
-    R := ring M;
-    degreelimit := resolutionDegreeLimit(R, opts.DegreeLimit);
-    lengthlimit := resolutionLengthLimit(R, opts.LengthLimit);
-    -- check to see if a cached resolution is sufficient
-    cacheKey := ResolutionContext{};
-    if M.cache#?cacheKey and isComputationDone(C := M.cache#cacheKey,
-	DegreeLimit => degreelimit, LengthLimit => lengthlimit)
-    then return betti(C.Result.Resolution, Weights => opts.Weights);
-    -- if not, compute a fast non-minimal resolution
-    -- the following line is because we need to make sure we have the resolution
-    -- either complete, or one more than the desired minimal betti numbers.
-    
-    -- We see if we can now compute a non-minimal resolution.
-    -- If not, we compute a usual resolution.
-    -- TODO: this isn't quite correct.
-    useFastNonminimal := not isQuotientRing R and
-      char R > 0 and char R < (1<<15);
-
-    if not useFastNonminimal then 
-        return betti resolution(M, DegreeLimit => degreelimit, LengthLimit => lengthlimit);
-    -- At this point, we think we are good to use the faster algorithm.        
-    -- First, we need to comppute the non-minimal resolution to one further step.
-    if instance(opts.LengthLimit, ZZ) then lengthlimit = lengthlimit + 1;
-    C = resolution(M,
-	StopBeforeComputation => true, FastNonminimal => true, ParallelizeByDegree => opts.ParallelizeByDegree,
-	DegreeLimit => degreelimit, LengthLimit => lengthlimit);
-    rC := if C.?Resolution and C.Resolution.?RawComputation then C.Resolution.RawComputation
-    -- TODO: when can this error happen?
-    else error "cannot use 'minimalBetti' with this input. Input must be an ideal or module in a
-    polynomial ring or skew commutative polynomial ring over a finite field, which is singly graded.
-    These restrictions might be removed in the future.";
-    --
-    B := unpackEngineBetti rawMinimalBetti(rC,
-	if opts.DegreeLimit =!= null     then {opts.DegreeLimit} else {},
-	if opts.LengthLimit =!= infinity then {opts.LengthLimit} else {}
-        );
-    betti(B, Weights => heftvec(opts.Weights, heft R))
-    )
-minimalBetti Ideal := BettiTally => opts -> I -> minimalBetti(
-    if I.cache.?quotient then I.cache.quotient
-    else I.cache.quotient = cokernel generators I, opts
-    )
 
 -----------------------------------------------------------------------------
 

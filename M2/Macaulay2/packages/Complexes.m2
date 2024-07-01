@@ -46,6 +46,7 @@ export {
     "isNullHomotopyOf",
     "isShortExactSequence",
     "liftMapAlongQuasiIsomorphism",
+    "minimalBetti",
     "minimizingMap",
     "nullHomotopy",
     --"nullhomotopy" => "nullHomotopy",

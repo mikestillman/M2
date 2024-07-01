@@ -699,6 +699,8 @@ minimalBetti Module := BettiTally => opts -> M -> (
     betti(B, Weights => heftvec(opts.Weights, heft R))
     )
 
+minimalBetti Ideal := BettiTally => opts -> I -> minimalBetti(comodule I, opts)
+
 -*
 -- older version of Core version of minimalBetti.  Can't use here?
 minimalBetti(Module, Thing) := BettiTally => opts -> (M, junk) -> (

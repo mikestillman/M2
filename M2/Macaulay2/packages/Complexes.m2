@@ -48,7 +48,7 @@ export {
     "liftMapAlongQuasiIsomorphism",
     "minimizingMap",
     "nullHomotopy",
-    "nullhomotopy" => "nullHomotopy",
+    --"nullhomotopy" => "nullHomotopy",
     "naiveTruncation",
     "randomComplexMap",
 --    "res" => "resolution",

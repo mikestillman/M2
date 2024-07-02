@@ -77,6 +77,10 @@ traceLevel = 0
 --   ring to a larger fractional ring?  We can certainly just multiply the two ideals, 
 --   and clean up, but perhaps this is not optimal?
 
+-- TODO: this needs to be changed
+inNoetherForm = method()
+inNoetherForm Ring := Boolean => R -> false
+
 factorize = method()
 factorize RingElement := (F) -> (
      facs := factor F;

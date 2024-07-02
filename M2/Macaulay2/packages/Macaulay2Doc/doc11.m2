@@ -37,7 +37,7 @@ document {
           R = QQ[x,y];
 	  C = res coker vars R;
 	  D = C ++ C
-	  formation D
+	    --formation D
 	  ///,
      SeeAlso => { directSum, (symbol ++, Module, Module), (symbol **, Module, Module), (Hom,Module,Module), Expression, FunctionApplication}
      }

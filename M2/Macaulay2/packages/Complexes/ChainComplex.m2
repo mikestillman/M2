@@ -483,6 +483,8 @@ defaultLengthLimit = (R, baselen, len) -> (
       len
     )
 
+-- MES: note, this list of options is all of the ones from resolution, in the Core,
+-- except FastNonminimal is not present (use instead: Strategy => Nonminimal).
 freeResolution = method(Options => {
 	StopBeforeComputation	=> false,
 	LengthLimit		=> infinity,	-- (infinity means numgens R)
@@ -532,6 +534,21 @@ freeResolution Matrix := ComplexMap => opts -> f -> extend(
     freeResolution(source f, opts),
     matrix f
     )
+
+resolution Module := Complex => opts  -> M -> (
+    o := pairs opts;
+    o2 := new OptionTable from select(pairs opts, x -> x#0 =!= FastNonminimal);
+    if opts.FastNonminimal then (
+        o2 = o2 ++ {Strategy => Nonminimal};
+        << "warning: `FastNonminimal => true` is deprecated.  Use: res(..., Strategy => Nonminimal) instead" << endl;
+        );
+    freeResolution(M, o2)
+    )
+
+complete Complex := C -> C
+complete ComplexMap := F -> F
+nullhomotopy ComplexMap := F -> nullHomotopy F
+status Complex := C -> << "resolution status of a Complex needs to be implemented" << endl;
 
 isHomogeneous Complex := (C) -> isHomogeneous dd^C
 

@@ -259,38 +259,40 @@ document {
      ///,
      SeeAlso => {(symbol _, Ring , ZZ), (symbol _, String, Ring)}
      }
-document { 
-     Key => {
-	  (symbol _, ChainComplex, ZZ),     -- component
-	  (symbol _, GradedModule, ZZ)},     -- component
-     Headline => "component",
-     Usage => "C_i",
-     Inputs => {
-	  "C" => {"or ", ofClass GradedModule},
-	  "i"
-	  },
-     Outputs => {
-	  Module => { "the ", TT "i", "-th component of ", TT "C"}
-	       },
-     EXAMPLE lines ///
-     	  R = QQ[x,y,z]/(x^3,y^3,z^3,x*y*z);
-	  C = res(coker vars R, LengthLimit=>8)
-     	  rank C_7
-	  C.dd_3
-	  ///,
-     SUBSECTION "Programming hint",
-	  "The chain complex ", TT "C", " is implemented as a hash table, 
-	  but since the computation of a projective resolution 
-	  can be stopped prematurely, Macaulay2 doesn't bother
-	  populating the hash table with the relevant free modules 
-	  until explicitly requested by the user, for example, in response to the
-	  command ", TT "C_i", " described above.  The hash table ", 
-	  TT "C", " can be examined directly with code like ", TT "C#i", ", but in order to populate 
-	  the hash table completely, use ", TO (complete, ChainComplex), ".",
-     SeeAlso => {resolution,
-	  (symbol ^, ChainComplex, ZZ),
-	  (symbol _, ChainComplexMap, ZZ)}
-     }
+
+-- MES, to be removed 7/24 
+-- document { 
+--      Key => {
+-- 	  (symbol _, ChainComplex, ZZ),     -- component
+-- 	  (symbol _, GradedModule, ZZ)},     -- component
+--      Headline => "component",
+--      Usage => "C_i",
+--      Inputs => {
+-- 	  "C" => {"or ", ofClass GradedModule},
+-- 	  "i"
+-- 	  },
+--      Outputs => {
+-- 	  Module => { "the ", TT "i", "-th component of ", TT "C"}
+-- 	       },
+--      EXAMPLE lines ///
+--      	  R = QQ[x,y,z]/(x^3,y^3,z^3,x*y*z);
+-- 	  C = res(coker vars R, LengthLimit=>8)
+--      	  rank C_7
+-- 	  C.dd_3
+-- 	  ///,
+--      SUBSECTION "Programming hint",
+-- 	  "The chain complex ", TT "C", " is implemented as a hash table, 
+-- 	  but since the computation of a projective resolution 
+-- 	  can be stopped prematurely, Macaulay2 doesn't bother
+-- 	  populating the hash table with the relevant free modules 
+-- 	  until explicitly requested by the user, for example, in response to the
+-- 	  command ", TT "C_i", " described above.  The hash table ", 
+-- 	  TT "C", " can be examined directly with code like ", TT "C#i", ", but in order to populate 
+-- 	  the hash table completely, use ", TO (complete, ChainComplex), ".",
+--      SeeAlso => {resolution,
+-- 	  (symbol ^, ChainComplex, ZZ),
+-- 	  (symbol _, ChainComplexMap, ZZ)}
+--      }
 
 document {
      Key => {(symbol _, ChainComplexMap, ZZ),

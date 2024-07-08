@@ -304,27 +304,28 @@ document {
 	  },
      }
 
-document {
-     Key => (complete, ChainComplex),
-     Headline => "complete the internal parts",
-     TT "complete C", " -- fills in the modules of a chain complex
-     obtained as a resolution with information from the engine.",
-     PARA{},
-     "For the sake of efficiency, when a chain complex arises as
-     a resolution of a module, the free modules are not filled in until
-     they are needed.  This routine can be used to fill them all in, and
-     is called internally when a chain complex is printed.
-     Normally users will not need this function, unless they use ", TO "#", " to
-     obtain the modules of the chain complex, or use ", TO "keys", " to
-     see which spots are occupied by modules.",
-     EXAMPLE {
-	  "R = ZZ/101[a..d];",
-      	  "C = resolution cokernel vars R;",
-      	  "keys C",
-      	  "complete C;",
-      	  "keys C"
-	  }
-     }
+-- MES: to be removed, 7/24
+-- document {
+--      Key => (complete, ChainComplex),
+--      Headline => "complete the internal parts",
+--      TT "complete C", " -- fills in the modules of a chain complex
+--      obtained as a resolution with information from the engine.",
+--      PARA{},
+--      "For the sake of efficiency, when a chain complex arises as
+--      a resolution of a module, the free modules are not filled in until
+--      they are needed.  This routine can be used to fill them all in, and
+--      is called internally when a chain complex is printed.
+--      Normally users will not need this function, unless they use ", TO "#", " to
+--      obtain the modules of the chain complex, or use ", TO "keys", " to
+--      see which spots are occupied by modules.",
+--      EXAMPLE {
+-- 	  "R = ZZ/101[a..d];",
+--       	  "C = resolution cokernel vars R;",
+--       	  "keys C",
+--       	  "complete C;",
+--       	  "keys C"
+-- 	  }
+--      }
 
 
 document {

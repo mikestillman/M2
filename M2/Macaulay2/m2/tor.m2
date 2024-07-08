@@ -46,7 +46,7 @@ Tor(ZZ, Module, Module) := Module => opts -> (i,M,N) -> (
 	  C := resolution(M,LengthLimit=>i+1);
 	  N = minimalPresentation N;
 	  b := C.dd;
-	  complete b;
+	  --complete b;
 	  if b#?i then (
 	       if b#?(i+1) 
 	       then homology(b_i ** N, b_(i+1) ** N)

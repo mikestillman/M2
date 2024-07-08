@@ -53,8 +53,10 @@ concentration ComplexMap := Sequence => f -> (
 max Complex := ZZ => C -> max concentration C
 min Complex := ZZ => C -> min concentration C
 
-complex = method(Options => {Base=>0})
-complex HashTable := Complex => opts -> maps -> (
+complexOptions = {Base => 0}
+--complex = method(Options => {Base=>0})
+complex = method(Options => true)
+complex HashTable := Complex => complexOptions >> opts -> maps -> (
     spots := sort keys maps;
     if #spots === 0 then
       error "expected at least one matrix";
@@ -80,7 +82,7 @@ complex HashTable := Complex => opts -> maps -> (
     C.dd = map(C,C,maps,Degree=>-1);
     C
     )
-complex List := Complex => opts -> L -> (
+complex List := Complex => complexOptions >> opts -> L -> (
     -- L is a list of matrices or a list of modules
     if not instance(opts.Base, ZZ) then
       error "expected Base to be an integer";
@@ -104,7 +106,7 @@ complex List := Complex => opts -> L -> (
         );
     error "expected a list of matrices or a list of modules";
     )
-complex Module := Complex => opts -> (M) -> (
+complex Module := Complex => complexOptions >> opts -> (M) -> (
     if not instance(opts.Base, ZZ) then
       error "complex: expected base to be an integer";
     if M.cache.?Complex and opts.Base === 0 then return M.cache.Complex;
@@ -118,9 +120,9 @@ complex Module := Complex => opts -> (M) -> (
     C.dd = map(C,C,0,Degree=>-1);
     C
     )
-complex Ring := Complex => opts -> R -> complex(R^1, opts)
-complex Ideal := Complex => opts -> I -> complex(module I, opts)
-complex Complex := Complex => opts -> C -> (
+complex Ring := Complex => complexOptions >> opts -> R -> complex(R^1, opts)
+complex Ideal := Complex => complexOptions >> opts -> I -> complex(module I, opts)
+complex Complex := Complex => complexOptions >> opts -> C -> (
     -- all this does is change the homological degrees 
     -- so the concentration begins at opts.Base
     (lo,hi) := concentration C;
@@ -133,7 +135,7 @@ complex Complex := Complex => opts -> C -> (
         complex(L, Base=>opts.Base)
         )
     )
-complex ComplexMap := Complex => opts -> f -> (
+complex ComplexMap := Complex => complexOptions >> opts -> f -> (
     if degree f === -1 then (
         if source f =!= target f then error "expected a differential";
         (lo,hi) := concentration source f;
@@ -607,6 +609,11 @@ poincareN Complex := C -> (
             (d,m) -> f = f + m * R_0^i * product(# d, j -> R_(j+1)^(d_j)))
         );
     f
+    )
+
+rank Complex := ZZ => C -> (
+    (lo, hi) := concentration C;
+    sum for i from lo to hi list (-1)^i * rank C_i
     )
 
 minimalPresentation Complex := 

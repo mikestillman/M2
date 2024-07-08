@@ -278,9 +278,11 @@ document {
      EXAMPLE lines ///
           R = QQ[a..d]
 	  D = res coker random(R^2,R^{4:-2})
-	  status(D, TotalPairs => true, PairsRemaining => true, Monomials => true)
      ///
      }
+
+-- line from previous example:
+-- status(D, TotalPairs => true, PairsRemaining => true, Monomials => true)
 
 document {
      Key => TotalPairs,

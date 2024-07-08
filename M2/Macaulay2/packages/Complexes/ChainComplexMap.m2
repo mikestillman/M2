@@ -634,6 +634,7 @@ Hom(Matrix, ComplexMap) := ComplexMap => opts -> (f,g) ->
     Hom(map(complex target f, complex source f, i -> if i === 0 then f), g, opts)
 
 dual ComplexMap := ComplexMap => {} >> o -> f -> Hom(f, (ring f)^1)
+transpose ComplexMap := ComplexMap => f -> dual f
 
 homomorphism ComplexMap := ComplexMap => (h) -> (
     -- h should be a homomorphism of complexes from R^1[-i] --> E = Hom(C,D)

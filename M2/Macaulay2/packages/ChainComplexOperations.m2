@@ -6,6 +6,7 @@
                          Email => "de@msri.org"}},
                Headline => "sym2, wedge2, chi2 of a ChainComplex",
 	       Keywords => {"Homological Algebra"},
+               PackageExports => {"Complexes"},
                DebuggingMode => false
                )
 
@@ -44,36 +45,36 @@ reverseFactors(Module, Module, ZZ,ZZ) := (P,Q,s,t) ->(
     map(Q**P,P**Q,ta)
     )
 
-reverseFactors(ChainComplex, ChainComplex) := (F,G) ->(
+reverseFactors(Complex, Complex) := ComplexMap => (F,G) ->(
     --define the iso (F**G --> G**F)
     tar := G**F;
     sour := F**G;
     Ln := symbol Ln;
     phi := for n from min sour to max sour list (
 	Ln = for i from max(min G,n-max F) to min(max G,n-min F) list (
-    	(tar_n)_[(i,n-i)]*reverseFactors(F_(n-i),G_i,n-i,i)*(sour_n)^[(n-i,i)]); 
+    	    (tar_n)_[{i,n-i}]*reverseFactors(F_(n-i),G_i,n-i,i)*(sour_n)^[{n-i,i}]); 
     	sum Ln);
-map(tar,sour,n->phi_(n-min sour))
+    map(tar,sour,n->phi_(n-min sour))
     )
 
 sym2 = method()
-sym2 ChainComplex := F ->(
+sym2 Complex := Complex => F ->(
     tau := reverseFactors(F,F);
     G := F**F;
     Gs := image(id_(F**F)+tau);
-    GGs := chainComplex(for i from min Gs+1 to max Gs list prune Gs.dd_i);
+    GGs := complex(for i from min Gs+1 to max Gs list prune Gs.dd_i);
     GGs[-min G]) 
 
 wedge2 = method()
-wedge2 ChainComplex := F ->(
+wedge2 Complex := Complex => F ->(
     tau := reverseFactors(F,F);
     G := F**F;
     Gs := image(id_(F**F)-tau);
-    GGs := chainComplex(for i from min Gs+1 to max Gs list prune Gs.dd_i);
+    GGs := complex(for i from min Gs+1 to max Gs list prune Gs.dd_i);
     GGs[-min G])
 
 evenHomologyLength = method()
-evenHomologyLength ChainComplex := F ->  (
+evenHomologyLength Complex := ZZ => F ->  (
     len := 0;
     L := for i from min F to max F list(
 	if even i then len = length(HH_i F)  else len = 0;
@@ -82,7 +83,7 @@ evenHomologyLength ChainComplex := F ->  (
     sum L)
 
 oddHomologyLength = method()
-oddHomologyLength ChainComplex := F ->  (
+oddHomologyLength Complex := ZZ => F ->  (
     len := 0;
     L := for i from min F to max F list(
 	if odd i then len = length(HH_i F)  else len = 0;
@@ -91,7 +92,7 @@ oddHomologyLength ChainComplex := F ->  (
     sum L)
 
 eulerCharacteristic = method()
-eulerCharacteristic ChainComplex := F -> (
+eulerCharacteristic Complex := ZZ => F -> (
     len := 0;
     L := for i from min F to max F list(
 	len = length(HH_i F);
@@ -100,10 +101,10 @@ eulerCharacteristic ChainComplex := F -> (
     sum L)
 
 chi2 = method()
-chi2 ChainComplex := F -> eulerCharacteristic sym2 F - eulerCharacteristic wedge2 F
+chi2 Complex := ZZ => F -> eulerCharacteristic sym2 F - eulerCharacteristic wedge2 F
 
 excess = method()
-excess ChainComplex := F ->(
+excess Complex := Sequence => F ->(
     excess1a := 2*oddHomologyLength sym2 F;
     excess1b := 2*evenHomologyLength wedge2 F;
     G := F**F;
@@ -111,14 +112,14 @@ excess ChainComplex := F ->(
          (length HH_0 F)*sum(for i from min F to max F list rank F_i);
     (excess1a, excess1b,excess2))
 
-excess Module := M ->(
-    F := res M;
+excess Module := Sequence => M ->(
+    F := freeResolution M;
     excess F)
 
-testWalker = M ->(F:=res M; 
+testWalker = M ->(
+    F:=freeResolution M; 
     sumbetti := sum(for i from min F to max F list rank F_i);
     (2^(codim M)*degree M + sum toList (excess M)) == (degree M)*sumbetti)
-
 
 beginDocumentation()
        doc ///
@@ -137,7 +138,7 @@ beginDocumentation()
 	  of characteristic $\neq 2$.
 	  
 	  The main new (to Eisenbud) tool in Walker's proof was the function chi2. Explicitly,
-	  if F is a ChainComplex of free S-modules with finite length homology, then
+	  if F is a complex of free S-modules with finite length homology, then
 	  chi2 F is the Euler characteristic of sym2 F minus that of wedge2 F.
 	  The function chi2 should be regarded as the Euler characteristic of the 2nd Adams operation,
 	  applied to F. It has two properties relevant for the proof:
@@ -160,7 +161,7 @@ beginDocumentation()
     	  QED
 
           Chi2 should be regarded as the Euler characteristic of
-	  the second Adams operation, applied to a free Chain complex. Its additivity
+	  the second Adams operation, applied to a free complex. Its additivity
 	  follows from the fact that the Adams operations are ring homomorphism.
 	  This is also easy to prove directly.
 	  
@@ -175,7 +176,7 @@ beginDocumentation()
 doc ///
    Key
     reverseFactors
-    (reverseFactors, ChainComplex, ChainComplex)
+    (reverseFactors, Complex, Complex)
     (reverseFactors, Module, Module, ZZ,ZZ)    
    Headline
     The isomorphism from F**G to G**F when F,G are complexes
@@ -183,14 +184,14 @@ doc ///
     phi = reverseFactors(F,G)
     phi = reverseFactors(M,N,p,q)
    Inputs
-    F:ChainComplex
-    G:ChainComplex    
+    F:Complex
+    G:Complex    
     M:Module
     N:Module
     p:ZZ
     q:ZZ
    Outputs
-    phi:ChainComplexMap
+    phi:ComplexMap
      to G**F from F**G
    Description
     Text
@@ -198,8 +199,8 @@ doc ///
      In reverseFactors(M,N,p,q) the integers p and q specify the homological degrees of M and N respectively. 
     Example
      S = ZZ/101[a,b]
-     F = chainComplex{map(S^1,S^{-1},a)}
-     G = chainComplex{map(S^1,S^{-1},b)}[3]
+     F = complex{map(S^1,S^{-1},a)}
+     G = complex{map(S^1,S^{-1},b)}[3]
      phi = reverseFactors(F,G)
      G**F
      F**G
@@ -214,13 +215,13 @@ doc ///
 doc ///
    Key
     oddHomologyLength
-    (oddHomologyLength, ChainComplex)
+    (oddHomologyLength, Complex)
    Headline
     sum of the lengths of the odd degree homology groups
    Usage
     m = oddHomologyLength F
    Inputs
-    F:ChainComplex
+    F:Complex
    Outputs
     m:ZZ
    Caveat
@@ -229,13 +230,13 @@ doc ///
 doc ///
    Key
     evenHomologyLength
-    (evenHomologyLength, ChainComplex)
+    (evenHomologyLength, Complex)
    Headline
     sum of the lengths of the even degree homology groups
    Usage
     m = evenHomologyLength F
    Inputs
-    F:ChainComplex
+    F:Complex
    Outputs
     m:ZZ
    Caveat
@@ -244,13 +245,13 @@ doc ///
 doc ///
    Key
     eulerCharacteristic
-    (eulerCharacteristic, ChainComplex)
+    (eulerCharacteristic, Complex)
    Headline
     sum of the lengths of the even degree homology minus the odd degree homology groups
    Usage
     m = eulerCharacteristic F
    Inputs
-    F:ChainComplex
+    F:Complex
    Outputs
     m:ZZ
    Caveat
@@ -259,7 +260,7 @@ doc ///
 doc ///
    Key
     excess
-    (excess, ChainComplex)
+    (excess, Complex)
     (excess, Module)
    Headline
     Difference between the sum of the lengths of Tor_i(M,M) and the Walker bound 2^d*length(M)
@@ -267,7 +268,7 @@ doc ///
     exs = excess F
     exs = excess M
    Inputs
-    F:ChainComplex
+    F:Complex
      with finite length homology
     M:Module
      of finite length
@@ -291,7 +292,7 @@ doc ///
      S = ZZ/101[a,b,c]
      mm = ideal vars S
      M = S^1/(mm^2)
-     F = res M
+     F = freeResolution M
      
      sumBetti = sum(4,i->rank F_i)          
      sumTor = sum(4,i->length(Tor_i(M,M)))
@@ -307,15 +308,15 @@ doc ///
 doc ///
    Key
     sym2
-    (sym2, ChainComplex)
+    (sym2, Complex)
    Headline
     symmetric square of a chain complex
    Usage
     G = sym2 F
    Inputs
-    F:ChainComplex
+    F:Complex
    Outputs
-    G:ChainComplex
+    G:Complex
    Description
     Text
      If tau: F**F \to F**F is the chain map reversing the factors, with appropriate signs, then
@@ -325,15 +326,15 @@ doc ///
 doc ///
    Key
     wedge2
-    (wedge2, ChainComplex)
+    (wedge2, Complex)
    Headline
     exterior square of a chain complex
    Usage
     G = wedge2 F
    Inputs
-    F:ChainComplex
+    F:Complex
    Outputs
-    G:ChainComplex
+    G:Complex
    Description
     Text
      If tau: F**F \to F**F is the chain map reversing the factors, with appropriate signs, then
@@ -342,13 +343,13 @@ doc ///
 doc ///
    Key
     chi2
-    (chi2, ChainComplex)
+    (chi2, Complex)
    Headline
     Euler characteristic of the 2nd Adams operation applied to a complex
    Usage
     m = chi2 F    
    Inputs
-    F:ChainComplex
+    F:Complex
    Outputs
     m:ZZ
    Description
@@ -363,7 +364,7 @@ doc ///
      S = ZZ/101[a,b,c]
      mm = ideal vars S
      M = S^1/(mm^2)
-     F = res M
+     F = freeResolution M
      
      sumBetti = sum(4,i->rank F_i)          
      sumTor = sum(4,i->length(Tor_i(M,M)))
@@ -407,7 +408,7 @@ assert (reverseFactors(P,Q,s,t)*reverseFactors(Q,P,s,t) == id_(Q**P))
 
 TEST///
 S = ZZ/101[a,b,c]
-F = chainComplex{map(S^1,S^1,0)}
+F = complex{map(S^1,S^1,0)}
 assert (try eulerCharacteristic F then "finite" else "undefined" == "undefined")
 ///
 
@@ -415,8 +416,8 @@ TEST///
 S = ZZ/101[a,b,c]
 M = S^1/ideal{a^2,b^2,c^2}
 N = S^1/((ideal gens S)^3)
-betti(F = complete res M)
-betti (G = complete res N)
+betti(F = freeResolution M)
+betti (G = freeResolution N)
 phi = reverseFactors(F,G);
 --is it a map of complexes?
 assert all(apply(1+length(F**G), i->(

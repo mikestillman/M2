@@ -245,8 +245,19 @@ document {
      EXAMPLE {
 	  "R = ZZ/2[a..d];",
 	  "M = coker random(R^4, R^{5:-3,6:-4});",
-	  "handleInterrupts = true",
-///(<< "-- computation started: " << endl;
+	  },
+     "If the user has a chain complex in hand that is known to be a
+     projective resolution of ", TT "M", ", then it can be installed
+     with ", TT "M.cache.resolution = C", ".",
+     PARA{},
+     "There are various optional arguments associated with ", TO2(resolution, "res"), "
+     which allow detailed control over the progress of the computation."
+     }
+
+-- the following was placed into the previous doc node.
+--	  "handleInterrupts = true",
+///
+(<< "-- computation started: " << endl;
  while true do try (
      alarm 1;
      time res M;
@@ -259,15 +270,8 @@ document {
      << "-- computation interrupted" << endl;
      status M.cache.resolution;
      << "-- continuing the computation" << endl;
-     ))///
-	  },
-     "If the user has a chain complex in hand that is known to be a
-     projective resolution of ", TT "M", ", then it can be installed
-     with ", TT "M.cache.resolution = C", ".",
-     PARA{},
-     "There are various optional arguments associated with ", TO2(resolution, "res"), "
-     which allow detailed control over the progress of the computation."
-     }
+     ))
+///
 
 document { Key => "the debugger",
      "We have a Macaulay2 source file with a pair of functions in it that

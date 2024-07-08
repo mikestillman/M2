@@ -3,45 +3,45 @@ document {
      Headline => "compute an Ext module"
      }
 
-document {
-     Key => {(Ext,Module,Module),(Ext,Ideal,Ideal),(Ext,Ideal,Module),(Ext,Ideal,Ring),(Ext,Module,Ideal),(Ext,Module,Ring)},
-     Headline => "total Ext module",
-     Usage => "Ext(M,N)",
-     Inputs => { "M" => {ofClass{Ideal,Ring}}, "N" => {ofClass{Ideal,Ring}}},
-     Outputs => {
-	  TEX { "the $Ext$ module of $M$ and $N$,
-	       as a multigraded module, with the modules $Ext^i(M,N)$ for all values of $i$ appearing simultaneously." }},
-     PARA { "The modules ", TT "M", " and ", TT "N", " should be graded (homogeneous) modules over the same ring." },
-     PARA { "If ", TT "M", " or ", TT "N", " is an ideal or ring, it is regarded as a module in the evident way." },
-     PARA TEX {
-	  "The computation of the total Ext module is possible for modules over the
-	  ring $R$ of a complete intersection, according the algorithm
-	  of Shamash-Eisenbud-Avramov-Buchweitz.  The result is provided as a finitely
-	  presented module over a new ring with one additional variable of degree
-	  ", TT "{-2,-d}", " for each equation of degree ", TT "d", " defining $R$.  The 
-	  variables in this new ring have degree length 1 more than the degree length of 
-	  the original ring, i.e., is multigraded, with the
-	  degree ", TT "d", " part of $Ext^n(M,N)$ appearing as the degree
-	  ", TT "prepend(-n,d)", " part of ", TT "Ext(M,N)", ".  We illustrate this in 
-	  the following example."
-	  },
-     EXAMPLE lines ///
-     R = QQ[x,y]/(x^3,y^2);
-     N = cokernel matrix {{x^2, x*y}}
-     H = Ext(N,N);
-     ring H
-     S = ring H;
-     H
-     isHomogeneous H
-     rank source basis( { -2,-3 }, H)
-     rank source basis( { -3 }, Ext^2(N,N) )
-     rank source basis( { -4,-5 }, H)
-     rank source basis( { -5 }, Ext^4(N,N) )
-     hilbertSeries H
-     hilbertSeries(H,Order=>11)
-     ///,
-     PARA{ "The result of the computation is cached for future reference." }
-     }
+-- document {
+--      Key => {(Ext,Module,Module),(Ext,Ideal,Ideal),(Ext,Ideal,Module),(Ext,Ideal,Ring),(Ext,Module,Ideal),(Ext,Module,Ring)},
+--      Headline => "total Ext module",
+--      Usage => "Ext(M,N)",
+--      Inputs => { "M" => {ofClass{Ideal,Ring}}, "N" => {ofClass{Ideal,Ring}}},
+--      Outputs => {
+-- 	  TEX { "the $Ext$ module of $M$ and $N$,
+-- 	       as a multigraded module, with the modules $Ext^i(M,N)$ for all values of $i$ appearing simultaneously." }},
+--      PARA { "The modules ", TT "M", " and ", TT "N", " should be graded (homogeneous) modules over the same ring." },
+--      PARA { "If ", TT "M", " or ", TT "N", " is an ideal or ring, it is regarded as a module in the evident way." },
+--      PARA TEX {
+-- 	  "The computation of the total Ext module is possible for modules over the
+-- 	  ring $R$ of a complete intersection, according the algorithm
+-- 	  of Shamash-Eisenbud-Avramov-Buchweitz.  The result is provided as a finitely
+-- 	  presented module over a new ring with one additional variable of degree
+-- 	  ", TT "{-2,-d}", " for each equation of degree ", TT "d", " defining $R$.  The 
+-- 	  variables in this new ring have degree length 1 more than the degree length of 
+-- 	  the original ring, i.e., is multigraded, with the
+-- 	  degree ", TT "d", " part of $Ext^n(M,N)$ appearing as the degree
+-- 	  ", TT "prepend(-n,d)", " part of ", TT "Ext(M,N)", ".  We illustrate this in 
+-- 	  the following example."
+-- 	  },
+--      EXAMPLE lines ///
+--      R = QQ[x,y]/(x^3,y^2);
+--      N = cokernel matrix {{x^2, x*y}}
+--      H = Ext(N,N);
+--      ring H
+--      S = ring H;
+--      H
+--      isHomogeneous H
+--      rank source basis( { -2,-3 }, H)
+--      rank source basis( { -3 }, Ext^2(N,N) )
+--      rank source basis( { -4,-5 }, H)
+--      rank source basis( { -5 }, Ext^4(N,N) )
+--      hilbertSeries H
+--      hilbertSeries(H,Order=>11)
+--      ///,
+--      PARA{ "The result of the computation is cached for future reference." }
+--      }
 
 document {
      Key => {(Ext,ZZ,Module,Module),

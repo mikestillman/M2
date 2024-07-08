@@ -21,7 +21,7 @@ newPackage(
                     },
         Headline => "random complexes over fields or the integers",
 	Keywords => {"Examples and Random Objects"},
-        PackageExports => {"SimplicialComplexes"},
+        PackageExports => {"SimplicialComplexes", "Complexes"},
 	PackageImports => {"LLLBases"}
         )
 
@@ -71,31 +71,17 @@ maximalEntry=method()
 maximalEntry(Matrix) := m -> (
     max(flatten entries m/abs)+0.0)
 
-maximalEntry(ChainComplex) := C -> (
+maximalEntry(Complex) := C -> (
     R:= ring C; 
     if not( R === ZZ or R === QQ or R === RR_53 ) then 
-    error "expect a ChainComplex over ZZ ,QQ or RR_53";
+    error "expect a Complex over ZZ ,QQ or RR_53";
     for i from min C+1 to max C list maximalEntry C.dd_i)
 
 disturb = method(Options => {Strategy => Discrete})
-disturb(ChainComplex,RR) := opts -> (C,epsilon) -> (   
-    chainComplex for i from 1 to length C list (
-	c := rank C_(i-1);
-	d := rank C_i;
-	e := maximalEntry C.dd_i;
-	entry := null;
-	if opts.Strategy == symbol Discrete then
-	  matrix apply(numrows C.dd_i,k->apply(numcols C.dd_i,l -> (
-		    entry=C.dd_i_(k,l)*(1+epsilon*(2*random(2)-1)))))
-	else if opts.Strategy == symbol Continuous then
-	  matrix apply(numrows C.dd_i,k->apply(numcols C.dd_i,l -> (
-		    entry=C.dd_i_(k,l)*(1+epsilon*(2*random(RR)-1)))))
---	C.dd_i +e*epsilon*(2*random(RR^c,RR^d)-oneMatrix(c,d))
-    ))
-disturb(ChainComplex,RR) := ChainComplex => opts -> (C,epsilon) -> (   
+disturb(Complex,RR) := Complex => opts -> (C,epsilon) -> (   
     if ring C =!= ZZ and ring C =!= QQ and not instance(ring C, RealField) then
       error "expected a chain complex over ZZ, QQ, or RR";
-    chainComplex for i from 1 to length C list (
+    complex for i from 1 to length C list (
 	c := rank C_(i-1);
 	d := rank C_i;
         elems := entries C.dd_i;
@@ -112,7 +98,7 @@ testTimeForLLLonSyzygies(ZZ,ZZ):= opts->(r,n)->(
     t1:=timing (B:=syz A**QQ);
     B=lift(B,ZZ);
     t2:=timing(C:=LLL B);
-    (append(maximalEntry chainComplex(A,B),maximalEntry C),t1#0,t2#0)
+    (append(maximalEntry complex{A,B},maximalEntry C),t1#0,t2#0)
     )
 
 TEST///
@@ -149,7 +135,7 @@ randomChainComplex(List,List):= opts -> (h,r)-> (
 	if opts.ZeroMean then C=C-mean*oneMatrix(rr_i,c_i);
 	L=append(L,A*B*C);
 	);
-    return chainComplex L)
+    return complex L)
 
 TEST ///
   needsPackage("SVDComplexes")
@@ -159,7 +145,6 @@ TEST ///
   prune HH C
   CR=C**RR_53    
   C=CR
-  SVDHomology CR
   (h,U)=SVDComplex CR
   auts=apply(min CR..max CR, i-> U_i*transpose U_i)
   e=1e-10
@@ -169,7 +154,7 @@ TEST ///
   apply(auts,M->clean_e ( M-id_(source M)))
 
 
-  Cplus=pseudoInverse C
+  Cplus = pseudoInverse C
 
   Cplus.dd^2
     betti C, betti Cplus
@@ -194,8 +179,8 @@ randomSimplicialComplex(ZZ,ZZ):= (k,n) -> (
    N:=#sets-k-2;
    I:=monomialIdeal apply(apply(n,i->sets_(random(N)+k+2)),s->product(s,i->x_i));
    c:=simplicialComplex I;
-   CQ:=chainComplex c; 
-   C:=(chainComplex apply(length CQ-1,i->lift(CQ.dd_(i+1),ZZ)))
+   CQ:=complex chainComplex c; 
+   complex apply(length CQ-1,i->lift(CQ.dd_(i+1),ZZ))
    )
 
 TEST ///
@@ -211,18 +196,14 @@ TEST ///
 ///
     
 normalize = method()
-normalize ChainComplex := C-> (
-    minC := min C;
-    maxC := max C;
+normalize Complex := Complex => C-> (
+    (loC, hiC) := concentration C;
     D := if ring C === ZZ then C**QQ else C;
-    C' := for i from minC+1 to maxC list (
+    complex(for i from loC+1 to hiC list (
         -- for some reason, if D.dd_i is 0, then this returns the 0 matrix:
 	    m := max(flatten entries D.dd_i/abs);
-   	    (1/m) * D.dd_i
-        );
-    -- this next line is not correct: it might negate some differentials.
-    -- if the complex has minC odd...
-    chainComplex C'[-minC]
+            if m == 0 then D.dd_i else (1/m) * D.dd_i
+            ), Base => loC)
     )
  
 beginDocumentation()
@@ -234,7 +215,7 @@ doc ///
      support for creating random complexes over the integers 
    Description
     Text
-      We implement two methods to create a random @TO "ChainComplex"@ over the integers.
+      We implement two methods to create a random @TO "Complex"@ over the integers.
       The first method (@TO randomChainComplex@) builds the complex from products of randomly chosen matrices of desired rank.
       The limitation of this method to produce large complexes over the integers with
       moderate Height is the use of the LLL algorithm to improve the presentation of
@@ -270,7 +251,7 @@ doc ///
      ZeroMean => Boolean
        whether to balance the random numbers around zero
    Outputs
-     C:ChainComplex
+     C:Complex
        a random chain complex over the integers whose homology ranks match $h$, and 
        whose matrices have ranks given by $r$
    Description
@@ -307,15 +288,15 @@ doc ///
      randomSimplicialComplex
      (randomSimplicialComplex,ZZ,ZZ)
    Headline
-     the chainComplex over ZZ of a random Stanley-Reisner simplicial complex 
+     the complex over ZZ of a random Stanley-Reisner simplicial complex 
    Usage
      C = randomSimplicialComplex(k,n)
    Inputs
      k:ZZ
      n:ZZ
    Outputs
-     C:ChainComplex
-       the chainComplex of the Stanley-Reisner simplicial complex of a random 
+     C:Complex
+       the chain complex of the Stanley-Reisner simplicial complex of a random 
        square free monomial ideal in k+1 variables and n generators
    Description
     Text
@@ -333,17 +314,17 @@ doc ///
 doc ///
    Key
      normalize
-     (normalize,ChainComplex)
+     (normalize,Complex)
    Headline
-     normalize a ChainComplex over QQ or RR
+     normalize a Complex over QQ or RR
    Usage
      B = normalize C
    Inputs
-     C:ChainComplex
+     C:Complex
        over RR or QQ
    Outputs
-     B:ChainComplex
-       an isomorphic ChainComplex over QQ or RR
+     B:Complex
+       an isomorphic Complex over QQ or RR
    Description
     Text
        We divide each matrix by its entry of maximal absolute value, to obtain a complex with entries of absolute size $\le 1$.
@@ -358,14 +339,14 @@ doc ///
 doc ///
    Key
      maximalEntry
-     (maximalEntry,ChainComplex)
+     (maximalEntry,Complex)
      (maximalEntry,Matrix)
    Headline
      maximal absolute value of the entries of the matrix or matrices 
    Usage
      m = maximalEntries C
    Inputs
-     C:ChainComplex
+     C:Complex
        or a @TO "Matrix"@, over ZZ, QQ, or RR
    Outputs
      m:List
@@ -386,21 +367,21 @@ doc ///
 doc ///
    Key
      disturb
-     (disturb,ChainComplex,RR)
+     (disturb,Complex,RR)
      [disturb, Strategy]
    Headline
      disturb the matrices of a chain complex over RR
    Usage
      B = disturb(C,epsilon)
    Inputs
-     C:ChainComplex
+     C:Complex
        over RR or QQ
      epsilon:RR
      Strategy => Symbol
        either Discrete or Continuous, whether the disturbed values should be drawn from a
        discrete distribution or a continuous distribution
    Outputs
-     B:ChainComplex
+     B:Complex
        a sequence of matrices over RR
    Description
     Text
@@ -592,7 +573,7 @@ TEST ///
   BR = normalize CR
   BR.dd
   
-  D = chainComplex{map(RR^1, RR^3, 0), map(RR^3, RR^1, {{1.0},{3.0},{5.0}})}
+  D = complex{map(RR^1, RR^3, 0), map(RR^3, RR^1, {{1.0},{3.0},{5.0}})}
   D.dd^2
   normalize D
   D.dd
@@ -712,7 +693,7 @@ elapsedTime (h,U)=SVDComplex CR;
 Sigma = source U
 
 e=1e-10
-nearlyZero=elapsedTime chainComplex apply(length C,i->(U_i*Sigma.dd_(i+1)*transpose U_(i+1)-C.dd_(i+1)))
+nearlyZero=elapsedTime complex apply(length C,i->(U_i*Sigma.dd_(i+1)*transpose U_(i+1)-C.dd_(i+1)))
 -- needs speed up for multiplication
 maximalEntry nearlyZero
 ///
@@ -897,8 +878,8 @@ Ud#0 *(source Ud).dd_1 *transpose Ud#1 - D.dd_1
 Ud#1 *(source Ud).dd_2 *transpose Ud#2 - D.dd_2 
 Ud#2 *(source Ud).dd_3 *transpose Ud#3 - D.dd_3 
 
-F=chainComplex apply(3,i->U#i *(source U).dd_(i+1) *transpose U#(i+1))
-E=chainComplex apply(3,i->Ud#i *(source Ud).dd_(i+1) *transpose Ud#(i+1))
+F=complex apply(3,i->U#i *(source U).dd_(i+1) *transpose U#(i+1))
+E=complex apply(3,i->Ud#i *(source Ud).dd_(i+1) *transpose Ud#(i+1))
 D.dd^2
 E.dd^2
 (h,Ue)=SVDComplex(E,Strategy=>Laplacian,Threshold=>1e-8);
@@ -945,7 +926,7 @@ tex Cplus.dd_0
 tex CplusQ.dd_0
 
 
-B=chainComplex CplusQ
+B=complex CplusQ
 B.dd^2
 C.dd^2
 B[3]
@@ -1038,10 +1019,6 @@ apply(5,i->hilbertFunction(i,Rp/Ip))
 A=Rp/(Ip+ideal random(1,Rp))
 apply(5,i->hilbertFunction(i,A))
 /// 
-
--- the following example refers to example files that don't exist,
--- and removed undocumented features of res.
-///
 restart
 needsPackage "SVDComplexes"
 needsPackage "AGRExamples"

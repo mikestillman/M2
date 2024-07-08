@@ -117,6 +117,7 @@ load "Complexes/ChainComplex.m2"
 load "Complexes/FreeResolutions.m2"
 load "Complexes/ChainComplexMap.m2"
 load "Complexes/Tor.m2"
+load "Complexes/Ext.m2"
 
 --------------------------------------------------------------------
 -- interface code to legacy types ----------------------------------

@@ -40,7 +40,7 @@ document {
 	  },
      EXAMPLE {
 	  "R = QQ[x]/x^5;",
-	  "C = res coker vars R",
+	  "C = res(coker vars R, LengthLimit => 5)",
 	  "M = HH C",
 	  "prune M"
 	  }

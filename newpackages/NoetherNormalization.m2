@@ -1,7 +1,7 @@
 newPackage(
         "NoetherNormalization",
-        Version => "0.9", 
-        Date => "17 January 2022",
+        Version => "0.95",
+        Date => "12 July 2024",
         Authors => {
             {Name => "David Eisenbud", 
                 Email => "de@msri.org", 
@@ -41,9 +41,15 @@ export {
     "NoetherInfo",
     "Remove",
     "CheckDomain",
-    "MaxTries"
+    "MaxTries",
+
+    -- TODO: keep these, export them, do they work?
+    "isFiniteNew", -- TODO: change name to isFinite?
+    "finiteVariablesOver"
     }
+
 export{"noetherNormalizationData","LimitList","RandomRange"}
+
 
 -- R = the original ring.  We need a flattened version?
 --   we should also store the resulting ring map f : A --> B --> R.
@@ -58,8 +64,11 @@ export{"noetherNormalizationData","LimitList","RandomRange"}
 -- 
 ----------------------------------------------------------------
 -- The following 3 lines: probably should be in m2/enginering.m2?
-raw = value Core#"private dictionary"#"raw"
-rawIsField = value Core#"private dictionary"#"rawIsField"
+--raw = value Core#"private dictionary"#"raw"
+--rawIsField = value Core#"private dictionary"#"rawIsField"
+
+importFrom(Core, {"raw", "rawIsField"})
+-- the following is a change to isField. TODO: place in Core?
 isField EngineRing := R -> (R.?isField and R.isField) or rawIsField raw R
 
 -- The following is a change to a function in PushForward.m2, should be replaced there.
@@ -96,6 +105,51 @@ noetherRing RingMap := Ring => opts -> (phi) -> (
         noetherNormalization(phi, opts); -- this will set R.noetherRing
     R.noetherRing    
     )
+
+-- XXX not complete yet.  Do we want to keep this?
+-- Fixes to make: 
+--  1. if R is homogeneous, and so are the elements of I, can we just do a dimension check?
+--  2. isFiniteNew R:  use the variables in the coefficient ring.
+--  3. isFiniteNew f:  use the image polynomials in the ring map.
+isFiniteNew = method()
+isFiniteNew(Ring, List) := Boolean => (R, L) -> (
+    w := symbol w;
+    I := ideal R;
+    S := (coefficientRing R)(monoid[gens ring I, w_0..w_(#L-1), MonomialOrder => {numgens ring I, #L}]);
+    I1 := sub(I, S);
+    L1 := ideal apply(#L, i-> S_(numgens R + i) - sub(L_i, S));
+    lT := leadTerm gens gb (I1+L1);
+    fL := flatten entries lT;
+    oldvars := drop (gens S, - #L);
+    finitevars := rsort for f in fL list (
+        s := support f;
+        if #s > 1 then continue else s#0
+        );
+    oldvars == finitevars
+    )
+isFiniteNew RingMap := Boolean => f -> isFiniteNew(target f, flatten entries matrix f)
+isFiniteNew Ring := Boolean => R -> isFiniteNew map(R,coefficientRing R) -- TODO: check that R is of right type?
+
+finiteVariablesOver = method()
+finiteVariablesOver(Ring, List) := List => (R, L) -> (
+    w := symbol w;
+    I := ideal R;
+    S := coefficientRing R[gens ring I, w_0..w_(#L-1), MonomialOrder => {numgens ring I, #L}];
+    I1 := sub(I, S);
+    L1 := ideal apply(#L, i-> w_i - sub(L_i, S));
+    lT := leadTerm gens gb (I1+L1);
+    fL := flatten entries lT;
+    finitevars := rsort for f in fL list (
+        s := support f;
+        if #s > 1 then continue else s#0
+        );
+    finitevars
+    )
+finiteVariablesOver RingMap := Boolean => f -> finiteVariablesOver(target f, flatten entries matrix f)
+finiteVariablesOver Ring := Boolean => R -> finiteVariablesOver map(R, coefficientRing R)
+
+
+
 
 hasNoetherRing = method()
 hasNoetherRing Ring := Boolean => R -> R.?noetherRing
@@ -296,8 +350,15 @@ makeFrac Ring := Ring => (B) -> (
     	ambientB := ring I;
     	ambientKB := ((frac A)(monoid B)); -- TODO: does this handle degrees correctly?
     	phiK := map(ambientKB,ambientB, vars ambientKB);
-    	JK := trim phiK I;
-    	KB := ambientKB / JK;
+
+        -- this is alternate code for
+        --   JK := trim phiK I;
+        -- that might be faster?
+        JKmat := phiK gens gb I;
+        gbJK := forceGB JKmat;
+        JK := ideal JKmat;
+
+        KB := ambientKB / JK;
         KB.baseRings = append(KB.baseRings, B)
         )
      else ( 
@@ -782,6 +843,7 @@ findParameters1 Ring := List => o -> S ->(
     select(sss, s -> #s ===m)
     )
 
+-- TODO: not complete!
 findIndeterminantParameters = method(Options => {MaxTries => 5})
 findIndeterminantParameters Ring := List => o -> S -> (
     -- find beginning of a NN for S
@@ -906,16 +968,30 @@ doc ///
     code for Noether normal forms of affine domains
   Description
     Text
-///
+      Given an affine domain $R = {\bf k}[x_1, \ldots, x_n]/I$, a {\it Noether normalization} of $R$
+      is a representation $R \cong B = A[y_1, \ldots, y_m]/J$, where $A$ is a polynomial ring over {\bf k}
+      with $d$ variables, and $B$ is a finitely generated $A$-module.
 
-///
-  Consequences
-    Item
-      The following fields are set in {\tt R}:
-    Item
-      The following fields are set in {\tt B}:
-    Item
-      The following fields are set in {\tt L = frac B}:
+      There are many conputational and conceptual advantages in the case when one has a Noether normalization.
+      For example, the fraction ring or field $K(R)$ of $R$ is of the form $K(R) \cong K(B) = K(A)[y_1, \ldots, y_m]/J$.
+
+      This package contains functionality to find such Noether normalizations, and some basic facts
+      given such a representation.
+    Text
+      As a first example, the easiest case is when one can choose $A$ to be generated by some of the generators of $R$.
+    Example
+      S = QQ[a..d]
+      I = monomialCurveIdeal(S, {1,3,4})
+      R = S/I
+      phi = noetherNormalization(R, {a,d})
+      B = noetherRing R
+      A = coefficientRing B
+      A === source phi
+      L = frac B
+      K = frac A
+      use L
+      (a+b)/c
+      1/(b+c)
 ///
 
 doc ///
@@ -956,7 +1032,7 @@ doc ///
      is an injective ring map $f$ from a polynomial
      ring $A$ to $R$ such that $R$ becomes (module-)finite over $A$.
       
-     It is convenient to have an isomorphic copy $B$ of $R$ such that {\tt A = coefficientRing B}.
+     It is often convenient to have an isomorphic copy $B$ of $R$ such that {\tt A = coefficientRing B}.
      The program also creates such a ring B. It can be obtained as {\tt noetherRing R},
      and an isomorphism $B\to R$ can be obtained as {\tt noetherMap B} or 
      {\tt noetherMap R}.
@@ -965,11 +1041,12 @@ doc ///
      Otherwise, A is created. Its variables may be some of the variables of R,
      and new indexed variables corresponding to linear combinations of variables of R.
      
-     The fraction field of B is represented as a finite extension of the fraction 
-     field of A, a useful simplification.
+     The fraction field (or ring) of B is represented as a finite extension of the fraction 
+     field (ring0 of A, a useful simplification.
      One advantage of having a noether normalization is that it allows the construction
      of the fraction field of R to be put in a form that is more convenient for
-     certain computations.
+     certain computations.  Certain computations, e.g. integral closures are often much faster
+     using such a representation.
     Example
       C = QQ[x,y]/(y^2 - x^2*(x-1))
       f = noetherNormalization C -- map from poly ring A to C
@@ -978,7 +1055,7 @@ doc ///
       B = noetherRing C
       describe B
       noetherBasis B
-      A === coefficientRing B
+      assert(A === coefficientRing B)
       g = noetherMap B
       source g === B
       target g === C
@@ -991,7 +1068,6 @@ doc ///
       isNoetherRing B
       B === noetherRing C
       hasNoetherRing C
-      --isNoethered C
     Example
       S = ZZ/32003[a..d]
       I = monomialCurveIdeal(S, {1,3,4})
@@ -1097,8 +1173,6 @@ doc ///
 
     The routine noetherNormalization R fails if it does not find dim R 
     linear forms such that R is finite over the ring they generate.
-    
-    
   SeeAlso
    noetherRing
    (noetherBasis, Ring)
@@ -1155,13 +1229,6 @@ doc ///
     (noetherBasis, Ring)
     (multiplicationMap, RingElement)
 ///
-
-
-
-
-
-
-
 
 doc ///
   Key
@@ -3221,10 +3288,38 @@ TEST ///
 *-
 ///
 
+-- XXX testing isFiniteNew.
+TEST ///
+-*
+  restart
+  debug needsPackage "NoetherNormalization"
+  errorDepth = 0
+*-
+  kk = ZZ/32003
+  R1 = kk[t,a,b,c,d,e,f,g,h];
+  I = ideal"a+c+d-e-h,2df+2cg+2eh-2h2-h-1,3df2+3cg2-3eh2+3h3+3h2-e+4h, 6bdg-6eh2+6h3-3eh+6h2-e+4h, 4df3+4cg3+4eh3-4h4-6h3+4eh-10h2-h-1, 8bdfg+8eh3-8h4+4eh2-12h3+4eh-14h2-3h-1, 12bdg2+12eh3-12h4+12eh2-18h3+8eh-14h2-h-1, -24eh3+24h4-24eh2+36h3-8eh+26h2+7h+1";
+
+  R = R1/I
+  J = {-t-c-g, c+d-e-h-2*(c+g), -b-5*(c+g), -d-f-7*(c+g)} 
+  isFiniteNew(R,{t, - c - d + e + h, b, d + f})
+  --isFiniteNew(R,{t, - c - d + e + h, b, d + f, c + g})  -- difficult.
+  isFiniteNew(R,J)    
+  isFiniteNew(R, {t, c+d-e-h-2*(c+g), b, d+f})
+  isFiniteNew(R, {t, c+g, b, d+f})
+
+  Jextra = {t, - c - d + e + h, b, d + f, c + g}
+  -- i = 0: takes a long time...
+  for i from 1 to #Jextra-1 list (
+      << "doing " << i << endl;
+      elapsedTime ans := isFiniteNew(R, drop(Jextra, {i,i}));
+      << "    " << ans << endl;
+      ans)
+///
+
 
 end----------------------------------------------------------
 restart
-load "NoetherNormalization.m2"
+needsPackage "NoetherNormalization"
 
 uninstallPackage "NoetherNormalization"
 restart

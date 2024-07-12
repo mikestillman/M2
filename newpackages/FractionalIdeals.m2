@@ -77,10 +77,6 @@ traceLevel = 0
 --   ring to a larger fractional ring?  We can certainly just multiply the two ideals, 
 --   and clean up, but perhaps this is not optimal?
 
--- TODO: this needs to be changed
-inNoetherForm = method()
-inNoetherForm Ring := Boolean => R -> false
-
 factorize = method()
 factorize RingElement := (F) -> (
      facs := factor F;
@@ -130,7 +126,7 @@ fractionalIdeal List := (L) -> (
      if #L == 0 then error "expected non-empty list";
      R := if instance(L#0, RingElement) then ring L#0 else ring value L#0;
      if instance(R, FractionField) then R = ring numerator 1_R;
-     if inNoetherForm R then (
+     if hasNoetherRing R then (
          << "warning: `fractionalIdeal` not written yet for rings in Noether position" << endl;
          -- TODO
          )
@@ -179,7 +175,7 @@ simplifyNonNoether FractionalIdeal := (F) -> (
 
 simplify = method()
 simplify FractionalIdeal := (F) -> (
-     if not inNoetherForm ring F 
+     if not hasNoetherRing ring F 
      then simplifyNonNoether F
      else (
      	  -- return the FractionalIdeal equal to F, but
@@ -214,7 +210,7 @@ fractions = method()
 fractions FractionalIdeal := I -> (
     R := ring I;
     denom := denominator I;
-    if inNoetherForm R 
+    if hasNoetherRing R 
     then (
         (1/denom * (numerator I)_*)/factor
         -- nums := apply((numerator I)_*, i-> 1/(denominator I) promote(i,L));
@@ -727,14 +723,14 @@ integralClosureNonNoether(FractionalRing,RingElement) := (R,Q) -> (
     )
 
 integralClosureDenominator(Ring,RingElement) := (R,Q) -> (
-    if inNoetherForm R 
+    if hasNoetherRing R 
     then tragerAlgorithm(fractionalRing R,Q) 
     else integralClosureNonNoether(fractionalRing R, Q)
     )
 
 integralClosureDenominator(Ring,List) := (R,Qs) -> (
     F := fractionalRing R;
-    if inNoetherForm R 
+    if hasNoetherRing R 
     then for Q in Qs do F = tragerAlgorithm(F,Q)
     else for Q in Qs do F = integralClosureNonNoether(F,Q);
     F
@@ -747,9 +743,9 @@ getIntegralEquationNoether = method()
 getIntegralEquationNoether(RingElement, RingElement, Ring) := (num, denom, Kt) -> (
      -- num, denom: elements of a noetherRing R
      -- denom should be liftable to the coefficient ring
-     -- returns true iff num/denom is an integral element of frac R over R
+     -- returns true iff num/denom is an integral element of frac R over R NO!! This doesn't return a Boolean!! TODO: fix doc
      R := ring num;
-     if not inNoetherForm R then error "currently, can only find integral equation over a ring in Noether position";
+     if not hasNoetherRing R then error "currently, can only find integral equation over a ring in Noether position";
      K := coefficientRing R;
      denom = lift(denom,K);     
      if not K === coefficientRing Kt then error "expected third argument to be polynomial ring over coefficient ring of ring of first argument";
@@ -804,7 +800,7 @@ getIntegralEquationNonNoether = method()
 getIntegralEquationNonNoether(RingElement,RingElement,Ring) := (num, denom, Rt) -> (
      -- idea: num and denom are in a domain R
      --  this ring can be a quotient of a poly ring (over kk say)
-     --  or: it can be a Noether ring R = A[x]/I (inNoetherForm R === true)
+     --  or: it can be a Noether ring R = A[x]/I (hasNoetherRing R === true)
      -- num should be in R
      -- denom should be in either A or R
      -- Rt should either be R[T]   (name of the var is not relevant)
@@ -817,7 +813,7 @@ getIntegralEquationNonNoether(RingElement,RingElement,Ring) := (num, denom, Rt) 
      R := ring num;
      if ring denom =!= R then
          try promote(denom, R) else error "different rings";
-     if coefficientRing Rt === coefficientRing R and inNoetherForm R
+     if coefficientRing Rt === coefficientRing R and hasNoetherRing R
          then getIntegralEquation(num,denom,Rt)
          else (
              -- 2 options for the ring Rt: it should be R[T], or K[T], where
@@ -890,7 +886,7 @@ getIntegralEquation(RingElement,RingElement,Ring) := opts -> (num, denom, Rt) ->
     denomR := denom;
     if ring denomR =!= R then
         try denomR = promote(denom, R) else error "different rings";
-    if coefficientRing Rt === coefficientRing R and inNoetherForm R then
+    if coefficientRing Rt === coefficientRing R and hasNoetherRing R then
         getIntegralEquationNoether(num,denomR,Rt)
     else if coefficientRing Rt === R then
         integralEqnNonNoether(num,denomR,Rt,opts.DegreeLimit)
@@ -955,16 +951,21 @@ TEST ///
 
   -- test 1: just find monic equations for elements in a Noether ring
   R = QQ[x,y]/(x^4-3, y^3-2)
-  B = noetherNormalization R
-  getIntegralEquation(x+y, QQ[t]) -- fails
-  getIntegralEquation(x+y, 1_R, QQ[t]) -- fails
+  B = noetherRing R
+  use B
+  F = getIntegralEquation(x+y, QQ[t])
+  assert(sub(F, t => x+y) == 0)
+  F = getIntegralEquation(x+y, 1_R, QQ[t]) 
+  assert(sub(F, t => x+y) == 0)
 
   R = QQ[x,y,z]/(x^4-3, y^3-2)
-  B = noetherNormalization R
+  B = noetherRing R
   getIntegralEquation(x+y, B[t]) -- gives trivial equation
-  F = getIntegralEquation(x+y, (coefficientRing B)[t])
-  assert(leadCoefficient F == 1)
-  assert(sub(F, {t => x+y}) == 0)
+
+  A = coefficientRing B
+  F2 = getIntegralEquation(x+y, A[s])
+  assert(leadCoefficient F2 == 1)
+  assert(sub(F2, {s => x+y}) == 0)
 ///
 
 beginDocumentation()
@@ -999,7 +1000,7 @@ TEST ///
   S = QQ[a..d]
   I = monomialCurveIdeal(S, {1,3,4})
   A = S/I
-  R = noetherNormalization {a,d}
+  R = noetherRing(A, {a,d})
   
   kk = coefficientRing R
   assert(ring a === kk)
@@ -1052,7 +1053,7 @@ TEST ///  -- test of basics of fractional ideals for Noether position
   I = sub(I, {t => t+z})
   R = S/I
   
-  B = noetherNormalization{w,t}
+  B = noetherRing(R, {w,t})
   L = frac B
   A = coefficientRing B
   KA = frac A
@@ -1099,7 +1100,7 @@ codim I == length res I -- perfect ideal
 --  elapsedTime integralClosureDenominator(A, z*t)
 --  elapsedTime integralClosureDenominator(A, {t,z}) -- FAILS right now.
     
-  R = noetherNormalization{w,t}
+  R = noetherRing(A, {w,t})
   traceForm R
   factor det traceForm R
   elapsedTime J1 = integralClosureDenominator(A, w)
@@ -1167,7 +1168,7 @@ TEST ///
   singF = intersect decompose(ideal F + ideal jacobian ideal F)
   see trim oo
   use A
-  R = noetherNormalization {v}
+  R = noetherRing(A, {v})
   singF = decompose(ideal F + ideal jacobian ideal F)
   singF = sub(intersect singF, R)
   Q = (ideal selectInSubring(1,gens gb singF))_0
@@ -1191,7 +1192,7 @@ TEST ///
   I = ideal"y20+y13x+x4y5+x3(x+1)2"
   R = S/I
   elapsedTime integralClosure R -- 1.96 sec
-  B = noetherNormalization {y}
+  B = noetherRing(R, {y})
   disc B
   elapsedTime integralClosureDenominator(R, y) -- SLOW...
 ///
@@ -1243,7 +1244,7 @@ viewHelp FractionalIdeals
   I = ideal(u^3-v^4)
   R = S/I
 
-  B = noetherNormalization({v})
+  B = noetherRing(R, {v})
   -- Basically, 4 rings get created:
   L = frac B
   B === ring numerator 1_L
@@ -1285,9 +1286,9 @@ ringFromFractions(oo, Variable => getSymbol "w")
 fractionalRingPresentation R'
 minimalPresentation oo
 
-A = noetherNormalization {x}
+A = noetherRing(R, {x})
 debug FractionalIdeals
-inNoetherForm A
+hasNoetherRing A
 
 netList factorize det traceForm A
 F = integralClosureDenominator(A, x)
@@ -1295,8 +1296,8 @@ fractions F
 oo/value
 
 use R
-A = noetherNormalization {y}
-inNoetherForm A
+A = noetherRing(R, {y})
+hasNoetherRing A
 
 use coefficientRing A
 F1 = time integralClosureDenominator(A, y^2-y)

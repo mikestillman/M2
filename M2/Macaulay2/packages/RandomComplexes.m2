@@ -29,7 +29,7 @@ export {
     "histogram",
     "maximalEntry",
     "testTimeForLLLonSyzygies",
-    "randomChainComplex",
+    "randomComplex",
     "randomSimplicialComplex",
     "disturb",
 --    "oneMatrix",
@@ -53,7 +53,7 @@ histogram(List,ZZ) := (L,n) -> (
 TEST ///
   needsPackage "RandomComplexes"
   needsPackage "SVDComplexes"
-  M=(randomChainComplex({50,50},{50},ZeroMean=>true)).dd_1;
+  M=(randomComplex({50,50},{50},ZeroMean=>true)).dd_1;
   (svds,U,Vt)=SVD(M**RR_53);
   maximalEntry M
   L=svds/log
@@ -108,12 +108,12 @@ TEST///
   1/10*sum apply(10,c->(testTimeForLLLonSyzygies(10,20))_2)
 ///
 
-randomChainComplex=method(Options=>{Height=>10,WithLLL=>true,ZeroMean=>true})
+randomComplex=method(Options=>{Height=>10,WithLLL=>true,ZeroMean=>true})
 
 oneMatrix=method()
 oneMatrix(ZZ,ZZ):= (n,m) -> matrix apply(n,i->apply(m,j-> 1))
 
-randomChainComplex(List,List):= opts -> (h,r)-> (
+randomComplex(List,List):= opts -> (h,r)-> (
     -- lists h_0,..,h_n,r_1,...,r_n
     -- of possible possible homology dimensions and ranks of maps in a chain complex
     if #h =!= #r+1 then error "expected list of non-negative integers of length n+1 and n";
@@ -141,7 +141,7 @@ TEST ///
   needsPackage("SVDComplexes")
   h={1,4,6,5,1} 
   r={1,3,3,4}
-  C=randomChainComplex(h,r)
+  C=randomComplex(h,r)
   prune HH C
   CR=C**RR_53    
   C=CR
@@ -179,7 +179,7 @@ randomSimplicialComplex(ZZ,ZZ):= (k,n) -> (
    N:=#sets-k-2;
    I:=monomialIdeal apply(apply(n,i->sets_(random(N)+k+2)),s->product(s,i->x_i));
    c:=simplicialComplex I;
-   CQ:=complex chainComplex c; 
+   CQ:=complex c; 
    complex apply(length CQ-1,i->lift(CQ.dd_(i+1),ZZ))
    )
 
@@ -216,7 +216,7 @@ doc ///
    Description
     Text
       We implement two methods to create a random @TO "Complex"@ over the integers.
-      The first method (@TO randomChainComplex@) builds the complex from products of randomly chosen matrices of desired rank.
+      The first method (@TO randomComplex@) builds the complex from products of randomly chosen matrices of desired rank.
       The limitation of this method to produce large complexes over the integers with
       moderate Height is the use of the LLL algorithm to improve the presentation of
       syzygy matrices.
@@ -230,15 +230,15 @@ doc ///
 
 doc ///
    Key
-     randomChainComplex
-     (randomChainComplex,List,List)
-     [randomChainComplex, Height]
-     [randomChainComplex, WithLLL]
-     [randomChainComplex, ZeroMean]
+     randomComplex
+     (randomComplex,List,List)
+     [randomComplex, Height]
+     [randomComplex, WithLLL]
+     [randomComplex, ZeroMean]
    Headline
      random chain complex over the integers with prescribed ranks of the homology group and ranks of the matrices
    Usage
-     C = randomChainComplex(h,r)
+     C = randomComplex(h,r)
    Inputs
      h:List
        of desired ranks of the homology groups, of some length $n$
@@ -260,7 +260,7 @@ doc ///
     Example
       h={1,4,6,5,1} 
       r={1,3,3,4}
-      C=randomChainComplex(h,r)
+      C=randomComplex(h,r)
       prune HH C
       for i from 0 to 4 list rank HH_i C
       for i from 1 to 4 list rank(C.dd_i)
@@ -270,7 +270,7 @@ doc ///
     Example
       h={1,4,0,5,1} 
       r={2,3,3,4}
-      C=randomChainComplex(h,r, Height=>1000)
+      C=randomComplex(h,r, Height=>1000)
       C.dd
       C.dd^2 == 0
       prune HH C
@@ -330,7 +330,7 @@ doc ///
        We divide each matrix by its entry of maximal absolute value, to obtain a complex with entries of absolute size $\le 1$.
     Example
       setRandomSeed "nice example 2";
-      C=randomChainComplex({1,1,1},{2,2})
+      C=randomComplex({1,1,1},{2,2})
       C.dd
       B=normalize C
       B.dd
@@ -356,10 +356,10 @@ doc ///
        For each matrix we compute the of maximal absolute value of the entries
     Example
       setRandomSeed "nice example 2";
-      C=randomChainComplex({1,1,1},{2,2},Height=>10)
+      C=randomComplex({1,1,1},{2,2},Height=>10)
       C.dd
       maximalEntry C
-      B=randomChainComplex({2,2,4,2,5,2,2},{2,3,3,2,3,3},Height=>5)
+      B=randomComplex({2,2,4,2,5,2,2},{2,3,3,2,3,3},Height=>5)
       maximalEntry B
       apply(min B..max B,i->rank HH_i(B**QQ))
 /// 
@@ -390,7 +390,7 @@ doc ///
     Example
       needsPackage "RandomComplexes"
       setRandomSeed "nice example 2";
-      C=randomChainComplex({1,1,1},{2,2})
+      C=randomComplex({1,1,1},{2,2})
       C.dd
       B=disturb(C,1e-4)
       B.dd
@@ -426,7 +426,7 @@ doc ///
        We compute h_i the number to elements in the i-th equidistant subdivision
        of the interval [min L, max L] into n parts 
     Example
-       M=(randomChainComplex({20,20},{20},ZeroMean=>true)).dd_1;
+       M=(randomComplex({20,20},{20},ZeroMean=>true)).dd_1;
        (svds,U,Vt)=SVD(M**RR_53);
        (entries matrix {svds})_0/log
        maximalEntry M
@@ -512,7 +512,7 @@ TEST ///
   needsPackage "RandomComplexes"
 *-
   rks = {4,5,6}
-  C = randomChainComplex({2,2,2,2},rks)
+  C = randomComplex({2,2,2,2},rks)
   assert(C.dd^2 == 0)
   for i from 0 to 3 do assert(rank prune HH_i C == 2)
   assert(rks == for i from 1 to 3 list rank C.dd_i)
@@ -524,7 +524,7 @@ TEST ///
   needsPackage "RandomComplexes"
 *-
   rks = {2,2,2}
-  C = randomChainComplex({1,1,1,1},rks)
+  C = randomComplex({1,1,1,1},rks)
   assert(C.dd^2 == 0)
   for i from 0 to 3 do assert(rank prune HH_i C == 1)
   assert(rks == for i from 1 to 3 list rank C.dd_i)
@@ -537,7 +537,7 @@ TEST ///
 *-
   hr = {5,5,5,5}
   rks = {2,2,2}
-  C = randomChainComplex(hr,rks)
+  C = randomComplex(hr,rks)
   assert(C.dd^2 == 0)
   hr == for i from 0 to #hr-1 list rank prune HH_i C
   assert(rks == for i from 1 to #rks list rank C.dd_i)
@@ -551,7 +551,7 @@ TEST ///
   hr = {5,5,5,5}
   rks = {20,20,20}
 
-  C = randomChainComplex(hr,rks)
+  C = randomComplex(hr,rks)
   assert(C.dd^2 == 0)
   -- hr == for i from 0 to #hr-1 list rank prune HH_i C -- ouch, this needs improvement!!
   assert(rks == for i from 1 to #rks list rank C.dd_i)
@@ -564,7 +564,7 @@ TEST ///
   needsPackage "RandomComplexes"
 *-
   setRandomSeed "nice example 2";
-  C = randomChainComplex({1,1,1},{2,2})
+  C = randomComplex({1,1,1},{2,2})
   C.dd
   B=normalize C
   B.dd
@@ -586,7 +586,7 @@ TEST ///
   needsPackage "RandomComplexes"
 *-
   setRandomSeed "nice example";
-  C = randomChainComplex({1,1,1},{2,2})
+  C = randomComplex({1,1,1},{2,2})
   C.dd
   disturb(C,.000001)
 ///
@@ -616,7 +616,7 @@ needsPackage "SVDComplexes"
 h={1,3,5,2,1} 
 r={5,11,3,2}
 setRandomSeed "alpha"
-elapsedTime C=randomChainComplex(h,r,Height=>5,WithLLL=> true)
+elapsedTime C=randomComplex(h,r,Height=>5,WithLLL=> true)
 C.dd_4
 
 C.dd^2
@@ -738,17 +738,17 @@ needsPackage "SVDComplexes"
 setRandomSeed"test SVD"
 h={1,4,10,4,1} 
 r={10,20,20,10}
-elapsedTime C=randomChainComplex(h,r,Height=>3,WithLLL=>true,ZeroMean=>true)
+elapsedTime C=randomComplex(h,r,Height=>3,WithLLL=>true,ZeroMean=>true)
 maximalEntry C
 CR=C**RR_53
 elapsedTime SVDHomology CR
 elapsedTime SVDHomology(CR,Strategy=>Laplacian)
-C1=randomChainComplex({1,1},{5})**RR_53
+C1=randomComplex({1,1},{5})**RR_53
 CR1=CR**C1
 A=elapsedTime SVDHomology CR1
 h={1,5,14,14,5,1}
 r={10,10,10,10,10}
-C=randomChainComplex(h,r,Height=>1000,WithLLL=>true,ZeroMean=>true)
+C=randomComplex(h,r,Height=>1000,WithLLL=>true,ZeroMean=>true)
 CR=C**RR_53
 maximalEntry CR
 B=elapsedTime SVDHomology CR
@@ -763,7 +763,7 @@ needsPackage "SVDComplexes"
 setRandomSeed"test SVD"
 h={1,5,20,5,1} 
 r={10,20,20,10}
-elapsedTime C=randomChainComplex(h,r,Height=>3,WithLLL=>true,ZeroMean=>true)
+elapsedTime C=randomComplex(h,r,Height=>3,WithLLL=>true,ZeroMean=>true)
 maximalEntry C
 CR=C**RR_53
 elapsedTime SVDHomology(CR,Strategy=>Laplacian)
@@ -800,7 +800,7 @@ min t, max t
 TEST ///
 restart
 needsPackage "RandomComplexes"
-M=(randomChainComplex({50,50},{50},ZeroMean=>true)).dd_1;
+M=(randomComplex({50,50},{50},ZeroMean=>true)).dd_1;
 (svds,U,Vt)=SVD(M**RR_53);
 maximalEntry M
 histogram(svds/log,10)
@@ -824,11 +824,11 @@ needsPackage "SVDComplexes"
 h={1,1,1,1}
 r={2,2,2}
 setRandomSeed 2
-C=randomChainComplex(h,r,Height=>9,WithLLL=>true,ZeroMean=>true)
+C=randomComplex(h,r,Height=>9,WithLLL=>true,ZeroMean=>true)
 prune HH C
 C.dd_1,C.dd_2,C.dd_3
 ker transpose C.dd_1,LLL syz C.dd_2,LLL syz transpose C.dd_2,ker C.dd_3 
---C1=randomChainComplex({1,1},{5},Height=>5,WithLLL=>true,ZeroMean=>true)
+--C1=randomComplex({1,1},{5},Height=>5,WithLLL=>true,ZeroMean=>true)
 CR=C**RR_53
 tally sort apply(10,c->random(RR_53)) --CR=C**C1**RR_53
 elapsedTime SVDHomology(CR,Threshold=>1e-15)
@@ -906,7 +906,7 @@ needsPackage "SVDComplexes"
 h={1,1,1,1}
 r={2,2,2}
 setRandomSeed 2
-C=randomChainComplex(h,r,Height=>9,WithLLL=>true,ZeroMean=>true)
+C=randomComplex(h,r,Height=>9,WithLLL=>true,ZeroMean=>true)
 prune HH C
 C.dd_1,C.dd_2,C.dd_3
 CR=C**RR
@@ -1065,7 +1065,7 @@ setRandomSeed "alpha"
 time Cs=apply(toList(1..6),i->(
    h={1+i,3*i,2*i,i}; 
    r={5,10+3*i,11+2*i};
-elapsedTime C=randomChainComplex(h,r,Height=>19,WithLLL=>true);
+elapsedTime C=randomComplex(h,r,Height=>19,WithLLL=>true);
 CR=normalize(C**RR_53)));
 netList Cs
 printingPrecision=3

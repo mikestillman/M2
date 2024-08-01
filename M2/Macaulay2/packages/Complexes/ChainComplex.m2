@@ -106,6 +106,9 @@ complex List := Complex => complexOptions >> opts -> L -> (
         );
     error "expected a list of matrices or a list of modules";
     )
+complex Matrix := Complex => complexOptions >> opts -> M -> (
+    complex({M}, opts)
+    )
 complex Module := Complex => complexOptions >> opts -> (M) -> (
     if not instance(opts.Base, ZZ) then
       error "complex: expected base to be an integer";
@@ -545,6 +548,13 @@ resolution Module := Complex => opts  -> M -> (
         << "warning: `FastNonminimal => true` is deprecated.  Use: res(..., Strategy => Nonminimal) instead" << endl;
         );
     freeResolution(M, o2)
+    )
+resolution Ideal := Complex => opts -> I -> resolution(comodule I, opts)
+resolution MonomialIdeal := Complex => opts -> I -> resolution(comodule ideal I, opts)
+resolution Matrix := ComplexMap => opts -> f -> extend(
+    resolution(target f, opts), 
+    resolution(source f, opts),
+    matrix f
     )
 
 complete Complex := C -> C

@@ -2,7 +2,7 @@
 
 -- Returns a non-minimal free resolution, for testing purposes.
 -- Homogenizes the ideal w.r.t. a new variable, calculates a free resolution
--- using res with option FastNonminimal, then dehomogenizes
+-- using res with Strategy Nonminimal, then dehomogenizes
 -- Warning: only works for finite fields
 freeRes = I -> (
     -- Warning: only works for finite fields
@@ -10,7 +10,7 @@ freeRes = I -> (
     homogvar := local homogvar;
     S := (coefficientRing R)(monoid [gens R, homogvar]);
     Ih := ideal homogenize(sub(gens gb I, S), S_(numgens R));
-    C1 := res(Ih, FastNonminimal=>true);
+    C1 := res(Ih, Strategy => Nonminimal);
     phi := map(R,S,gens R | {1});
     phi C1
     )
@@ -72,7 +72,6 @@ TEST ///
 
 TEST ///
   debug needsPackage "PruneComplex"
-  needsPackage "ChainComplexExtras"
   R = ZZ/32003[vars(0..8)]
   M = genericMatrix(R,3,3)
   I = minors(2, M)
@@ -81,7 +80,7 @@ TEST ///
   elapsedTime C1 = pruneComplex(C, UnitTest => isScalar); -- fastest
   elapsedTime C2 = pruneComplex(C, Strategy=>null); -- FIXME far too slow
   elapsedTime C3 = pruneComplex(C, Strategy=>null, UnitTest => isScalar); -- okay
-  elapsedTime C4 = target minimize C; -- slow
+  elapsedTime C4 = minimize C; -- slow
   assert({res I, C0, C1, C2, C3, C4}/betti//same)
 
   needsPackage "LocalRings"

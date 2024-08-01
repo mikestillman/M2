@@ -1117,13 +1117,13 @@ nullHomotopyFreeSource = f -> (
     (lo,hi) := concentration f;
     for i from lo to hi do (
         if hs#?(i-1) then ( 
-            rem := (f_i - hs#(i-1) * dd^C_i) % (dd^D_(i+deg));
-            if rem != 0 then return null; -- error "can't construct homotopy";
+            --rem := (f_i - hs#(i-1) * dd^C_i) % (dd^D_(i+deg));
+            --if rem != 0 then return null; -- error "can't construct homotopy";
             hs#i = (f_i - hs#(i-1) * dd^C_i) // (dd^D_(i+deg))
             )
         else (
-            rem = f_i % dd^D_(i+deg);
-            if rem != 0 then return null; -- error "can't construct homotopy";
+            --rem = f_i % dd^D_(i+deg);
+            --if rem != 0 then return null; -- error "can't construct homotopy";
             hs#i = f_i // dd^D_(i+deg)
             )
         );

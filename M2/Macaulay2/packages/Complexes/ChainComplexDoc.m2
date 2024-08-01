@@ -410,6 +410,7 @@ doc ///
     Key
         (complex, List)
         complex
+        (complex, Matrix)
         [(complex, List), Base]
         Base
     Headline
@@ -418,7 +419,7 @@ doc ///
         complex L
     Inputs
         L:List
-            of maps
+            of maps, or a single matrix.
         Base => ZZ
             the index of the target of the first map 
             in the differential.
@@ -483,6 +484,14 @@ doc ///
             HH C
             prune HH C
             prune HH_1 C
+        Text
+            Having the input be a matrix is equivalent to having it be
+            a singleton list containing this matrix.
+        Example
+            C' = complex F1
+            assert isWellDefined C'
+            C'' = complex(F1, Base => 3)
+            assert isWellDefined C''
     Caveat
         This constructor minimizes computation
         and does very little error checking. To verify that a complex

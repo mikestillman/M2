@@ -56,6 +56,9 @@ NCGroebnerTest :  gtest-include.o NCGroebnerTest.o $(UNITTEST_SHARED_OBJECT_FILE
 runNCGroebnerTest : NCGroebnerTest
 	time ./NCGroebnerTest
 
+RingDesignTest :  gtest-include.o ring-design.o
+	@CXX@ $(LDFLAGS) $^ $(LOADLIBES) -o $@
+
 ARingRRRZZpTest :  gtest-include.o  \
     ARingZZpTest.o  \
     ARingRRRTest.o \

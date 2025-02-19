@@ -159,10 +159,6 @@ set(SRCLIST
   BasicPoly
   BasicPolyList
   BasicPolyListParser
-  SparseMatrixZZp
-  SparseMatrixZZp
-  sparse-matrix/SparseVector
-  sparse-matrix/SparseVector
   sparse-matrix/MatrixOps
   sparse-matrix/Vectors
   sparse-matrix/SparseMatrixZZp

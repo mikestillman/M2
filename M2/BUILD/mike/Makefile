@@ -9,19 +9,19 @@ BREWPREFIX := `brew --prefix`
 ## cmake build files ##
 #######################
 
-cmake-appleclang:
-	echo "git branch is " $(BRANCH)
-	mkdir -p builds.tmp/cmake-appleclang
-	cd builds.tmp/cmake-appleclang; cmake \
-		-GNinja \
-		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
-		-DCMAKE_PREFIX_PATH="`brew --prefix libffi`" \
-		-DBUILD_NATIVE=off \
-		-DCMAKE_INSTALL_PREFIX=`pwd`/installed \
-		-DBUILD_TESTING=on \
-		-DBUILD_DOCS=on \
-		-DCMAKE_EXPORT_COMPILE_COMMANDS=true \
-		../../../..
+# cmake-appleclang:
+# 	echo "git branch is " $(BRANCH)
+# 	mkdir -p builds.tmp/cmake-appleclang
+# 	cd builds.tmp/cmake-appleclang; cmake \
+# 		-GNinja \
+# 		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+# 		-DCMAKE_PREFIX_PATH="`brew --prefix libffi`" \
+# 		-DBUILD_NATIVE=off \
+# 		-DCMAKE_INSTALL_PREFIX=`pwd`/installed \
+# 		-DBUILD_TESTING=on \
+# 		-DBUILD_DOCS=on \
+# 		-DCMAKE_EXPORT_COMPILE_COMMANDS=true \
+# 		../../../..
 
 cmake-clang:
 	echo "git branch is " $(BRANCH)
@@ -89,17 +89,46 @@ cmake-no-tbb-appleclang:
 		-DBUILD_DOCS=on \
 		../../../..
 
+# brew tap macaulay2/tap
+# brew install $(brew deps --1 --include-build macaulay2/tap/M2)
+# deps=$(brew deps --1 --include-optional macaulay2/tap/M2 | tr '\n' ';')
+# paths=$HOMEBREW_PREFIX/opt/${deps//;/;$HOMEBREW_PREFIX/opt/}
+
+# git clone https://github.com/Macaulay2/M2.git
+# cmake -GNinja -S M2/M2 -B M2/M2/BUILD/build \
+#       -DBUILD_NATIVE=OFF \
+#       -DCMAKE_PREFIX_PATH=$paths \
+#       -DCMAKE_BUILD_TYPE=Release \
+#       -DCMAKE_INSTALL_PREFIX=/usr
+
+# cd M2/M2/BUILD/build
+# ninja
+
+# cmake-appleclang:
+# 	echo "git branch is " $(BRANCH)
+# 	mkdir -p builds.tmp/cmake-appleclang
+# 	cd builds.tmp/cmake-appleclang; cmake \
+# 		-GNinja \
+# 		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+# 		-DCMAKE_PREFIX_PATH="`brew --prefix libffi`" \
+# 		-DBUILD_NATIVE=off \
+# 		-DCMAKE_INSTALL_PREFIX=`pwd`/installed \
+# 		-DBUILD_TESTING=on \
+# 		-DBUILD_DOCS=on \
+# 		../../../..
+
 cmake-appleclang:
 	echo "git branch is " $(BRANCH)
 	mkdir -p builds.tmp/cmake-appleclang
 	cd builds.tmp/cmake-appleclang; cmake \
 		-GNinja \
 		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
-		-DCMAKE_PREFIX_PATH="`brew --prefix libffi`" \
+		-DCMAKE_PREFIX_PATH="/opt/homebrew/opt/mpi;/opt/homebrew/opt/bdw-gc;/opt/homebrew/opt/boost;/opt/homebrew/opt/cohomcalg;/opt/homebrew/opt/csdp;/opt/homebrew/opt/eigen;/opt/homebrew/opt/factory;/opt/homebrew/opt/fflas-ffpack;/opt/homebrew/opt/flint;/opt/homebrew/opt/fourtitwo;/opt/homebrew/opt/frobby;/opt/homebrew/opt/gdbm;/opt/homebrew/opt/gfan;/opt/homebrew/opt/givaro;/opt/homebrew/opt/gmp;/opt/homebrew/opt/libffi;/opt/homebrew/opt/libomp;/opt/homebrew/opt/lrs;/opt/homebrew/opt/mpfi;/opt/homebrew/opt/mpfr;/opt/homebrew/opt/mpsolve;/opt/homebrew/opt/msolve;/opt/homebrew/opt/nauty;/opt/homebrew/opt/node;/opt/homebrew/opt/normaliz;/opt/homebrew/opt/ntl;/opt/homebrew/opt/python;/opt/homebrew/opt/readline;/opt/homebrew/opt/tbb;/opt/homebrew/opt/topcom;/opt/homebrew/opt/" \
 		-DBUILD_NATIVE=off \
 		-DCMAKE_INSTALL_PREFIX=`pwd`/installed \
 		-DBUILD_TESTING=on \
 		-DBUILD_DOCS=on \
+		-DCMAKE_EXPORT_COMPILE_COMMANDS=true \
 		../../../..
 
 cmake-debug-appleclang:
@@ -249,15 +278,72 @@ xcode:
 # 		--build=x86_64-apple-darwin
 #       --enable-build-libraries="flint ntl"
 
+# arm64-appleclang : always
+# 	mkdir -p builds.tmp/arm64-appleclang
+# 	cd builds.tmp/arm64-appleclang; ../../../../configure \
+# 		CPPFLAGS="-I`brew --prefix tbb@2021`/include -I`brew --prefix`/include" \
+# 		LDFLAGS="-L`brew --prefix tbb@2021`/lib -L`brew --prefix`/lib" \
+# 	    --with-boost-regex=boost_regex \
+# 		--prefix="`pwd`/installed" \
+# 		--disable-strip \
+# 		--enable-download
+
 arm64-appleclang : always
 	mkdir -p builds.tmp/arm64-appleclang
 	cd builds.tmp/arm64-appleclang; ../../../../configure \
-		CPPFLAGS="-I`brew --prefix tbb@2021`/include -I`brew --prefix`/include" \
-		LDFLAGS="-L`brew --prefix tbb@2021`/lib -L`brew --prefix`/lib" \
+		CC=/usr/bin/gcc CXX=/usr/bin/g++ \
+		F77="gfortran-14" \
+		CPPFLAGS="-I`brew --prefix libomp`/include -I`brew --prefix`/include" \
+		LDFLAGS="-L`brew --prefix libomp`/lib -L`brew --prefix`/lib -L`brew --prefix readline`/lib" \
 	    --with-boost-regex=boost_regex \
+		--without-python \
 		--prefix="`pwd`/installed" \
 		--disable-strip \
-		--enable-download
+		--enable-download \
+		PKG_CONFIG_PATH="$(brew --prefix factory)/lib/pkgconfig"
+
+arm64-appleclang : always
+	mkdir -p builds.tmp/arm64-appleclang
+	cd builds.tmp/arm64-appleclang; ../../../../configure \
+	--enable-dmg \
+	--enable-download --with-system-gc \
+	--with-system-memtailor --with-system-mathic \
+	--with-system-mathicgb \
+	--without-python \
+	--with-gtest-include-path="`brew --prefix googletest`/include" \
+	--with-gtest-source-path="`brew --prefix googletest`/include/googletest/googletest" \
+	LDFLAGS="-L`brew --prefix`/lib  \
+		-L`brew --prefix factory`/lib \
+		-L`brew --prefix libomp`/lib  \
+		-L`brew --prefix readline`/lib" \
+	CPPFLAGS="-I`brew --prefix`/include   \
+	    -I`brew --prefix`/include/cddlib    \
+		-I`brew --prefix factory`/include   \
+		-I`brew --prefix libomp`/include    \
+		-I`brew --prefix readline`/include" \
+	F77="gfortran-14" \
+	PKG_CONFIG_PATH="`brew --prefix factory`/lib/pkgconfig"
+
+arm64-appleclang-python : always
+	mkdir -p builds.tmp/arm64-appleclang-python
+	cd builds.tmp/arm64-appleclang-python; ../../../../configure \
+	--enable-download --with-system-gc \
+	--with-system-memtailor --with-system-mathic \
+	--with-system-mathicgb \
+	--with-gtest-include-path="`brew --prefix googletest`/include" \
+	--with-gtest-source-path="`brew --prefix googletest`/include/googletest/googletest" \
+	LDFLAGS="-L`brew --prefix`/lib  \
+		-L`brew --prefix factory`/lib \
+		-L`brew --prefix libomp`/lib  \
+		-L`brew --prefix readline`/lib \
+		-L`brew --prefix python`/Frameworks/Python.framework/Versions/3.13/lib" \
+	CPPFLAGS="-I`brew --prefix`/include   \
+	    -I`brew --prefix`/include/cddlib    \
+		-I`brew --prefix factory`/include   \
+		-I`brew --prefix libomp`/include    \
+		-I`brew --prefix readline`/include" \
+	F77="gfortran-14" \
+	PKG_CONFIG_PATH="`brew --prefix factory`/lib/pkgconfig"
 
 debug-arm64-appleclang : always
 	mkdir -p builds.tmp/debug-arm64-appleclang
@@ -270,17 +356,6 @@ debug-arm64-appleclang : always
 		--enable-debug \
 		--enable-memdebug \
 		--disable-optimize \
-		--enable-download
-
-arm64-linbox-appleclang : always
-	mkdir -p builds.tmp/arm64-linbox-appleclang
-	cd builds.tmp/arm64-linbox-appleclang; ../../../../configure \
-		CPPFLAGS="-I`brew --prefix tbb@2021`/include -I`brew --prefix`/include" \
-		LDFLAGS="-L`brew --prefix tbb@2021`/lib -L`brew --prefix`/lib" \
-	    --with-boost-regex=boost_regex \
-		--enable-linbox \
-		--prefix="`pwd`/installed" \
-		--disable-strip \
 		--enable-download
 
 arm64-tbb2020-appleclang : always

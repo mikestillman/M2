@@ -15,6 +15,15 @@ class DenseVector;
 using ZZpElement = M2::ARingZZpFlint::ElementType; // really just long.
 using IndexType = int;
 
+// std::vector<RT::ElementType, RT::vector_alloc<RT::ElementType>>
+// create one of these as follows:
+//  std::vector<...>(allocator is the parameter) (default vector constructor)
+// for vector_alloc just need destroy function.
+
+// ElementArray a;
+// create an ElementArray b of larger size
+// a.data()
+
 class SparseMatrixZZp
 {
 private:
@@ -22,6 +31,7 @@ private:
   const M2::ARingZZpFlint& mField;
   IndexType mNumRows;
   IndexType mNumColumns;
+  //typename RT::ElementArray mNonzeroElements; // 0..e-1
   std::vector<ZZpElement> mNonzeroElements; // 0..e-1
   std::vector<IndexType> mColumns; // 0..e-1: mColumns[i] is the column number of of the i-th element in mNonzeroElements.
   std::vector<IndexType> mRows; // 0..mNumRows // mRows[r]..mRows[r+1]-1 are the indices into mNonzeroElements, in this row.

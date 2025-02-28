@@ -32,6 +32,23 @@ document {
     SeeAlso => { "monoid" }
     }
 document {
+    Key => FlatMonoid,
+    Usage => "R.FlatMonoid",
+    Inputs => {
+	"R" => PolynomialRing
+    },
+    Outputs => {
+	GeneralOrderedMonoid => { "the flattened monoid in terms of which the polynomials 
+	    are expressed when the coefficient ring of R is itself a polynomial ring"
+	}
+    },
+    EXAMPLE lines ///
+    R = QQ[a,b][x]
+    R.FlatMonoid
+    ///,
+    SeeAlso => { flattenRing }
+}
+document {
     Key => MonoidElement,
     Headline => "the class of all monoid elements",
     SeeAlso => "monoid"}
@@ -66,6 +83,11 @@ document {
 	  TO (vars, Ring),
 	  },
      }
+document {
+    Key => Engine,
+    Headline => "specify whether a ring is handled by the engine",
+    TT "Engine", " -- a key for rings that yields the value ", TT "true", " if this
+    ring is supported by the ", TO "engine", "."}
 document {
     Key => EngineRing,
     Headline => "the class of rings handled by the engine",

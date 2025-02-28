@@ -189,14 +189,14 @@ document {
 	       }
 	  },
      EXAMPLE lines ///
-     load "Macaulay2Doc/demo3.m2"
+     load "Macaulay2Doc/demos/demo3.m2"
      get loadedFiles#(#loadedFiles-1)
      ///,
      PARA {
 	  "Here is an example of its use in the debugger."
 	  },
      EXAMPLE lines ///
-     load "Macaulay2Doc/demo1.m2"
+     load "Macaulay2Doc/demos/demo1.m2"
      g 2
      end
      end
@@ -1095,6 +1095,8 @@ document { Key => {(symlinkDirectory, String, String),symlinkDirectory,[symlinkD
      SeeAlso => { symlinkFile, copyDirectory }
      }
 
+document { Key => UpdateOnly,
+     Headline => "only copies of newer files should replace files" }
 document { Key => {(copyDirectory, String, String),copyDirectory,[copyDirectory, Exclude],[copyDirectory, UpdateOnly],[copyDirectory, FollowLinks],[copyDirectory, Verbose]},
      Usage => "copyDirectory(src,dst)",
      Inputs => {

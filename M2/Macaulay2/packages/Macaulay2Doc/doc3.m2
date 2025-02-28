@@ -1,114 +1,6 @@
 --		Copyright 1993-1998 by Daniel R. Grayson
 
 document {
-     Key => symbol ++,
-     Headline => "a binary operator, usually used for direct sum"
-     }
-
-document {
-     Key => symbol (*),
-     Headline => "a unary postfix operator, used for indicating a graded object"
-     }
-
-document {
-     Key => symbol ^*,
-     Headline => "a unary postfix operator, used for indicating pullback maps"
-     }
-
-document {
-     Key => symbol _*,
-     Headline => "a unary postfix operator, used for indicating pushforward maps"
-     }
-
-document {
-     Key => symbol ^!,
-     Headline => "a unary postfix operator, used for the upper shriek functor"
-     }
-
-document {
-     Key => symbol _!,
-     Headline => "a unary postfix operator, used for the lower shriek functor"
-     }
-
-document {
-     Key => symbol |_,
-     Headline => "a binary operator, used for restriction to a subset"
-     }
-
-document {
-     Key => symbol ^~,
-     Headline => "a unary postfix operator, used for sheafification"
-     }
-
-document {
-     Key => symbol _~,
-     Headline => "a unary postfix operator"
-     }
-
-apply({symbol ^>, symbol ^>=, symbol ^<, symbol ^<=, symbol _>, symbol _>=, symbol _<, symbol _<=},
-    symb -> document { Key => symb, Headline => "a binary operator, used for truncation" })
-
-document {
-     Key => symbol <==>,
-     Headline => "a binary operator"
-     }
-
-document {
-     Key => symbol ,,
-     Headline => "the comma, used for separating entries in a list or sequence"
-     }
-
-document {
-     Key => symbol ==>,
-     Headline => "a binary operator"
-     }
-
-document {
-     Key => symbol |-,
-     Headline => "a binary operator"
-     }
-
-document {
-     Key => symbol ===>,
-     Headline => "a binary operator"
-     }
-
-document {
-     Key => symbol <===,
-     Headline => "a unary and binary operator"
-     }
-
-document {
-     Key => symbol <==,
-     Headline => "a unary and binary operator"
-     }
-
-document {
-     Key => symbol @@,
-     Headline => "a binary operator"
-     }
-
-document {
-     Key => (symbol @@, Function, Function),
-     Headline => "composition of functions",
-     Usage => "f @@ g",
-     Inputs => { "f", "g" },
-     Outputs => {{ "the composite function of ", TT "f", " and ", TT "g", "." }},
-     EXAMPLE {
-	  "f = i -> i+1",
-	  "g = i -> i^2",
-	  "apply(0 .. 10, f @@ g)",
-	  "apply(0 .. 10, g @@ f)"
-	  }
-     }
-
-document {
-     Key => symbol @,
-     Headline => "a binary operator",
-     "This operator is right associative."
-     }
-
-document {
      Key => {(symbol /,List,RingElement),(symbol /,List,Number)},
      Headline => "vector division",
      Usage => "v/c",
@@ -211,17 +103,6 @@ document {
      ///
      }
 
-
-document {
-     Key => CacheTable,
-     Headline => "hash tables for caching",
-     "A type of mutable hash table designed for caching computed values that
-     could always be recomputed.  Cache tables are designed so their contents
-     will not participate in any comparisons by the strict comparison
-     operator ", TT "===", ".  To that end, any two cache tables with the same
-     class and parent are considered equal to each other and have hash code equal to 0."
-     }
-
 document { Key => {(numRows, Matrix),(numRows, MutableMatrix),numRows},
      Headline => "number of rows in a matrix or mutable matrix",
      Usage => "numRows m", Inputs => { "m" }, Outputs => {{ "the number of rows in ", TT "m" }}}
@@ -284,10 +165,6 @@ document { Key => {(mutableIdentity, Ring, ZZ),(mutableIdentity, RingFamily, ZZ)
      SeeAlso => {mutableMatrix}
      }
 
-undocumented (pretty, Thing)
-document { Key => pretty,
-     Headline => "a pretty printer", "This function is experimental and under development." }
-
 document { Key => Bareiss,
      "This symbol is used as one of the permissible values for the strategy option in function dealing with determinants.",
      SeeAlso => {[exteriorPower,Strategy], [minors,Strategy], [det,Strategy]}
@@ -335,18 +212,6 @@ document { Key => {(netList, VisibleList),
 	  netList(f,Boxes=>{{1},{1}})
 	  netList apply(5,i->apply(i+1,j->(i,j)))
 	  netList(apply(5,i->apply(i+1,j->(i,j))),Boxes=>{true,false})
-     ///}
-
-document { Key => cache,
-     Headline => "a key under which to store cache tables",
-     SeeAlso => {CacheTable},
-     EXAMPLE lines ///
-     	  F = ZZ^3
-     	  peek F
-	  F.cache#Foo = Bar
-	  peek F
-	  peek F.cache
-	  F === ZZ^3
      ///}
 
 document { Key => centerString,

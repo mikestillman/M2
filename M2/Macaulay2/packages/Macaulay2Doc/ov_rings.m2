@@ -1,5 +1,45 @@
 -- -*- coding: utf-8 -*-
 ----------- File Mike is Working on! -------------------------
+document {
+     Key => "rings",
+
+     "Macaulay2 differs from other computer algebra systems such as 
+     Maple and Mathematica, in that before making a polynomial, 
+     you must create a ring to contain it, deciding first
+     the complete list of indeterminates and the type of coefficients 
+     permitted.  Recall that a ring is a set with addition and multiplication operations 
+     satisfying familiar axioms, such as the distributive rule.  
+     Examples include the ring of integers (", TO "ZZ", "), the
+     ring of rational numbers (", TO "QQ", "), and the most 
+     important rings in Macaulay2, polynomial rings.",
+
+     PARA{},
+     "The sections below describe the types of rings available and how to use them.",
+     Subnodes => {
+	  "Rings",
+	  TO "basic rings of numbers",
+	  TO "integers modulo a prime",
+	  TO "finite fields",
+	  TO "polynomial rings",
+	  TO "quotient rings",
+	  TO "manipulating polynomials",
+	  TO "factoring polynomials",
+	  TO "substitution and maps between rings",
+	  "Fields",
+	  TO "fraction fields",
+	  TO "finite field extensions",
+	  "Other algebras",
+	  TO "exterior algebras",
+	  TO "symmetric algebras",
+	  TO "tensor products of rings",
+	  TO "Weyl algebras",
+	  -- TO "Schur rings", 
+	  TO "associative algebras",
+       	  },
+     PARA{},
+     "For additional common operations and a comprehensive list of all routines
+     in Macaulay2 which return or use rings, see ", TO "Ring", "."
+     }
 
 document {
      Key => "basic rings of numbers",
@@ -9,7 +49,10 @@ document {
 	  TO "ZZ", 
 	  TO "QQ", 
 	  TO "RR",
+	  TO "RR'",
+	  TO "RRi",
 	  TO "CC",
+	  TO "CC'",
 	  },
      "The names of some of these rings are double letters so the corresponding symbols
      with single letters are preserved for use as variables.",
@@ -43,23 +86,257 @@ document {
 	  },
      "Numbers can be promoted to larger rings as follows, see ", TO (symbol _, RingElement, Ring), ".",
      EXAMPLE lines ///
-     1_QQ
-     (2/3)_CC
+         1_QQ
+	 (2/3)_CC
      ///,
      "One way to enter real and complex numbers with more precision is to insert the desired number of bits of precision
      after the letter p at the end of the number, but before the possible e that indicates the exponent of 10.",
      EXAMPLE lines ///
-     1p300
-     1p300e-30
+         1p300
+	 1p300e-30
      ///,
      "Numbers can be lifted to smaller rings as follows, see ", TO "lift", ".",
      EXAMPLE lines ///
-     x = 2/3*ii/ii
-     lift(x,RR)
-     lift(x,QQ)
+         x = 2/3*ii/ii
+	 lift(x,RR)
+	 lift(x,QQ)
+     ///,
+     Subnodes => { 
+	  TO "ZZ", 
+	  TO "QQ", 
+	  TO "RR",
+	  TO "RRi",
+	  TO "CC",
+     }
+}
+
+document {
+     Key => ZZ,
+     Headline => "the class of all integers" }
+
+document {
+     Key => QQ,
+     Headline => "the class of all rational numbers",
+     EXAMPLE "1/2 + 3/5"}
+
+document {
+     Key => RR,
+     Headline => "the class of all real numbers",
+     "A real number is entered as a sequence of decimal digits with a point.  It is stored internally
+     as an arbitrary precision floating point number, using the ", TO "MPFR", " library.",
+     EXAMPLE "3.14159",
+     "The precision is measured in bits, is visible in the ring displayed on
+     the second of each pair of output lines, and can be recovered using ", TO "precision", ".",
+     EXAMPLE "precision 3.14159",
+     "For real numbers, the functions ", TO "class", " and ", TO "ring", " yield different
+     results.  That allows numbers of various precisions
+     to be used without creating a new ring for each precision.",
+     EXAMPLE {"class 3.1", "ring 3.1"},
+     "The precision can be specified on input by appending the letter ", TT "p", " and a positive number.",
+     EXAMPLE "3p300",
+     "An optional exponent (for the power of ten to multiply by) can be specified on input
+     by appending the letter ", TT "e", " and a number.",
+     EXAMPLE {"3e3", "-3e-3", "-3p111e-3"},
+     "Numbers that appear alone on an output line are displayed with all their meaningful digits.
+     (Specifying 100 bits of precision yields about 30 decimal digits of precision.)",
+     EXAMPLE {"1/3.","1/3p100", "100 * log(10,2)"},
+     "Numbers displayed inside more complicated objects are printed with the number of digits
+     specified by ", TO "printingPrecision", ".",
+     EXAMPLE {"printingPrecision","{1/3.,1/3p100}"},
+     "The notion of equality tested by ", TO "==", " amounts to equality of the internal binary digits.",
+     EXAMPLE {".5p100 == .5p30", ".2p100 == .2p30"},
+     "The notion of (strict) equality tested by ", TO "===", " also takes the precision into account.",
+     EXAMPLE {".5p100 === .5p30", ".2p100 === .2p30"},
+     "Perhaps surprisingly, the IEEE floating point standard also specifies that every number, including 0,
+     has a sign bit, and strict equality testing takes it into account, as it must do, because some arithmetic
+     and transcendental functions take it into account.",
+     EXAMPLE lines ///
+     0.
+     -0.
+     1/0.
+     1/-0.
+     log 0
+     csc (0.)
+     csc (-0.)
+     ///,
+     "Use ", TO "toExternalString", " to produce something that, when encountered as input, will reproduce
+     exactly what you had before.",
+     EXAMPLE lines ///
+	  x = {1/3.,1/3p100}
+	  x == {.333333, .333333}
+	  y = toExternalString x
+	  x === value y
+     ///,
+     "Transcendental constants and functions are available to high precision, with ", TO "numeric", ".",
+     EXAMPLE lines ///
+	  numeric pi
+	  numeric_200 pi
+	  Gamma oo
+	  ///,
+     SeeAlso => {toRR, numeric, precision, format, "printingPrecision", "printingAccuracy",
+	  "printingLeadLimit", "printingTrailLimit", "printingSeparator",
+	  "maxExponent", "minExponent"
+	  }
+     }
+
+document {
+     Key => RR',
+     Headline => "the parent class of all rings of real numbers",
+     PARA {
+	  "Floating point real numbers are treated in a special way.  Recall first to create a polynomial, one must
+	  first create a polynomial ring to contain it.  And then, the polynomial ring is the class of the polynomial."
+	  },
+     EXAMPLE lines ///
+     R = QQ[x,y,z]
+     x^2
+     class x^2
+     ///,
+     PARA {
+	  "Floating point real numbers, however, can be created directly, as follows, without creating a ring."
+	  },
+     EXAMPLE lines ///
+     r = 4.5
+     s = 4.3p300
+     ///,
+     PARA {
+	  "The floating point numbers created above have different precisions, and thus are regarded as being elements of 
+	  different rings, whose elements all have the same precision."
+	  },
+     EXAMPLE lines ///
+     precision r
+     precision s
+     ring r
+     ring s
+     ///,
+     PARA {
+	  "In order to make it convenient to define methods that apply to all such rings, those rings have a common
+	  parent, namely ", TT "RR'", ".  Notice that ", TT "RR'", " is printed in a special way."
+	  },
+     EXAMPLE lines ///
+     RR'
+     parent ring r     
+     parent ring s
+     parent ring s === RR'
      ///
      }
 
+document {
+     Key => CC,
+     Headline => "the class of all complex numbers",
+     "In Macaulay2, complex numbers are represented as floating point numbers, and so are
+     only approximate.  The symbol ", TO "ii", " represents the square root of -1 in many numeric
+     contexts.  A complex number is obtained by using the symbolic constant ", TO "ii", " or the conversion
+     functions ", TO "toCC", " and ", TO "numeric", ", in combination with real numbers (see ", TO "RR", ").
+     It is stored internally as a pair of arbitrary precision floating point real numbers, using
+     the ", TO "MPFR", " library.",
+     EXAMPLE {
+	  "z = 3-4*ii",
+	  "z^5",
+	  "1/z",
+	  "+ii",
+	  "numeric_200 ii",
+	  },
+     "Complex numbers are ordered lexicographically, mingled with real numbers.",
+     EXAMPLE {
+	  "sort {1+ii,2+ii,1-ii,2-ii,1/2,2.1,7/5}"
+	  },
+     "The precision is measured in bits, is visible in the ring displayed on
+     the second of each pair of output lines, and can be recovered using ", TO "precision", ".",
+     EXAMPLE "precision z",
+     "For complex numbers, the functions ", TO "class", " and ", TO "ring", " yield different
+     results.  That allows numbers of various precisions
+     to be used without creating a new ring for each precision.",
+     EXAMPLE {"class z", "ring z"},
+     "A computation involving numbers of different precisions has a result with the minimal precision occurring.
+     Numbers that appear alone on an output line are displayed with all their meaningful digits.
+     (Specifying 100 bits of precision yields about 30 decimal digits of precision.)",
+     EXAMPLE "3p100+2p90e3*ii",
+     "Numbers displayed inside more complicated objects are printed with the number of digits
+     specified by ", TO "printingPrecision", ".",
+     EXAMPLE {"printingPrecision","x = {1/3.*ii,1/3p100*ii}"},
+     "Use ", TO "toExternalString", " to produce something that, when encountered as input, will reproduce
+     exactly what you had before.",
+     EXAMPLE lines ///
+	  y = toExternalString x
+	  value y === x
+     ///,
+     Caveat => { "Currently, most transcendental functions are not implemented for complex arguments." },
+     SeeAlso => {"ii", toCC, toRR, numeric, precision, format, "printingPrecision", "printingAccuracy", "printingLeadLimit", "printingTrailLimit", "printingSeparator"}
+     }
+
+document {
+     Key => CC',
+     Headline => "the parent class of all rings of complex numbers",
+     PARA {
+	  "Floating point complex numbers are treated in a special way.  Recall first to create a polynomial, one must
+	  first create a polynomial ring to contain it.  And then, the polynomial ring is the class of the polynomial."
+	  },
+     EXAMPLE lines ///
+     R = QQ[x,y,z]
+     x^2
+     class x^2
+     ///,
+     PARA {
+	  "Floating point complex numbers, however, can be created directly, as follows, without creating a ring."
+	  },
+     EXAMPLE lines ///
+     r = 4.5 * ii
+     s = 4.3p300 * ii
+     ///,
+     PARA {
+	  "The floating point numbers created above have different precisions, and thus are regarded as being elements of 
+	  different rings, whose elements all have the same precision."
+	  },
+     EXAMPLE lines ///
+     precision r
+     precision s
+     ring r
+     ring s
+     ///,
+     PARA {
+	  "In order to make it convenient to define methods that apply to all such rings, those rings have a common
+	  parent, namely ", TT "CC'", ".  Notice that ", TT "CC'", " is printed in a special way."
+	  },
+     EXAMPLE lines ///
+     CC'
+     parent ring r     
+     parent ring s
+     parent ring s === CC'
+     ///
+     }
+
+undocumented {RRi'}
+
+document {
+     Key => RRi,
+     Headline => "the class of all real intervals",
+     "A real interval is entered as a pair of real numbers to the interval function.  It is stored internally as an arbitrary precision interval using the ", TO "MPFI", " library.",
+     EXAMPLE "interval(3.1415,3.1416)",
+     "The precision is measured in bits, is visible in the ring displayed on
+     the second of each pair of output lines, and can be recovered using ", TO "precision", ".",
+     EXAMPLE "precision interval(3.1415,3.1416)",
+     "For real intervals, the functions ", TO "class", " and ", TO "ring", " yield different
+     results.  That allows numbers of various precisions
+     to be used without creating a new ring for each precision.",
+     EXAMPLE {"class interval(3.1,3.5)", "ring interval(3.1,3.5)"},
+     "The precision can be specified on input by specifying the precision of both input ", TO "RR", " numbers.",
+     "Alternatively, the precision can be specified by including the option ", TT "Precision", ".",
+     EXAMPLE {"interval(2.5p100,3.2p1000)","interval(2.5,3.2,Precision=>200)"},
+     "Intervals can also be created using ", TO (span,Sequence), " to create the smallest interval containing the inputs.",
+     EXAMPLE {"span(2,Precision=>100)","span(2,3,interval(-1.5,-0.5),73)"},
+     "Operations using intervals are computed as sets so that the resulting intervals contain all possible outputs from pairs of points in input intervals.",
+     EXAMPLE {"interval(1,3)+interval(2,4)","interval(-1,1)*interval(2,3)","interval(0,1)-interval(0,1)","interval(1,2)/interval(1,2)"},
+     "The notion of equality tested by ", TO "==", " amounts to checking the equality of the endpoints of intervals.",
+     "The notion of equality tested by ", TO "===", " takes into account the precision of the inputs as well.",
+     EXAMPLE {"interval(1,3) == interval(1,3,Precision=>100)","interval(1,3) === interval(1,3,Precision=>100)","interval(1/3,1,Precision=>100)==interval(1/3,1,Precision=>1000)"},
+     "The notion of inequalities for intervals amounts to testing the inequality for all points in the intervals.  In particular, ",TO "<=", " is not the same as ",TO "<"," or ",TO "==",".",
+    EXAMPLE {"interval(1,2)<=interval(2,3)","interval(1,2)<=interval(1,2)", "interval(1,2)<interval(2,3)","interval(1,2)<interval(3,4)"},
+     "Transcendental functions on intervals produce intervals containing the image of the function on the interval.",
+     EXAMPLE {"exp(interval(2,4))","cos(interval(1,1.3))","sqrt(interval(2))"},
+     "Transcendental functions are available to high precision, with ", TO "numericInterval", ".",
+    EXAMPLE {"numericInterval(100,pi)","numericInterval_200 EulerConstant"},
+    SeeAlso => {toRRi, numericInterval, precision, interval, (span,Sequence), (span,List)}
+	  }
 
 document {
 	Key => "integers modulo a prime",
@@ -180,6 +457,210 @@ document {
      "We can even lift it back to the polynomial ring.",
      EXAMPLE "lift(k_0, ambient ring T)",
      "For more information see ", TO "GaloisField", "."
+     }
+
+document {
+     Key => "polynomial rings",
+     "A polynomial ring can be created with the usual mathematical notation.",
+     EXAMPLE "ZZ[x,y,z]",
+     "If you try to construct this ring again, you will get a different
+     answer.  We use the strict comparison operator ", TO "===", " to
+     demonstrate this.",
+     EXAMPLE "ZZ[x,y,z]===ZZ[x,y,z]",
+     "Thus it is a good idea to assign a new ring to a variable for
+     future reference.",
+     EXAMPLE "R = QQ[a,b,c,d,e,f]",
+     "Notice that after assignment to a global variable, Macaulay2
+     knows the ring's name, and this name is used when printing the ring.",
+     EXAMPLE "R",
+     "The original description of the ring can be recovered
+     with ", TO "describe", ".",
+     EXAMPLE "describe R",
+     "Use the following subscript notation to obtain 0,1, or any multiple of 1,
+     as elements in the ring.",
+     EXAMPLE {
+	  "0_R",
+      	  "1_R",
+      	  "11_R",
+	  },
+     "Obtain the variables (generators) of the ring by subscripting the name of 
+     the ring.  As always in Macaulay2, indexing starts at 0.",
+     EXAMPLE "R_0^10+R_1^3+R_2",
+     "It is also possible to obtain the variables in a ring from strings
+     containing their names.",
+     EXAMPLE ///"a"_R^10+"b"_R^3+"c"_R///,
+     "The number of variables is provided by ", TO "numgens", ".",
+     EXAMPLE {
+	  "numgens R",
+      	  "apply(numgens R, i -> R_i^i)",
+      	  "sum(numgens R, i -> R_i^i)"
+	  },
+     "(See ", TO "apply", " and ", TO "sum", ".)  ",
+     "Use ", TO "generators", " to obtain a list of the variables of the ring.",
+     EXAMPLE "gens R",
+     "A matrix (with one row) containing the variables of the ring can be obtained
+     using ", TO (vars,Ring), ".",
+     EXAMPLE "vars R",
+     "The ", TO "index", " of a variable:",
+     EXAMPLE {
+	  "index x, index y, index z",
+	  },
+     "The coefficient ring can be recovered with ", TO "coefficientRing", ".",
+     EXAMPLE "coefficientRing R",
+
+     "An element of the coefficient ring can be promoted to the polynomial ring.",
+     EXAMPLE "promote(11/2,R)",
+     "Conversely, an element of the polynomial ring that is known to be a scalar
+     can be lifted back to the coefficient ring.",
+     EXAMPLE {
+	 "sc = (a-2)^2-a^2+4*a",
+	 "lift(sc,QQ)",
+	 },
+     "In programs, the function ", TO "liftable", " can be used to see whether
+     this is possible.",
+     EXAMPLE {
+	 "liftable(sc,QQ)",
+	 "liftable(c^3,QQ)",
+	 },
+     "A random homogeneous element can be obtained with ", TO "random", ".",
+     EXAMPLE "random(2,R)",
+
+     "A basis of the subspace of ring elements of a given degree can be obtained
+     in matrix form with ", TO "basis", ".",
+     EXAMPLE "basis(2,R)",
+
+     "We may construct polynomial rings over polynomial rings.",
+     EXAMPLE "R = ZZ[a,b,c][d,e,f];",
+     "When displaying an element of an iterated polynomial ring,
+     parentheses are used to organize the coefficients recursively, which
+     may themselves be polynomials.",
+     EXAMPLE "(a+d+1)^2",
+     "Internally, the polynomials in such towers are expressed in terms of a flattened monoid
+     containing all the variables, obtainable with the key ", TO "FlatMonoid", ".",
+
+     EXAMPLE "R.FlatMonoid",
+     "Variable names may be words.",
+     EXAMPLE {
+	  "QQ[rho,sigma,tau];",
+      	  "(rho - sigma)^2",
+	  },
+     "There are various other ways to specify the variables in a polynomial
+     ring.  A sequence of variables can be obtained as follows.",
+     EXAMPLE "ZZ[b..k];",
+     "In this example, if you had previously assigned either b or k a value that
+     was not a ring generator, then Macaulay2 would complain about this: it would
+     no longer understand what variables you wanted.  To get around this, we could
+     either do",
+     EXAMPLE "ZZ[symbol b .. symbol k];",
+     "or we may obtain the single-letter variables with ", TO "vars", ".",
+     EXAMPLE {
+	  "vars (0..4)",
+      	  "ZZ[vars (0..4),vars(26..30),vars 51]",
+	  },
+     "Subscripted variables can be used, provided the base for the subscripted
+     variable has not been used for something else.",
+     EXAMPLE "ZZ[t,p_0,p_1,q_0,q_1];",
+     "Sequences of subscripted variables can also be used.",
+     EXAMPLE {
+      	  "ZZ[p_(0,0) .. p_(2,1),q_0..q_5]",
+	  "(p_(0,0)+q_2-1)^2",
+	  },
+     "The subscripts can be much more general, but care is required when using
+     symbols as subscripts, for the symbols may acquire values later that would
+     interfere with your original use of them as symbols.  Thus you should
+     protect symbols that will be used in this way.",
+     EXAMPLE {
+	  "protect xx; protect yy; protect zz;",
+      	  "ZZ[ee_[xx],ee_[yy],ee_[zz]]",
+	  },
+     "A basis of the subspace of ring elements of a given degree can be obtained
+     in matrix form with ", TO "basis", ".",
+     EXAMPLE {
+	 "R = QQ[a,b,c,d,e,f];",
+	 "basis(2,R)"
+	 },
+     "The Hilbert series of a polynomial ring can be obtained.  Its power
+     series expansion is the generating function for the dimensions of the
+     degree ", TT "n", " parts.",
+     EXAMPLE "hilbertSeries R",
+     "We may use the option ", TO "Degrees", " to produce rings where the
+     generators have degrees other than 1.",
+     EXAMPLE {
+	 "S = ZZ/101[a,b,c,d,Degrees=>{1,2,3,4}]",
+	 "random(5,S)",
+	 "hilbertSeries S"
+	 },
+     "Some things to watch out for when using polynomial rings:",
+     UL {
+	  LI ("Defining a ring twice gives different rings, as far as Macaulay2 is concerned:
+     	       We use the strict comparison operator ", TO "===", " to demonstrate this.",     
+     	       EXAMPLE "ZZ[a,b,c] === ZZ[a,b,c]",
+     	       "Thus it is a good idea to assign a new ring to a variable for future reference."
+	       )
+       	  },
+     SeeAlso => {"heft vectors", "division in polynomial rings with monomials less than 1"},
+     Subnodes => {
+	 TO "graded and multigraded polynomial rings",
+	 TO "monomial orderings",
+         }
+     }
+
+document {
+     Key => "graded and multigraded polynomial rings",
+     "It is possible to set up a polynomial ring so that the degree of an
+     element is a vector of integers.  For this, the option
+     ", TO "Degrees", " is used, together with a list of degrees for the
+     variables in the ring.  Each degree is itself a list of integers.  The
+     degrees given must all be of the same length, and length zero is
+     allowed, to get an ungraded ring.",
+     EXAMPLE {
+	  "R = ZZ/101[a,b,c,Degrees=>{{1,2},{2,1},{1,0}}]",
+      	  "describe R",
+	  },
+     EXAMPLE {
+	  "degree a",
+      	  "degree b^2",
+      	  "degree 0_R",
+      	  "degree 1_R",
+	  },
+     "A random element of bi-degree ", TT "{m,n}", " can be obtained with
+     ", TO "random", ".",
+     EXAMPLE "random({15,15},R)",
+     "The function ", TO "degree", " applied to a polynomial will
+     return the least upper bound of the degrees of its monomials.",
+     EXAMPLE "degree (a+b)",
+     "We may recover the number of integers in each degree list for our ring
+     as follows.",
+     EXAMPLE {
+	  "degreeLength R",
+      	  "degreeLength ZZ"
+	  },
+     "One restriction on degrees of variables is that the entries be small integer values, possibly
+     zero or negative.  The notion of small depends on the size of exponents one wants: the degree
+     of each monomial occurring should fit in a 32 bit integer (or 64 bit integer, on 64 bit machines).",
+     PARA{
+	 "Another restriction on degrees, at least if all the computational facilities of Macaulay2 are
+	 needed, is that a heft vector exists for them.  A heft vector is a list of integers whose length is
+	 the same as the length of the degrees (see ", TO degreeLength, "), such that its dot product with
+	 the degree of each variable is positive.  Heft vectors are computed automatically for you,
+	 as in the following example, or they may be provided by the user (see ", TO "Heft", ")."
+	 },
+    EXAMPLE lines ///
+	 R = QQ[a,b,c,Degrees=>{{1,0},{-2,1},{-3,1}}];
+	 random({1,1},R)
+	 basis({1,1},R)
+	 ///,
+     PARA {
+	  "The heft vector computed behind the scenes is available to the user."
+	  },
+     EXAMPLE lines ///
+     (options R).Heft
+     ///,
+     PARA {
+     	  "If the heft vector is not provided, many computations will work (e.g., Gröbner bases and computation of resolutions),
+	  but certain other operations (such as ", TT "basis", " and ", TT "random", ") will raise errors."
+	  },
+     Subnodes => {TO "heft vectors"}
      }
 
 document {
@@ -615,7 +1096,12 @@ document {
      }
 
 document {
-     Key => {"Weyl algebras", isWeylAlgebra},
+     Key => {
+	 "Weyl algebras",
+	 isWeylAlgebra,
+	(isWeylAlgebra, PolynomialRing),
+	(isWeylAlgebra, QuotientRing),
+	(isWeylAlgebra, Ring)},
      "A Weyl algebra is the non-commutative algebra of algebraic differential 
      operators on a polynomial ring.  To each variable ", TT "x", " corresponds 
      the operator ", TT "dx", " that differentiates with respect to that 

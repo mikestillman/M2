@@ -9,18 +9,6 @@ document {
      "This is the identity function."
      }
 
-document {
-     Key => symbol SPACE, 
-     Headline => "blank operator; often used for function application, making polynomial rings",
-     SeeAlso =>(symbol SPACE, Function, Thing)		    -- not really a method
-     }
-
-document {
-     Key => (symbol SPACE, Function, Thing),
-     Headline => "function application",
-     TT "f x", " -- yields the result of applying the function ", TT "f", " to ", TT "x", ".",
-     }
-
 undocumented {
      (symbol *, Number, RingElement),
      (symbol *, RingElement, Number),
@@ -144,6 +132,51 @@ document {
     "interval(-1,1)*interval(-1,1)"
     },
      SeeAlso =>{ "times", "product"}
+     }
+
+document {
+     Key => (symbol *, Matrix, Matrix),
+     Headline => "matrix multiplication",
+     Usage => "f * g",
+     Inputs => {"f", "g"},
+     Outputs => { Matrix },
+     "Multiplication of matrices corresponds to composition of maps, and when
+     the target ", TT "Q", "
+     of ", TT "g", " equals the source ", TT "P", " of ", TT "f", ", the
+     product ", TT "f*g", " is defined, its source is the source of ", 
+     TT "g", ", and its target is the target of ", TT "f", ".  ",
+     EXAMPLE {
+	  "R = QQ[a,b,c,x,y,z];",
+	  "f = matrix{{x},{y},{z}}",
+	  "g = matrix{{a,b,c}}",
+	  "f*g"
+	  },
+     PARA{},
+     "The degree of ",
+     TT "f*g", " is the sum of the degrees of ", TT "f", " and of ", TT "g",
+     ".",
+     PARA{},
+     "The product is also defined when ", TT "P", " != ", TT "Q", ",
+     provided only that ", TT "P", " and ", TT "Q", " are free modules of the
+     same rank.  If the degrees of ", TT "P", " differ from the corresponding
+     degrees of ", TT "Q", " by the same degree ", TT "d", ", then the degree
+     of ", TT "f*g", " is adjusted by ", TT "d", " so it will have a good
+     chance to be homogeneous, and the target and source of ", TT "f*g", "
+     are as before.",
+     EXAMPLE {
+	  "target (f*g) == target f",
+	  "source (f*g) == source g",
+	  "isHomogeneous (f*g)",
+	  "degree(f*g)",
+	  },
+     "Sometimes, it is useful to
+     make this a map of degree zero.  Use ", TO (map,Matrix), " for this purpose.",
+     EXAMPLE {
+	  "h = map(f*g,Degree=>0)",
+	  "degree h",
+	  "degrees source h"
+	  },
+     SeeAlso => {(degree,Matrix),degrees}
      }
 
 document {
@@ -343,6 +376,17 @@ document {
      SeeAlso =>{ "difference", "minus"}
      }
 
+document {
+    Key => (symbol -, Vector),
+    Headline => "negation of a Vector",
+    TT "-v", " -- the negation of ", TT "v",
+    PARA{},
+    EXAMPLE lines ///
+        v = vector {2,3,5,7}
+	- v
+    ///
+}
+
 undocumented {
      (symbol /, InfiniteNumber, InfiniteNumber),
      (symbol /, RingElement, Number),
@@ -524,25 +568,6 @@ document {
      Headline => "a binary operator"
      }
 
-undocumented {
-     (symbol ^, InfiniteNumber, ZZ),
-     (symbol ^, InfiniteNumber, QQ),
-     (symbol ^, InfiniteNumber, RR),
-     (symbol ^, ZZ, InfiniteNumber),
-     (symbol ^, QQ, InfiniteNumber),
-     (symbol ^, RR, InfiniteNumber),
-     }
-
-document {
-     Key => {symbol ^},
-     Headline => "a binary operator, usually used for powers",
-     Usage => "x ^ y",
-     PARA{},
-     "This operator is used for exponentiation, making free modules and sheaves, 
-     for shifting complexes left or right, for projection maps involving direct sums, 
-     and for making nets.",
-     }
-
 document {
      Key => {symbol !, (symbol !, ZZ), (symbol !, QQ), (symbol !, RR),(symbol !,Constant)},
      Headline => "factorial",
@@ -556,12 +581,6 @@ document {
      ///
      }
 
-document {
-     Key => "not",
-     Headline => "negation",
-     TT "not x", " -- yields the negation of x, which must be true or false.",
-     SeeAlso =>{ "and", "or" }
-     }
 
 doc ///
   Key
@@ -593,43 +612,6 @@ document {
      Key => symbol |, 
      Headline => "a binary operator, often used for horizontal concatenation",
      SeeAlso => {"||"}
-     }
-
-document {
-     Key => {(symbol |, List, List),
-	  (symbol |, Array, Array),
-	  (symbol |, Sequence, Sequence)},
-     Headline => "join lists, sequences or arrays",
-     Usage => "v|w",
-     Inputs => {"v" => Nothing =>  {ofClass List, ", ",
-	       ofClass Array, ", or ",
-	       ofClass Sequence},
-	  "w" => Nothing => {"of the same type as ", TT "v"}},
-     Outputs => {
-	  Nothing => "The join of the lists, sequences or arrays."},
-     EXAMPLE "{1,2,3}|{4,5,6}",
-     EXAMPLE "(a,b,c)|(1,2)",
-     SeeAlso => {join}
-     }
-
-document {
-     Key => {(symbol |, Net, Net),
-	  (symbol |, String, String),
-	  (symbol |, String, ZZ),
-	  (symbol |, ZZ, String)},
-     Headline => "join strings or nets",
-     TT "s|t", " -- concatenates strings or nets horizontally.", 
-     PARA{},
-     "The result is a string if the arguments are all strings, otherwise it
-     is a net.  The baselines of the nets are aligned.",
-     EXAMPLE {
-	  ///"abc" | "def"///,
-      	  ///x = "abc" || "ABC"///,
-      	  ///x|"x"|x///,
-	  },
-     "If one of the two arguments is an integer, it is converted to a string first.",
-     EXAMPLE ///"t = " | 333///,
-     SeeAlso => {horizontalJoin}
      }
 
 document {
@@ -747,151 +729,6 @@ document {
 	  ///,
      PARA{},
      SeeAlso => {(symbol ||, Matrix, Matrix)}
-     }
-
-document {
-     Key => {(symbol===,Thing,Thing), symbol ===},
-     Headline => "strict equality",
-     Usage => "x === y",
-     Inputs => { "x", "y" },
-     Outputs => { Boolean => {"whether the expressions ", TT "x", " and ", TT "y", " are strictly equal"} },
-     PARA{
-	  "Strictly equal expressions have the same type, so ", TT "0===0.", " and
-	  ", TT "0===0/1", " are false; the three types involved here are ", 
-	  TO "ZZ", ", ", TO "RR", ", and ", TO "QQ", "."
-	  },
-     PARA{
-	  "If x and y are ", TO "mutable", " then they are strictly equal only
-	  if they are identical (i.e., at the same address in memory).  For
-	  details about why strict equality cannot depend on the contents of
-	  mutable hash tables, see ", TO "hashing", ".  On the other hand, if x
-	  and y are non-mutable, then they are strictly equal if and only if
-	  all their contents are strictly equal."
-	  },
-     EXAMPLE { "{1,2,3} === {1,2,3}", "{1,2,3} === {2,1,3}" },
-     PARA {
-	  "For some types, such as ring elements and matrices, strict equality is the same as mathematical equality.
-	  This tends to be the case for objects for which not much computation is not required to test equality.
-	  For certain other types, such as ", TO "Ideal", " or ", TO "Module", ", where extensive computations may
-	  be required, the operator ", TO "==", " implements the desired comparison."
-	  },
-     EXAMPLE {
-	  "R = QQ[a..d];",
-	  "a^2+b === b+a^2",
-	  "ideal(a^2+b,c*d) === ideal(b+a^2,c*d+b+a^2)",
-     	  "matrix{{a,b,c}} === matrix{{a,b,c}}",
-       	  "matrix{{a,b,c}} === transpose matrix{{a},{b},{c}}"
-	  },
-     PARA {
-	  "As it happens, polynomial rings are mutable objects, and new ones are easily created, which are distinct from each other.
-	  For example, the rings ", TT "A", " and ", TT "B", " below are not strictly equal."
-	  },
-     EXAMPLE {
-     	  "A = QQ[x]; B = QQ[x];",
-     	  "A === B"
-     	  },
-     SeeAlso =>{ symbol==,  symbol=!=, "operators" }
-     }
-
-document {
-     Key => {symbol =!=, (symbol=!=,Thing,Thing)},
-     Headline => "strict inequality",
-     TT "x =!= y", " -- returns true or false depending on whether the expressions
-     x and y are strictly unequal.",
-     PARA{},
-     "See ", TO "===", " for details."
-     }
-
-document {
-    Key => { symbol == },
-     Headline => "equality",
-     Usage => "x == y",
-     PARA {
-	  "Returns true or false, depending on whether 
-	  the objects x and y are (mathematically) equal.  The objects x and y are
-	  typically numbers, elements of rings, matrices, modules, ideals, 
-	  chain complexes, and so on."
-	  },
-     PARA {
-	  "A test for mathematical equality will typically involve doing a computation
-	  to see whether two representations of the same mathematical object are being
-	  compared.  For example, an ideal in a ring is represented by giving its
-	  generators, and checking whether two sets of generators produce the same
-	  ideal involves a computation with Gröbner bases.  The ideals must be defined
-	  in the same ring."
-	  },
-     HEADER3 "Ideals",
-     EXAMPLE {
-	  "R = QQ[a,b,c];",
-	  "ideal(a^2-b,a^3) == ideal(b^2, a*b, a^2-b)"
-	  },
-     PARA {
-     	  "Often mathematical objects can be tested to see if they are 0 or 1."
-	  },
-     EXAMPLE {
-	  "L = ideal(a^2-a-1,a^3+a+3)",
-	  "L == 1",
-	  "L == 0"
-	  },
-     HEADER3 "Matrices",
-     PARA {
-	  "Two ", TO "matrices", " are equal if their entries are equal, the source and target are
-	  the same (including degrees), and the degree of the matrices are the same.  In this example,
-	  m and n have different source free modules."
-	  },
-     EXAMPLE {
-	  "m = matrix{{a,b},{c,a}}",
-     	  "n = map(R^2,R^2,m)",
-	  "m == n",
-	  "source m == source n"
-	  },
-     PARA {
-     	  "If you only want to know if they have the same entries, test the difference against zero."
-	  },
-     EXAMPLE {
-	  "m-n == 0"
-	  },
-     HEADER3 "Rings",
-     HEADER3 "Modules",
-     PARA {
-     	  "Two ", TO "modules", " are equal if they are isomorphic as subquotients of the
-     	  same ambient free module."
-	  },
-     EXAMPLE {
-      	  "image matrix {{2,a},{1,5}} == R^2",
-      	  "image matrix {{2,a},{0,5}} == R^2"
-	  },
-     HEADER3 "Intervals",
-        PARA { "If either side of the equality is an ", TO "RRi", ", the equality is an equality of sets." },
-    EXAMPLE {
-        "interval(1,3) == interval(1,3)",
-        "interval(1/2) == 1/2",
-        "interval(1/3) == 1/3"
-    },
-     PARA{
-	  "It may happen that for certain types of objects, there is no method installed (yet)
-	  for testing mathematical equality, in which case an error message will be
-	  printed.  A good alternative may be to test for strict equality with
-	  the operator ", TO "===", "."
-	  },
-     PARA {
-	 "Since various sorts of mathematical objects are implemented as types, i.e., as
-	 instances of ", TO "Type", ", there is no generic method for checking equality of types, so that
-	 new mathematical comparison code can be provided in the future without breaking code that works."
-	 },
-     Caveat => {
-	  "Warning: whether this comparison operator returns true is not necessarily 
-     	  related to whether the comparison operator ", TO symbol ?, " returns ", TT "symbol ==", "."
-	  },
-     SeeAlso =>{ symbol!=, symbol===, symbol=!=, "operators" }
-     }
-
-document {
-     Key => symbol !=,
-     Headline => "inequality",
-     TT "x != y", " -- the negation of ", TT "x == y", ".",
-     PARA{},
-     SeeAlso =>{ "==", "operators" }
      }
 
 undocumented {

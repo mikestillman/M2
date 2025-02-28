@@ -111,6 +111,7 @@ fghij"///,
 	  "functions for handling nets",
 	  TO horizontalJoin,
 	  TO pad,
+	  TO columnate,
 	  TO stack,
 	  TO unstack,
 	  "more information",
@@ -159,7 +160,7 @@ document {
      "Warning: if so many characters are written to a file that an internal buffer
      is filled before the line ends or first net is seen, then the buffer will be 
      flushed, and writing a net subsequently will produce an unexpected result.",
-     Subnodes => TO \ {net, (width, Net), (height, Net), (depth, Net)}
+     Subnodes => TO \ {(width, Net), (height, Net), (depth, Net)}
      }
 
 document {
@@ -206,6 +207,18 @@ document {
      utf8 x
      ///,
      SeeAlso => {String, "///", ascii, utf8}
+     }
+
+document {
+     Key => {concatenate,(concatenate, ZZ), (concatenate, BasicList), (concatenate, String), (concatenate, Nothing), (concatenate, Symbol)},
+     Headline => "join strings",
+     TT "concatenate(s,t,...,u)", " yields the concatenation of the strings s,t,...,u.",
+     PARA{},
+     "The arguments may also be lists or sequences of strings and symbols, in
+     which case they are concatenated recursively.  Additionally,
+     an integer may be used to represent a number of spaces, and ", TO "null", " will be represented by the empty string.",
+     EXAMPLE ///concatenate {"a",("s",3,"d",),"f"}///,
+     SeeAlso => { "String"} 
      }
 
 undocumented {
@@ -469,6 +482,101 @@ document { Key => toUpper,
      EXAMPLE lines ///
      	  toUpper "A b C d E f"
      ///}
+
+document {
+     Key => print,
+     Headline => "print something",
+	Usage => "print x",
+     TT "print x", " prints ", TT "x", " on the standard output followed by a 
+     new line.",
+	EXAMPLE {
+		///print "Hello world!"///
+		},
+     "The return value is ", TO "null", "."
+     }
+
+doc ///
+  Key
+    printerr
+  Headline
+    print something to stderr
+  Usage
+    printerr x
+  Inputs
+    x:{String,Net,BasicList}
+  Description
+    Text
+      Print @TT "x"@, each line prepended with @TT "--"@, to @TO
+      stderr@.  This is useful for displaying warning messages and
+      verbose logs.
+    Example
+      printerr "Hello, world!"
+      printerr("foo" || "bar")
+    Text
+      If @TT "x"@ is @ofClass BasicList@, then its elements are first
+      joined with @TO horizontalJoin@.
+    Example
+      printerr("foo", "bar")
+///
+
+doc ///
+  Key
+    pad
+    (pad, String, ZZ)
+    (pad, ZZ, String)
+    (pad, Net, ZZ)
+    (pad, ZZ, Net)
+  Headline
+    pad a string or net with spaces
+  Usage
+    pad(s,n)
+    pad(n,s)
+  Inputs
+    s:Net
+    n:ZZ
+  Description
+    Text
+      @TT "pad(s,n)"@ pads the string or net @TT "s"@ to length @TT
+      "n"@ with spaces on the right.
+
+      @TT "pad(n,s)"@ pads the string or net @TT "s"@ to length @TT
+      "n"@ with spaces on the left.
+    Example
+      pad(6, "foo")
+      pad("foo", 6) | "bar"
+///
+
+document {
+     Key => columnate,
+     Headline => "arrange strings in columns",
+     TT "columnate(w,s)", " -- arranges the strings in the list ", TT "s", " in
+     columns, returning a ", TO "Net", " suitable for output to a terminal 
+     with a linewidth of ", TT "w", ".",
+     PARA{},
+     EXAMPLE {
+	  "columnate(12, characters ascii (65 .. 90))",
+	  }
+     }
+
+document {
+     Key => {(symbol |, Net, Net),
+	  (symbol |, String, String),
+	  (symbol |, String, ZZ),
+	  (symbol |, ZZ, String)},
+     Headline => "join strings or nets",
+     TT "s|t", " -- concatenates strings or nets horizontally.", 
+     PARA{},
+     "The result is a string if the arguments are all strings, otherwise it
+     is a net.  The baselines of the nets are aligned.",
+     EXAMPLE {
+	  ///"abc" | "def"///,
+      	  ///x = "abc" || "ABC"///,
+      	  ///x|"x"|x///,
+	  },
+     "If one of the two arguments is an integer, it is converted to a string first.",
+     EXAMPLE ///"t = " | 333///,
+     SeeAlso => {horizontalJoin}
+     }
 
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/m2 "

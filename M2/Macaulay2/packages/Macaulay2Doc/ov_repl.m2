@@ -66,76 +66,6 @@ document {
      "We intend to add parsing precedences to this table and eliminate ", TO "seeParsing", "."
      }
 
-undocumented {(value, RingElement), (value, Nothing), (value, IndexedVariableTable)}
-
-document {
-     Key => value,
-     Headline => "evaluate"
-     }
-
-document {
-     Key => (value,Symbol),
-     Headline => "retrieve the value of a symbol",
-     Usage => "value s",
-     Inputs => { "s" },
-     Outputs => { {"the value of ", TT "s" } },
-     EXAMPLE {
-	  "x = s",
-	  "s = 11111111111",
-	  "x",
-	  "value x"
-	  }
-     }
-
-document {
-     Key => (value, IndexedVariable),
-     Headline => "retrieve the value of an indexed variable",
-     Usage => "value s",
-     Inputs => { "s" },
-     Outputs => { {"the value of ", TT "s" } },
-     EXAMPLE lines ///
-	  y = x_3
-	  x_3 = 4
-	  x_3
-	  y
-	  value y
-     ///
-     }
-
-document {
-     Key => {(value,String),"currentString"},
-     Headline => "evaluate a string",
-     Usage => "value s",
-     Inputs => { "s" },
-     Outputs => { {"the value obtained by evaluating the code in ", TT "s" } },
-     "The contents of ", TT "s", " are treated as code in the
-     Macaulay2 language, parsed it in its own scope (the same way a file is)
-     and evaluated.  The string may contain multiple lines.",
-     {
-	  EXAMPLE {
-	       ///value "2 + 2"///,
-	       ///value "a := 33
-a+a"///,
-	       ///a///
-	       },
-	  "Since the local assignment to ", TT "a", " above occurred in a new scope,
-	  the value of the global variable ", TT "a", " is unaffected."
-	  },
-     PARA{
-	  "During evaluation of the string, error messages will refer to the location of the error
-	  as ", TT "currentString", " with a line number and a column number,
-	  and the value of the variable ", TO "currentString", " is set to the string, to aid in debugging."
-	  },
-     EXAMPLE lines ///
-     debuggingMode = stopIfError = false;
-     value "1/0"
-     debuggingMode = true;
-     value "1/0"
-     break
-     ///,
-     SeeAlso => {"debugging", "stopIfError", "debuggingMode"}
-     }
-
 document {
      Key => "global",
      Headline => "get a global symbol",
@@ -551,7 +481,7 @@ document { Key => listLocalSymbols,
 	       "This usage works only in the debugger, where ", TO "current", " has a non-null value."
 	       },
 	  EXAMPLE lines ///
-	  load "Macaulay2Doc/demo1.m2"
+	  load "Macaulay2Doc/demos/demo1.m2"
 	  g 2
 	  listLocalSymbols
 	  ///,
@@ -574,7 +504,7 @@ document { Key => listLocalSymbols,
 	       "This usage works only in the debugger, where ", TO "current", " has a non-null value."
 	       },
 	  EXAMPLE lines ///
-	  load "Macaulay2Doc/demo1.m2"
+	  load "Macaulay2Doc/demos/demo1.m2"
 	  g 2
 	  listLocalSymbols ZZ
 	  ///
@@ -936,6 +866,44 @@ document {
      SeeAlso => {"currentRowNumber", "currentColumnNumber" }
      }
 
+document {
+     Key => { symbolBody, SymbolBody },
+     Headline => "symbol bodies",
+     PARA {
+	  "A Macaulay2 symbol is much like a function closure, in that it comes equipped with a pointer to a frame
+	  that contains a value for it.  That value can be recovered with the function ", TO "value", ", as follows."
+	  },
+     EXAMPLE lines ///
+     f = x -> symbol x
+     s = f 1
+     t = f 2
+     ///,
+     PARA {
+	  "The two symbols created in the example above have something in common -- they are created by the same bit
+	  of code (the function ", TT "f", "), but they have different values."
+	  },
+     EXAMPLE lines ///
+     value s
+     value t
+     ///,
+     PARA {
+	  "To allow the user to determine whether two symbols are created by the same bit of code, Macaulay2 has
+	  the notion of symbol body, which parallel to the notion of function body.  It's essentially the symbol, but
+	  without the pointer to the frame that contains the value."
+	  },
+     EXAMPLE lines ///
+     symbolBody s
+     symbolBody t
+     symbolBody s === symbolBody t
+     ///,
+     PARA {
+	  "All such symbol bodies are members of the class ", TT "SymbolBody", "."
+	  },
+     EXAMPLE lines ///
+     class symbolBody s
+     ///
+     }
+
 document { Key => functionBody,
      Headline => "get the body of a function",
      Usage => "functionBody f",
@@ -1003,7 +971,7 @@ document { Key => pseudocode,
 	  "It may be useful to look at code during debugging, as in the following demonstration."
 	  },
      EXAMPLE lines ///
-     load "Macaulay2Doc/demo1.m2"
+     load "Macaulay2Doc/demos/demo1.m2"
      code g
      g 2
      code current
@@ -1025,7 +993,7 @@ document { Key => disassemble,
 	  "It may be useful to disassemble code during debugging, as in the following demonstration."
 	  },
      EXAMPLE lines ///
-     load "Macaulay2Doc/demo1.m2"
+     load "Macaulay2Doc/demos/demo1.m2"
      code g
      g 2
      code current
@@ -1039,7 +1007,7 @@ document { Key => "current",
      Outputs => { PseudocodeClosure => { "the pseudocode that produced an error, or ", TO "null", ", if none" } },
      "Use ", TO "value", " to evaluate the code again, for debugging purposes.",
      EXAMPLE lines ///
-     load "Macaulay2Doc/demo1.m2"
+     load "Macaulay2Doc/demos/demo1.m2"
      code g
      g 2
      code current
@@ -1061,7 +1029,7 @@ document { Key => (value, Pseudocode),
 	  variable fixed the problem in the code, by executing just the offending line."
 	  },
      EXAMPLE lines ///
-     load "Macaulay2Doc/demo1.m2"
+     load "Macaulay2Doc/demos/demo1.m2"
      g 2
      value current
      x = 11
@@ -1097,3 +1065,25 @@ document { Key => getGlobalSymbol,
 	  peek d
      ///
      }
+
+document {
+    Key => {
+	Command,
+	(symbol SPACE, Command, Thing)
+    },
+    Headline => "the class of all commands",
+    Usage => "Command g",
+    Inputs => { "g" => "a function or a string" },
+    Outputs => { { "a new command that will evaluate ", TT "g()", " if ", TT "g", " is a function, and will evaluate ", TT "run g", " if ", TT "g", " is a string" } },
+    "A command behaves as a function does if it is followed by an adjacent
+    expression that can serve as its argument or argument list.  In addition,
+    if it appears as the value of an expression typed by the user at top
+    level (i.e., not in a file), then it gets executed with empty argument list.",
+    EXAMPLE {
+	  "(f = Command ( () -> 2^30 );)",
+	  "f",
+	  "(c = Command \"date\";)",
+	  "c"
+	  },
+    SeeAlso => {"run", "AfterEval"}
+}

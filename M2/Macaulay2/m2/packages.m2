@@ -472,6 +472,7 @@ Core#"preloaded packages" = {
     "InverseSystems",
     "SimpleDoc",
     "OnlineLookup",
+    "OldChainComplexes",
     "Isomorphism",
     "Varieties",
     "PackageCitations"}

@@ -26,7 +26,7 @@ Node
       "ideals"
       "matrices"
       "modules"
-      "chain complexes"
+      "OldChainComplexes :: chain complexes"
       "Varieties :: Varieties"
     :Some Mathematical Computations
       "mathematical examples"

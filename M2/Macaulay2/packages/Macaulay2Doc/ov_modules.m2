@@ -1,13 +1,105 @@
 -- -*- coding: utf-8 -*-
 document {
-     Key => "modules",
+     Key => Module,
+     Headline => "the class of all modules",
+     PARA{},
+     "See ", TO "modules", " for an overview of modules in Macaulay2.  See
+     ", TO "modules in Macaulay2", " for a tutorial overview of modules.",
+     PARA{},
      "Modules in Macaulay2 are implemented as ", TO "subquotient modules", ".  
      Submodules and quotients of free modules are perhaps the most common and important
-     modules, and subquotients form the smallest class of modules that naturally includes these cases.",
+     modules, and subquotients form the smallest class
+     of modules that naturally includes these cases.",
      PARA{},
-     "See ", TO "Tutorial: Modules in Macaulay2", " for an overview tutorial on modules.",
-     PARA{},
-     "For additional common operations and a comprehensive list of all routines
+     "Common ways to make a module:",
+     UL {
+	  TO (symbol ^, Ring, ZZ),
+	  TO (symbol ^, Ring, List),
+	  TO (cokernel, Matrix),
+	  TO (image, Matrix),
+	  TO (kernel, Matrix),
+	  },
+     "Common ways to get information about modules:",
+     UL {
+	  TO (ring, Module),
+	  TO (numgens, Module),
+	  TO (degrees, Module),
+	  TO (generators, Module),
+	  TO (relations, Module),
+	  TO "isFreeModule",
+	  TO (isHomogeneous, Module),
+	  },
+     "Numerical information about a module:",
+     UL {
+	  TO (codim, Module),
+	  TO (dim, Module),
+	  TO (rank, Module)
+	  },
+     "Submodules, quotients, and subquotient modules:",
+     UL {
+	  TO (ambient, Module),
+	  TO (cover, Module),
+	  TO (super, Module),
+	  TO (symbol /, Module, Module),
+     	  TO (subquotient, Matrix, Matrix),
+	  TO (isSubset, Module, Module),
+	  },
+     "Common operations on modules:",
+     UL {
+	  TO (symbol +, Module, Module),
+	  TO (symbol ==, Module, Module),
+	  TO (symbol ++, Module, Module),
+	  TO (symbol ^, Module, List),
+	  TO (symbol **, Module, Module),
+	  TO (symbol ^**, Module, ZZ),
+	  TO (symbol _, Module, List),
+	  },
+     "Minimalization:",
+     UL {
+	  TO (mingens,Module),
+	  TO (trim,Module),
+	  TO (minimalPresentation,Module)
+	  },
+     "Graded modules:",
+     UL {
+	  TO basis,
+	  TO "Truncations::truncate(ZZ,Module)",
+	  TO (degree, Module),
+	  TO "Varieties::genera(Module)",
+	  TO (hilbertSeries, Module),
+	  TO (hilbertFunction, ZZ, Module),
+	  TO (poincare, Module),
+	  TO (regularity, Module),
+	  },
+     "Annihilators, quotients and Gröbner bases:",
+     UL {
+	  TO (gb, Module),
+	  TO "Saturation::Ideal : Ideal",
+	  TO "Saturation::annihilator(Module)",
+	  TO "Saturation::saturate(Module,Ideal)",
+	  },
+     "Common homological computations:",
+     UL {
+	  TO (res, Module),
+	  TO (pdim, Module),
+	  TO "Hom",
+	  TO (homomorphism,Matrix),
+	  TO (Ext,ZZ,Module,Module),
+	  TO (Tor,ZZ,Module,Module),
+	  TO (cohomology,ZZ,Module),
+	  TO (homology, Matrix, Matrix),
+	  TO (fittingIdeal, ZZ, Module),
+	  },
+     "Multilinear algebra:",
+     UL {
+	  TO (exteriorPower,ZZ,Module),
+	  }}
+
+document {
+     Key => "modules",
+     "For more operations in homological algebra, see ", 
+     TO "Complexes", ".  For additional common operations and a 
+     comprehensive list of all routines
      in Macaulay2 which return or use modules, see ", TO Module, ".",
      Subnodes => {
 	TO Module,
@@ -596,7 +688,7 @@ document {
 	  "C = resolution M",
 	  "C.dd_3"
 	  },
-     "For more information about chain complexes and resolutions, see ", TO "chain complexes",
+     "For more information about chain complexes and resolutions, see ", TO "OldChainComplexes :: chain complexes",
      " and ", TO "computing resolutions", ".",
      SUBSECTION "betti numbers",
      "Use ", TO2{(betti,GradedModule),"betti"}, " to display the graded betti numbers of ", TT "M", ".",

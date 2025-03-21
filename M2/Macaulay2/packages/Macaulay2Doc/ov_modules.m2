@@ -98,7 +98,7 @@ document {
 document {
      Key => "modules",
      "For more operations in homological algebra, see ", 
-     TO "chain complexes", ".  For additional common operations and a 
+     TO "OldChainComplexes :: chain complexes", ".  For additional common operations and a 
      comprehensive list of all routines
      in Macaulay2 which return or use modules, see ", TO Module, ".",
      Subnodes => {
@@ -669,7 +669,7 @@ document {
 	  "C = resolution M",
 	  "C.dd_3"
 	  },
-     "For more information about chain complexes and resolutions, see ", TO "chain complexes",
+     "For more information about chain complexes and resolutions, see ", TO "OldChainComplexes :: chain complexes",
      " and ", TO "computing resolutions", ".",
      SUBSECTION "betti numbers",
      "Use ", TO2{(betti,GradedModule),"betti"}, " to display the graded betti numbers of ", TT "M", ".",

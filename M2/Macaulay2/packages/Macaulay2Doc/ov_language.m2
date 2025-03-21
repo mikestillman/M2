@@ -20,7 +20,7 @@ document {
 	  "There is special syntax for creating and accessing strings, lists, sequences, and hashtables.  These are the key data types underlying many new
 	  types.  The Macaulay2 engine implements rings, ring elements, and matrices, as instances of low-level types, and various high-level types,
 	  visible to the user, are based on them.  Examples include ", TO "Ring", ", ", TO "RingElement", ", ", TO "Matrix", ", ", TO "Ideal", ", ", 
-	  TO "RingMap", ", ", TO "Module", ", and ", TO "ChainComplex", "."
+	  TO "RingMap", ", ", TO "Module", ", and ", TO "Complexes::Complex", "."
 	  },
 
      PARA{
@@ -29,7 +29,7 @@ document {
 	  },
 
      Subnodes => {
-	      TO "variables",
+         TO "variables",
 	  "basic data types",
 	      TO "numeric types",
 	      TO "strings and nets",

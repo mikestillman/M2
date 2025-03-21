@@ -39,7 +39,7 @@ document { Key => { isIsomorphism, (isIsomorphism, Matrix) },
 document { Key => cone,
     Headline => "mapping cone or polyhedral cone",
     SeeAlso => {
-	(cone, ChainComplexMap),
+	"OldChainComplexes::cone(ChainComplexMap)",
 	"Complexes::cone(ComplexMap)",
 	"Polyhedra::cone(Polyhedron)",
 	}

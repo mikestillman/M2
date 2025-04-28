@@ -560,7 +560,7 @@ document {
 	 RingElement,
 	 --Time,
 	 Option,
-	 Vector,
+	 --Vector,
 	 --Partition,
 	 Expression,
 	 Manipulator,

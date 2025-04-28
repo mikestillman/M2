@@ -43,7 +43,7 @@ Node
     eagonNorthcott
     regularity
     presentation
-    resolution
+    "OldChainComplexes :: resolution"
     quotient
     quotient'
     quotientRemainder
@@ -67,7 +67,7 @@ Node
     tensor
     directSum
     monomialCurveIdeal
-    syzygyScheme
+    --syzygyScheme
     isBorel
     isCommutative
     isAffineRing
@@ -83,17 +83,12 @@ Node
     preimage
     pullback
     pushout
-    extend
-    nullhomotopy
     isInjective
     isSurjective
     isIsomorphism
     inverse
     ScriptedFunctor
     id
-    HH
-    Tor
-    Ext
 
 Node
   Key

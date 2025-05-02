@@ -36,10 +36,10 @@ Node
     hilbertPolynomial
     syz
     koszul
-    eagonNorthcott
+    "OldChainComplexes :: eagonNorthcott"
     regularity
     presentation
-    resolution
+    "OldChainComplexes :: resolution"
     quotient
     quotient'
     quotientRemainder
@@ -63,7 +63,6 @@ Node
     tensor
     directSum
     monomialCurveIdeal
-    syzygyScheme
     isBorel
     isCommutative
     isAffineRing
@@ -79,8 +78,8 @@ Node
     preimage
     pullback
     pushout
-    extend
-    nullhomotopy
+    "OldChainComplexes :: extend"
+    "OldChainComplexes :: nullhomotopy"
     isInjective
     isSurjective
     isIsomorphism
@@ -88,8 +87,8 @@ Node
     ScriptedFunctor
     id
     HH
-    Tor
-    Ext
+    "OldChainComplexes :: Tor"
+    "OldChainComplexes :: Ext"
 
 Node
   Key

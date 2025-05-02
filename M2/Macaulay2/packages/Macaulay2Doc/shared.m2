@@ -136,3 +136,16 @@ document {
 	-- add references to tensor methods installed in packages _other than Core_ here
 	}
     }
+
+document {
+    Key => status,
+    Headline => "get the status of a computation",
+    SeeAlso => {
+	(status, GroebnerBasis),
+	"OldChainComplexes :: status(ChainComplex)",
+	"SubalgebraBases :: status(SAGBIBasis)",
+	"SumsOfSquares :: status(SDPResult)",
+	-- this one is used in a different sense
+	-- "NAGtypes :: status(AbstractPoint)",
+    },
+}

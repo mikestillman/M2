@@ -116,6 +116,7 @@ Node
       work only if the Betti tally contains degrees of the correct degree length.
     Example
       R = QQ[x,y]
+      t = new BettiTally from { (0,{0},0) => 1, (1,{1},1) => 2, (2,{3},3) => 3, (2,{4},4) => 4 }
       C = R^t
       betti C
       C.dd

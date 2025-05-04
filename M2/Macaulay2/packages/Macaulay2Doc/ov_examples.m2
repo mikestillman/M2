@@ -54,6 +54,7 @@ Node
     depth -- contains link to package Depth
     height -- TODO
     length
+    complete
     trim
     prune
     numgens
@@ -78,7 +79,7 @@ Node
     preimage
     pullback
     pushout
-    "OldChainComplexes :: extend"
+    extend
     "OldChainComplexes :: nullhomotopy"
     isInjective
     isSurjective

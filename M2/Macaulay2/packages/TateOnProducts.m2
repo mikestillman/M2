@@ -21,7 +21,7 @@ newPackage(
 	{ Name => "Yeongrak Kim",     	 Email => "kim@math.uni-sb.de",      HomePage => "http://sites.google.com/view/yeongrak/"}
 	},
     Keywords => {"Commutative Algebra"},
-    PackageImports => {"OldChainComplexes", "Truncations", "Complexes"},
+    PackageImports => {"Truncations", "Complexes", "OldChainComplexes"},
     PackageExports => {"SVDComplexes"},
     DebuggingMode => false
     )

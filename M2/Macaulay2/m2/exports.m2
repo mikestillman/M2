@@ -1309,6 +1309,7 @@ export {
 }
 
 exportMutable {
+    "HomologicalAlgebraPackage",
 	"OutputDictionary",
 	"allowableThreads",
 	"applicationDirectorySuffix",

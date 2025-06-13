@@ -118,6 +118,9 @@ complex Matrix := Complex => complexOptions >> opts -> M -> (
 complex Module := Complex => complexOptions >> opts -> (M) -> (
     if not instance(opts.Base, ZZ) then
       error "complex: expected base to be an integer";
+    isLowRankFreeModule := isFreeModule M and rank M <= 1 and opts.Base === 0;
+    r := if isLowRankFreeModule then rank M;
+    if isLowRankFreeModule and (ring M)#?(Complex,r) then return (ring M)#(Complex,r);
     if M.cache.?Complex and opts.Base === 0 then return M.cache.Complex;
     C := new Complex from {
            symbol ring => ring M,
@@ -125,8 +128,9 @@ complex Module := Complex => complexOptions >> opts -> (M) -> (
            symbol module => hashTable {opts.Base => M},
            symbol cache => new CacheTable
            };
-    if opts.Base === 0 then M.cache.Complex = C;
     C.dd = map(C,C,0,Degree=>-1);
+    if opts.Base === 0 then M.cache.Complex = C;
+    if isLowRankFreeModule then (ring M)#(Complex,r) = C;
     C
     )
 complex Ring := Complex => complexOptions >> opts -> R -> complex(R^1, opts)
@@ -419,7 +423,7 @@ Complex Array := (C, L) -> (
     )
 
 
-Complex#id = (C) -> (
+Complex#id = (C) -> C.cache.id ??= (
     (lo,hi) := C.concentration;
     maps := hashTable for i from lo to hi list i => id_(C_i);
     result := map(C,C,maps);
@@ -723,21 +727,23 @@ canonicalTruncation(Complex,Sequence) := Complex => (C,loHi) -> (
     if lo === null then lo = -infinity;
     if hi === null then hi = infinity;
     if lo > hi then error "interval of truncation is empty";
-    (loC,hiC) := concentration C;
-    if lo <= loC and hi >= hiC then C
-    else if lo === hi then complex(HH_lo(C), Base=>lo)
-    else if lo === hiC then complex(ker dd^C_lo, Base=>lo)
-    else if lo > hiC then complex((ring C)^0, Base=>lo)
-    else if loC === hi then complex(coker dd^C_(hi+1), Base=>hi)
-    else if loC > hi then complex((ring C)^0, Base=>hi)
-    else complex(hashTable for i from max(lo+1,loC+1) to min(hi,hiC) list i => (
-            if i === lo+1 then (
-                K := ker dd^C_lo;
-                g := dd^C_(lo+1) // inducedMap(C_lo,K); -- induced map C_(lo+1) --> K.
-                if i === hi then map(K, coker dd^C_(hi+1), g) else g
+    C.cache#(canonicalTruncation, lo, hi) ??= (
+        (loC,hiC) := concentration C;
+        if lo <= loC and hi >= hiC then C
+        else if lo === hi then complex(HH_lo(C), Base=>lo)
+        else if lo === hiC then complex(ker dd^C_lo, Base=>lo)
+        else if lo > hiC then complex((ring C)^0, Base=>lo)
+        else if loC === hi then complex(coker dd^C_(hi+1), Base=>hi)
+        else if loC > hi then complex((ring C)^0, Base=>hi)
+        else complex(hashTable for i from max(lo+1,loC+1) to min(hi,hiC) list i => (
+                if i === lo+1 then (
+                    K := ker dd^C_lo;
+                    g := dd^C_(lo+1) // inducedMap(C_lo,K); -- induced map C_(lo+1) --> K.
+                    if i === hi then map(K, coker dd^C_(hi+1), g) else g
+                    )
+                else if i === hi then map(C_(hi-1), coker dd^C_(hi+1), dd^C_hi)
+                else dd^C_i
                 )
-            else if i === hi then map(C_(hi-1), coker dd^C_(hi+1), dd^C_hi)
-            else dd^C_i
             )
         )
     )

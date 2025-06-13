@@ -2129,6 +2129,23 @@ doc ///
             This is really a shorthand for constructing complex maps via block matrices.
         Example
             assert(h === map(D, C1 ++ C2, {{f,g}}))
+        Text
+            {\bf Warning:} The "sameness" of the targets of the complex maps $f$ and $g$
+            is tested using {\tt ===}. One avoids issues by not reconstructing
+            complexes that are the same.  For instance, {\tt C4} is isomorphic, but not identical
+            to {\tt C3}.
+        Example
+            C3 = complex S^3
+            id_C3 | id_C3
+            C4 = complex S^3
+            target id_C3 === target id_C4
+            target id_C3 == target id_C4
+        Text
+            Alternatively, one can compose with the appropriate isomorphism to ensure the targets
+            are the same.
+        Example
+            eta = inducedMap(target id_C4, target id_C3)
+            (eta * id_C3) | id_C4
     SeeAlso
         (symbol++, Complex, Complex)
         (symbol++, ComplexMap, ComplexMap)
@@ -2172,6 +2189,23 @@ doc ///
             This is really a shorthand for constructing complex maps via block matrices.
         Example
             assert(h === map(D1 ++ D2, C, {{f},{g}}))
+        Text
+            {\bf Warning:} The "sameness" of the sources of the complex maps $f$ and $g$
+            is tested using {\tt ===}. One avoids issues by not reconstructing
+            complexes that are the same.  For instance, {\tt C4} is isomorphic, but not identical
+            to {\tt C3}.
+        Example
+            C3 = complex S^3
+            id_C3 || id_C3
+            C4 = complex S^3
+            target id_C3 === target id_C4
+            target id_C3 == target id_C4
+        Text
+            Alternatively, one can compose with the appropriate isomorphism to ensure the targets
+            are the same.
+        Example
+            eta = inducedMap(source id_C4, source id_C3)
+            id_C3 || (id_C4 * eta)
     SeeAlso
         (symbol++, Complex, Complex)
         (symbol++, ComplexMap, ComplexMap)
@@ -3671,14 +3705,32 @@ doc ///
             isSemiFree, and add in an example or 2.  Include
             finding an inverse for a quasi-isomorphism.
             We need some kind of better example here.
+        Text
+            {\bf Warning:} The "sameness" of the targets of the complex maps $f$ and $g$
+            is tested using {\tt ===}. One avoids issues by not reconstructing
+            complexes that are the same.  For instance, {\tt C4} is isomorphic, but not identical
+            to {\tt C3}.
+        Example
+            C3 = complex S^3
+            id_C3 // id_C3
+            C4 = complex S^3
+            target id_C3 === target id_C4
+            target id_C3 == target id_C4
+        Text
+            Alternatively, one can compose with the appropriate isomorphism to ensure the targets
+            are the same.
+        Example
+            eta = inducedMap(target id_C4, target id_C3)
+            (eta * id_C3) // id_C4
     Caveat
         The following three assumptions are not checked:
         $f$ is a morphism, the source of $f$ is semifree,
         and $g$ is a quasi-isomorphism.
     SeeAlso
         "Towards computing in the derived category"
-        isQuasiIsomorphism
         isComplexMorphism
+        isFree
+        isQuasiIsomorphism
 ///
 
 doc ///

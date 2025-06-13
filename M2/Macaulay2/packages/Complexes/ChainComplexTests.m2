@@ -95,6 +95,8 @@ TEST ///
 
   C2 = complex S
   assert(ring C2 === S)
+  assert(complex S === C2)
+  assert(complex S^1 === C2)
   I = ideal(a^2-b, c^3)
   C3 = complex I
   C4 = complex (S/I)
@@ -104,6 +106,7 @@ TEST ///
   assert(length C4 == 0)
   
   C5 = complex S^0
+  assert(complex S^0 === C5)
   assert(C5 == 0)
   assert(0 == C5)
   assert(dd^C5 == 0)
@@ -114,6 +117,11 @@ TEST ///
   assert(concentration prune(C5[4]) == (0,0))
   assert(isExact C5)
 
+  -- only complexes associated to S^0, S^1 are cached.
+  -- others remain distinct when using ===
+  assert(complex S^2 =!= complex S^2)
+  assert(complex(S, Base => 13) =!= complex(S, Base => 13))
+      
   R = QQ
   C = complex QQ
   D = C[3] ++ (complex QQ^2)
@@ -141,12 +149,24 @@ TEST ///
   assert((dd^C)^2 != 0)
 ///
 
-TEST ///
-  -- test creation of complexes 3: via constructors
+TEST /// -- id_Complex
+  S = ZZ/101[a..d]
+  C = koszulComplex vars S
+  assert(isWellDefined id_C)
+  assert(id_C === id_C)
+  assert(id_C == 1)
+
+  assert isWellDefined(id_C | id_C)
+  assert isWellDefined(id_C || id_C)
+  assert isWellDefined(id_C // id_C)
+///
+
 -*
   restart
   needsPackage "Complexes"
 *-
+TEST ///
+  -- test creation of complexes 3: via constructors
   S = ZZ/101[a..d]
   I = ideal(b^2-a*c, b*c-a*d, c^2-b*d)
   F1 = map(S^1,,matrix{{I_0, I_1, I_2}})

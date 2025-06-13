@@ -118,7 +118,7 @@ complex Matrix := Complex => complexOptions >> opts -> M -> (
 complex Module := Complex => complexOptions >> opts -> (M) -> (
     if not instance(opts.Base, ZZ) then
       error "complex: expected base to be an integer";
-    isLowRankFreeModule := isFreeModule M and rank M <= 1 and opts.Base === 0;
+    isLowRankFreeModule := isFreeModule M and opts.Base === 0 and M === (ring M)^0 or M === (ring M)^1;
     r := if isLowRankFreeModule then rank M;
     if isLowRankFreeModule and (ring M)#?(Complex,r) then return (ring M)#(Complex,r);
     if M.cache.?Complex and opts.Base === 0 then return M.cache.Complex;
@@ -704,10 +704,12 @@ naiveTruncation(Complex,Sequence) := Complex => (C,loHi) -> (
     (loC,hiC) := concentration C;
     lo = max(lo,loC);
     hi = min(hi,hiC);
-    if lo === loC and hi === hiC then C
-    else if lo === hi then complex(C_lo, Base=>lo)
-    else if lo > hi then complex (ring C)^0
-    else complex(hashTable for i from lo+1 to hi list i => dd^C_i, Base=>lo)
+    C.cache#(naiveTruncation, lo, hi) ??= (
+        if lo === loC and hi === hiC then C
+        else if lo === hi then complex(C_lo, Base=>lo)
+        else if lo > hi then complex (ring C)^0
+        else complex(hashTable for i from lo+1 to hi list i => dd^C_i, Base=>lo)
+        )
     )
 naiveTruncation(Complex,ZZ,ZZ) := 
 naiveTruncation(Complex,ZZ,InfiniteNumber) := 
@@ -727,8 +729,8 @@ canonicalTruncation(Complex,Sequence) := Complex => (C,loHi) -> (
     if lo === null then lo = -infinity;
     if hi === null then hi = infinity;
     if lo > hi then error "interval of truncation is empty";
-    C.cache#(canonicalTruncation, lo, hi) ??= (
-        (loC,hiC) := concentration C;
+    (loC,hiC) := concentration C;
+    C.cache#(canonicalTruncation, max(lo, loC), min(hi, hiC)) ??= (
         if lo <= loC and hi >= hiC then C
         else if lo === hi then complex(HH_lo(C), Base=>lo)
         else if lo === hiC then complex(ker dd^C_lo, Base=>lo)

@@ -2135,9 +2135,9 @@ doc ///
             complexes that are the same.  For instance, {\tt C4} is isomorphic, but not identical
             to {\tt C3}.
         Example
-            C3 = complex S^3
+            C3 = complex R^3
             id_C3 | id_C3
-            C4 = complex S^3
+            C4 = complex R^3
             target id_C3 === target id_C4
             target id_C3 == target id_C4
         Text
@@ -2195,9 +2195,9 @@ doc ///
             complexes that are the same.  For instance, {\tt C4} is isomorphic, but not identical
             to {\tt C3}.
         Example
-            C3 = complex S^3
+            C3 = complex R^3
             id_C3 || id_C3
-            C4 = complex S^3
+            C4 = complex R^3
             target id_C3 === target id_C4
             target id_C3 == target id_C4
         Text

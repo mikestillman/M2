@@ -1,7 +1,7 @@
 newPackage(
     "Complexes",
-    Version => "0.999995",
-    Date => "1 May 2023",
+    Version => "1.0",
+    Date => "13 June 2025",
     Authors => {
         {   Name => "Gregory G. Smith", 
             Email => "ggsmith@mast.queensu.ca", 
@@ -11,7 +11,7 @@ newPackage(
             Email => "mike@math.cornell.edu", 
             HomePage => "http://www.math.cornell.edu/~mike"
             }},
-    Headline => "beta testing new version of chain complexes",
+    Headline => "data types and routines for homological algebra",
     Keywords => {"Homological Algebra"},
     PackageImports => { "LLLBases" },
     PackageExports => { "Truncations" },

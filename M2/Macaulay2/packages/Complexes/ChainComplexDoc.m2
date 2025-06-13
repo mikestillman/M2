@@ -3,30 +3,23 @@
 --------------------------------------------------------------------
 
 -*
-        Text
-            The major change is replacing the @TO ChainComplex@ data type with @TO Complex@.
-            The internal structure of this new data type is somewhat different, but more
-            importantly, it has a richer set of constructors.  Use the functions
-            @TO (complex, ChainComplex)@, @TO (complex, ChainComplexMap)@, @TO (chainComplex, Complex)@, @TO (chainComplex, ComplexMap)@, 
-            to translate between these representations.
+Text
+The major change is replacing the @TO ChainComplex@ data type with @TO Complex@.
+The internal structure of this new data type is somewhat different, but more
+importantly, it has a richer set of constructors.  Use the functions
+@TO (complex, ChainComplex)@, @TO (complex, ChainComplexMap)@, @TO (chainComplex, Complex)@, @TO (chainComplex, ComplexMap)@, 
+to translate between these representations.
 *-
 
 doc ///
     Key
         Complexes
     Headline
-        development package for beta testing new version of chain complexes    
+        package for homological algebra
     Description
         Text
-            This package develops new data types and routines for homological algebra.
-            Eventually, it will replace the current facilities for homological algebra.
-            We are making this available in order to get feedback from users before
-            making this change.  Please email the authors with any and all comments or
-            suggestions.
-        Text
-            The overarching goal is to make all of the homological algebra routines functorial.
-            For instance, we have @TO2(canonicalMap, "canonical maps")@ associated to kernels,
-            cokernels, images, coimages, cones, and cylinders.
+            This package develops data types and routines for homological algebra.
+            The overarching goal is to make all homological algebra routines functorial.
     SeeAlso
         "Making chain complexes"
         "Making maps between chain complexes"
@@ -44,7 +37,7 @@ doc ///
     Description
     	Text
     	    @SUBSECTION "Basic constructors"@
-	Text
+        Text
     	    @UL {
                 TO (complex, HashTable),
                 TO (complex, List),
@@ -55,7 +48,7 @@ doc ///
             }@
     	Text
     	    @SUBSECTION "Important computations creating new complexes"@
-	Text
+        Text
     	    @UL {
                 TO (freeResolution, Module),
                 TO (freeResolution, Complex),
@@ -63,7 +56,7 @@ doc ///
             }@
     	Text
     	    @SUBSECTION "More advanced constructors"@
-	Text
+        Text
     	    @UL {
                 TO (symbol++, Complex, Complex),
                 TO (symbol**, Complex, Complex),
@@ -2950,6 +2943,7 @@ doc ///
 
 doc ///
     Key
+        naiveTruncation
         (naiveTruncation, Complex, ZZ, ZZ)
         (naiveTruncation, Complex, InfiniteNumber, ZZ)
         (naiveTruncation, Complex, Nothing, ZZ)
@@ -2957,7 +2951,6 @@ doc ///
         (naiveTruncation, Complex, ZZ, InfiniteNumber)
         (naiveTruncation, Complex, ZZ, Nothing)
         (naiveTruncation, Complex, InfiniteNumber, InfiniteNumber)
-        naiveTruncation
     Headline
         drops all terms of a complex outside a given interval
     Usage

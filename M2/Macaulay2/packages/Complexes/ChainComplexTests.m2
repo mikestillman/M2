@@ -936,27 +936,34 @@ TEST ///
   assert(freeResolution C == source f)
 ///
 
-TEST ///
-  -- naive truncation
 -*  
   restart
   needsPackage "Complexes"
 *-  
+TEST ///
+  -- naive truncation
   R = ZZ/101[a,b,c,d,e]
   I = intersect(ideal(a,b),ideal(c,d,e))
   C = freeResolution I
-  naiveTruncation(C,1,2)
-  naiveTruncation(C,1,6)
-  naiveTruncation(C,-13,2)
-  naiveTruncation(C,-infinity,2)
+  C12 = naiveTruncation(C,1,2)
+  assert isWellDefined C12
+  assert(concentration C12 == (1, 2))
+  assert(C12 === naiveTruncation(C12, (1, 2))) -- checking that we are caching the result
+  assert(C12 === naiveTruncation(C, (1, 2)))
+
+  assert isWellDefined naiveTruncation(C,1,6)
+  assert isWellDefined naiveTruncation(C,-13,2)
+  assert isWellDefined naiveTruncation(C,-infinity,2)
   assert try (naiveTruncation(C,4,3); false) else true
-  naiveTruncation(C,4,infinity)
+  assert isWellDefined naiveTruncation(C,4,infinity)
   assert(C === naiveTruncation(C,-infinity,infinity))
 
   g = naiveTruncation(id_C, (0,2), (1,3))
   assert isWellDefined g
   assert not isComplexMorphism g
-  
+  concentration source g === (2,3)
+  concentration target g === (0,1)
+
   g = naiveTruncation(id_C, (1,3))
   assert isWellDefined g
   assert isComplexMorphism g
@@ -967,27 +974,50 @@ TEST ///
   assert(g == 0)
 ///
 
-TEST ///
-  -- canonical truncation
 -*  
   restart
   needsPackage "Complexes"
 *-  
+TEST ///
+  -- canonical truncation
   R = ZZ/101[a,b,c,d,e]
   I = intersect(ideal(a,b),ideal(c,d,e))
   C = freeResolution I
+
   C1 = canonicalTruncation(C,1,2)
   assert isWellDefined C1
-  C2 = canonicalTruncation(C,1,6)
-  assert(C2 == canonicalTruncation(C,1,))
-  C3 = canonicalTruncation(C,-13,2)
-  assert(C3 == canonicalTruncation(C,,2))
-  C4 = canonicalTruncation(C,-infinity,2)
-  assert(C3 == C4)
-  assert try (canonicalTruncation(C,4,3); false) else true
-  canonicalTruncation(C,4,infinity)
-  canonicalTruncation(C,-infinity,infinity) == C
+  assert(concentration C1 == (1,2))
+  assert(C1 === canonicalTruncation(C,1,2)) -- testing that it was cached
+  assert(C1 === canonicalTruncation(C1,1,2))
+  assert(C1 === canonicalTruncation(C1,-1,4))
 
+  C2 = canonicalTruncation(C,1,6)
+  assert(C2 === canonicalTruncation(C,1,))
+  C3 = canonicalTruncation(C,-13,2)
+  assert(C3 === canonicalTruncation(C,,2))
+  C4 = canonicalTruncation(C,-infinity,2)
+  assert(C3 === C4)
+  assert try (canonicalTruncation(C,4,3); false) else true
+  assert(0 == canonicalTruncation(C,4,infinity))
+  assert(C === canonicalTruncation(C,-infinity,infinity))
+
+  -- test of base cases
+  C11 = canonicalTruncation(C, 1, 1)
+  assert isWellDefined C11
+  assert(concentration C11 == (1,1))
+
+  C00 = canonicalTruncation(C, 0, 0)
+  assert isWellDefined C00
+  assert(concentration C00 == (0, 0))
+  assert(C00_0 == coker dd^C_1)
+
+  C' = naiveTruncation(C, (0,3))
+  C'33 = canonicalTruncation(C', 3, 3)
+  assert isWellDefined C'33
+  assert(concentration C'33 == (3, 3))
+  assert(C'33_3 == image dd^C_4)
+
+  assert(canonicalTruncation(C, 5, 5) == 0)
   g = canonicalTruncation(id_C, (1, infinity))
   assert isWellDefined g
   assert isComplexMorphism g
@@ -1006,13 +1036,12 @@ TEST ///
 
 ///
 
-
-TEST ///
-  -- canonical truncation, more interesting example(s)
 -*  
   restart
   needsPackage "Complexes"
 *-  
+TEST ///
+  -- canonical truncation, more interesting example(s)
   R = ZZ/101[a,b,c,d,e]
   I = intersect(ideal(a,b),ideal(c,d,e))
   J = ideal(a^2, b^2, a*d, b*c^2)
@@ -1035,15 +1064,18 @@ TEST ///
   ZHCE0 = ker dd^HCE_0;
   f0 = map(ZHCD0, R^1,  random(R^(numgens ZHCD0), R^1))
   f = homomorphism(0, f0, HCD)
-  isWellDefined f
-  isNullHomotopic f
+  assert isWellDefined f
+  assert isComplexMorphism f
+  assert not isNullHomotopic f -- the generic one is not null homotopic
   g0 = map(ZHDE0, R^1,  random(R^(numgens ZHDE0), R^1))
   g = homomorphism(0, g0, HDE)
-  isWellDefined g
-  isNullHomotopic g
+  assert isWellDefined g
+  assert isComplexMorphism g
+  assert not isNullHomotopic g
   h = g * f
-  isWellDefined h
-  isNullHomotopic h
+  assert isWellDefined h
+  assert isComplexMorphism h
+  assert isNullHomotopic h
   f' = canonicalTruncation(f, (-3,-1));
   g' = canonicalTruncation(g, (-3,-1));
   h' = canonicalTruncation(h, (-3,-1));
@@ -1069,16 +1101,15 @@ TEST ///
   assert(g' * f' == h')
 
   g = canonicalTruncation(f, (-3,-2))
-  isWellDefined g
-  isComplexMorphism g
-  
+  assert isWellDefined g
+  assert isComplexMorphism g
 ///
 
-TEST ///
 -*
   restart
   needsPackage "Complexes"
 *-
+TEST ///
   kk = ZZ/101
   S = kk[a..d]
   I = ideal"a2-bc,ab-cd"

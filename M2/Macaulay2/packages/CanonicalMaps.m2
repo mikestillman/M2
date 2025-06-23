@@ -22,8 +22,16 @@ export {
     "cokernelMap",
     "coimageMap",
     "imageMap",
-    "coimageImageMap"
+    "coimageImageMap",
+    "fiberProduct",
+    "fiberProductMap",
+    "fiberSum",
+    "fiberSumMap",
     }
+
+-- TODO:
+--  various "standard" canonical maps (adjoint maps)
+--  (in issues.m2)
 
 kernelMap = method()
 kernelMap Matrix := Matrix => f -> (
@@ -81,6 +89,7 @@ imageMap Matrix := Matrix => (f) -> kernelMap cokernelMap f
 
 coimageImageMap = method()
 coimageImageMap Matrix := Matrix => (f) -> (
+    -- f: B --> C
     eta := kernelMap f; -- eta: ker f --> B
     p := cokernelMap f; -- p: C --> coker f
     theta' := cokernelMap eta; -- theta' : B --> coker eta == coim f
@@ -90,6 +99,76 @@ coimageImageMap Matrix := Matrix => (f) -> (
     )
 
 -- axiom of an Abelian category: coimageToImage f is an isomorphism
+
+fiberProduct = method()
+fiberProduct(Matrix, Matrix) := Module => (phi, phi') -> (
+    -- Given: phi : B --> C
+    -- Given: phi' : B' --> C
+    -- return: (B x_C B', p, p'), and stash the kernel map and map B ++ B' --> C
+    C := target phi;
+    if C =!= target phi' then error "expected maps to have the same target";
+    direct := map(C, source phi ++ source phi', (matrix phi) | (-matrix phi'));
+    eta := kernelMap direct;
+    E := source eta;
+    E.cache#fiberProduct = (eta, direct); -- note that phi == direct_[0], phi' == -direct_[1]
+    E
+    )
+fiberProductMap = method()
+fiberProductMap Module := Sequence => E -> (
+    if not E.cache#?fiberProduct then error "expected argument to be constructed as a fiber product";
+    (eta, direct) := E.cache#fiberProduct;
+    (eta^[0], eta^[1]) -- phi: B --> C, phi' : B' --> C, E = B xC B', eta^[0]: E --> B, eta^[1]: E --> B'
+    )
+    
+fiberProductMap(Module, Matrix, Matrix) := Matrix => (E, alpha, alpha') -> (
+    -- if alpha, alpha' are maps A --> B, A --> B', and
+    -- E is the fiber product of (f,f') : B ++ B' --> C
+    -- and if phi*alpha = phi'*alpha', then this function returns the unique map
+    -- h:A --> E such that alpha = p*h, alpha' = p'*h.
+    if not E.cache#?fiberProduct then error "expected first argument to be constructed as a fiber product";
+    if source alpha =!= source alpha' then error "expected maps to have the same source";
+    (gmap, direct) := E.cache#fiberProduct;
+    phi := direct_[0];
+    phi' := -direct_[1];
+    if phi*alpha != phi'*alpha' then error "expected maps to commute";
+    h := map(source direct, source alpha, (matrix alpha) || (matrix alpha'));
+    kernelMap(h, direct)
+    )
+
+fiberSum = method()
+fiberSum(Matrix, Matrix) := Module => (phi, phi') -> (
+    -- Given: phi : B --> C
+    -- Given: phi' : B --> C'
+    -- return: (C ++_B C', q, q'), and stash the cokernel map and map B --> C ++ C'
+    B := source phi;
+    if B =!= source phi' then error "expected maps to have the same source";
+    direct := map(target phi ++ target phi', B, (matrix phi) || (-matrix phi'));
+    rho := cokernelMap direct;
+    E := target rho;
+    E.cache#fiberSum = (rho, direct); -- note that phi == direct^[0], phi' == -direct^[1]
+    E
+    )
+fiberSumMap = method()
+fiberSumMap Module := Sequence => E -> (
+    if not E.cache#?fiberSum then error "expected argument to be constructed as a fiber sum";
+    (rho, direct) := E.cache#fiberSum;
+    (rho_[0], rho_[1]) -- phi: B --> C, phi' : B --> C', E = C ++_B C', rho_[0]: B --> E, rho_[1]: B' --> E
+    )
+    
+fiberSumMap(Module, Matrix, Matrix) := Matrix => (E, alpha, alpha') -> (
+    -- if alpha, alpha' are maps C --> D, C' --> D, and
+    -- E is the fiber sum of (phi,phi') : B --> C ++_B C' = E
+    -- and if alpha * phi = alpha' * phi', then this function returns the unique map
+    -- h:E --> D such that alpha = h * q, alpha' = h * q'.
+    if not E.cache#?fiberSum then error "expected first argument to be constructed as a fiber sum";
+    if target alpha =!= target alpha' then error "expected maps to have the same target";
+    (rho, direct) := E.cache#fiberSum;
+    phi := direct^[0];
+    phi' := -direct^[1];
+    if alpha * phi != alpha' * phi' then error "expected maps to commute";
+    h := map(target alpha, target direct, (matrix alpha) | (matrix alpha'));
+    cokernelMap(h, direct)
+    )
 
 beginDocumentation()
 
@@ -203,8 +282,184 @@ TEST ///
   assert(hlift * p === h)
 ///
 
+-*
+  restart
+  needsPackage "CanonicalMaps"
+*-
 TEST ///
+  -- testing ker and coker universal maps, for complexes
+  S = ZZ/11[x,y,z];
+  f = random(S^2, S^{-1,-1,-1})
 
+  imf = imageMap f
+  cof = coimageMap f
+  assert isWellDefined imf
+  assert(ker imf == 0)
+  assert(source imf == image f) -- not nec ===
+  assert(target imf === target f)
+  assert(imf * (f // imf) === f) -- f factors through the image
+  assert(imf * kernelMap(f, cokernelMap f) === f)
+
+  assert isWellDefined cof
+  assert(coker cof == 0)
+  assert(source cof === source f)
+  assert(target cof == coimage f)
+  assert((cof \\ f) * cof === f) -- f factors through the coimage
+  assert(cokernelMap(f, kernelMap f) * cof === f) -- f factors through the coimage  
+
+  -- two ways to construct coimage f --> image f.
+  eta = kernelMap f
+  p = cokernelMap f
+  choice1 = cokernelMap(kernelMap(f, p), eta)
+  assert(source choice1 === target coimageMap f)
+  assert(target choice1 === source imageMap f)
+  -- 
+  choice2 = kernelMap(cokernelMap(f, eta), p)
+  assert(choice1 === choice2)
+  assert(kernel choice1 == 0)
+  assert(cokernel choice1 == 0)
+
+  g = coimageImageMap f
+  assert(choice1 === g)
+  h = g^-1
+  assert isWellDefined g
+  assert isWellDefined h
+  assert(h * g == 1)
+  assert(g * h == 1)
+///
+
+-*
+  restart
+  needsPackage "CanonicalMaps"
+*-
+TEST /// -- fiberProduct
+  -- given: phi : B --> C
+  --        gamma : C --> D
+  -- Check if (ker gamma) x_C phi = kernelMap(gamma * phi).
+  -- There is a natural map between them, mu.
+  -- Is it an isomorphism, by using universal property
+  --  of kernel, and fiber product.
+  R = ZZ/101[a..d]
+  phi = random(R^2, R^{3:-1})
+  gamma = random(R^{2}, R^2)
+
+  g = gamma*phi
+  eta = kernelMap gamma
+  h2 = kernelMap g
+  h1 = kernelMap(phi * h2, gamma) -- induced map from ker g --> ker gamma.
+  assert(eta * h1 === phi * h2)
+
+  P = fiberProduct(eta, phi)
+  --assert isWellDefined P -- isWellDefined does not yet apply to Module
+  (p, p') = fiberProductMap P
+  assert isWellDefined p
+  assert isWellDefined p'
+  assert(source p === P)
+  assert(source p' === P)
+  assert(target p === source eta)
+  assert(target p' === source phi)
+  assert(eta * p === phi * p')
+
+  mu = fiberProductMap(P, h1, h2)
+  assert isWellDefined mu
+  assert isIsomorphism mu
+  assert(target mu === P)
+  assert(source mu === source h2)
+  assert(p * mu === h1)
+  assert(p' * mu === h2)
+
+  -- let's construct the inverse of mu using the univ property of kernels
+  nu = kernelMap(p', g)
+  assert isWellDefined nu
+  assert isIsomorphism nu
+  assert(target nu === source h2)
+  assert(source nu === P)
+  assert(nu * mu == 1)
+  assert(mu * nu == 1)
+  assert(h2 * nu === p')
+  assert(h1 * nu === p)
+
+///
+
+TEST /// -- fiberSum
+  -- the dual of the previous test.
+  -- given: phi : B --> C
+  --        gamma : C --> D
+  -- Check if (coker phi) ++_C gamma = cokernelMap(gamma * phi).
+  -- There is a natural map between them, mu.
+  -- Is it an isomorphism, by using universal property
+  --  of cokernel, and fiber sum.
+  R = ZZ/101[a..d]
+  phi = random(R^2, R^{3:-1})
+  gamma = random(R^{2}, R^2)
+
+  g = gamma*phi
+  pC = cokernelMap phi
+  pD = cokernelMap g
+  h = cokernelMap(pD * gamma, phi) -- induced map from coker phi --> coker g.
+  assert(h * pC === pD * gamma)
+
+  P = fiberSum(pC, gamma)
+  --assert isWellDefined P -- isWellDefined does not yet apply to Module
+  (q, q') = fiberSumMap P
+  assert isWellDefined q
+  assert isWellDefined q'
+  assert(target q === P)
+  assert(target q' === P)
+  assert(source q === target pC)
+  assert(source q' === target gamma)
+  assert(q * pC === q' * gamma)
+
+  mu = fiberSumMap(P, h, pD)
+  assert isWellDefined mu
+  assert isIsomorphism mu
+  assert(target mu === target pD)
+  assert(source mu === P)
+  assert(pD === mu * q')
+  assert(h === mu * q)
+
+  -- let's construct the inverse of mu using the univ property of cokernels
+  nu = cokernelMap(q', g)
+  assert isWellDefined nu
+  assert isIsomorphism nu
+  assert(source nu === target h)
+  assert(target nu === P)
+  assert(nu * mu == 1)
+  assert(mu * nu == 1)
+  assert(nu * pD === q')
+  assert(nu * h === q)
+///
+
+TEST ///
+  -- given phi : B --> C,
+  -- construct the canonical isomorphism mu from image phi to
+  --   C *_(C ++_B C) C
+  -- TODO: construct the 
+  R = ZZ/101[a..d]
+  phi = random(R^2, R^{3:-1})
+  imap = kernelMap cokernelMap phi -- image phi --> C
+  assert(source imap == image phi)
+  assert(target imap === target phi)
+  S = fiberSum(phi, phi)
+  (q, q') = fiberSumMap S
+  P = fiberProduct(q, q')
+  assert(q * imap === q' * imap)
+  mu = fiberProductMap(P, imap, imap)
+  assert(source mu === source imap)
+  assert(target mu === P)
+  assert isIsomorphism mu -- Exercise: show that this is an isomorphism (probably is true...!)
+
+  jmap = cokernelMap kernelMap phi -- B --> coimage phi
+  assert(source jmap == source phi)
+  assert(target jmap === coimage phi)
+  P = fiberProduct(phi, phi)
+  (p, p') = fiberProductMap P
+  S = fiberSum(p, p')
+  assert(jmap * p === jmap * p')
+  mu = fiberSumMap(S, jmap, jmap) -- isom S --> coimage phi
+  assert(source mu === S)
+  assert(target mu === target jmap)
+  assert isIsomorphism mu
 ///
 
 end--
@@ -218,4 +473,3 @@ uninstallPackage "CanonicalMaps"
 restart
 installPackage "CanonicalMaps"
 viewHelp "CanonicalMaps"
-

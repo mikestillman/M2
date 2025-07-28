@@ -27,6 +27,11 @@ export {
     "fiberProductMap",
     "fiberSum",
     "fiberSumMap",
+    "superMap",
+    "cosuper",
+    "cosuperMap",
+    "trimMap",
+    "pruneMap"
     }
 
 -- TODO:
@@ -169,6 +174,46 @@ fiberSumMap(Module, Matrix, Matrix) := Matrix => (E, alpha, alpha') -> (
     h := map(target alpha, target direct, (matrix alpha) | (matrix alpha'));
     cokernelMap(h, direct)
     )
+
+superMap = method()
+superMap Module := Matrix => M -> map(super M, M, generators M)
+
+cosuper = method()
+cosuper Module := Module => M -> image generators M
+
+cosuperMap = method()
+cosuperMap Module := Matrix => M -> map(M, cosuper M, id_(cosuper M))
+
+pruneMap = method(Options => options prune)
+
+-- pruneMap M : M --> prune M (opposite of the current pruningMap)
+--  (pruneMap M)^-1 : prune M --> M
+
+pruneMap Module := opts -> M -> (
+    M' := prune(M, opts);
+    f := M'.cache.pruningMap;
+    map(M', M, f^(-1))
+    )
+
+-- trimMap is complicated by strategies in trim.  Not sure how to handle this?
+-- trimMap M : M --> trim M (basically the identity on generators)
+--  (trimMap M)^-1 : trim M --> M (what about for ideals?)
+
+
+
+-- coverMap, superMap
+-- given a subquotient module M = P/Q of F (Q \subset P \subset F), F free.
+-- ambient M := F (not functorial, i.e. cannot 
+-- cover M := G, the free module whose basis elements correspond
+--   to the given basis of M (equivalently, basis of P)
+-- coverMap M := cover M --> M --> 0 (already exists)
+-- super M := F/Q
+-- cosuper M := P/0
+-- superMap M := M --> F/Q
+-- cosuperMap M := P/0 --> P/Q = M (quotient by Q)
+-- internal info about these: (stored data)
+--   gens M := G --> F, image gens M == P
+--   relations M := cover Q --> F, image relations M == Q
 
 beginDocumentation()
 
@@ -460,6 +505,216 @@ TEST ///
   assert(source mu === S)
   assert(target mu === target jmap)
   assert isIsomorphism mu
+///
+
+-*
+  restart
+  needsPackage "CanonicalMaps"
+*-
+TEST ///
+  -- super, superMap, cosuper, cosuperMap, cover, coverMap
+  a = matrix{{6,0,0},{0,3,0},{0,0,0},{0,0,0}}
+  b = matrix{{12,0,0},{0,3,0},{0,0,2},{0,0,0}}
+  M = subquotient(a,b)
+  assert(super M == coker relations M) -- or === should work too
+  f = superMap M
+  assert(source f === M)
+  assert(target f === super M)
+  assert(ker f == 0)
+  g = cosuperMap M
+  assert(source g === cosuper M)
+  assert(target g === M)
+  assert(coker g == 0)
+  assert(cosuper M === image generators M) -- or === should work too
+  h = coverMap M
+  assert(cover M === source generators M)
+  assert(source h === cover M)
+  assert(target h === M)
+  assert(coker h == 0)
+
+  f === superMap M
+  j = map(M, ZZ^1, transpose matrix{{1,0,1}})
+  assert(super j === (superMap target j) * j)
+
+  h === coverMap M
+  j = map(M, ZZ^1, transpose matrix{{1,0,1}})
+  assert(cover j === matrix j)
+  assert(coverMap M * cover j === j)
+
+
+  
+  
+  -- testing module with no relations
+  M = image a
+    
+  assert(super M == coker relations M) -- or === should work too
+  f = superMap M
+  assert(source f === M)
+  assert(target f === super M)
+  assert(ker f == 0)
+  g = cosuperMap M
+  assert(source g === cosuper M)
+  assert(target g === M)
+  assert(coker g == 0)
+  assert(cosuper M === image generators M) -- or === should work too
+  h = coverMap M
+  assert(cover M === source generators M)
+  assert(source h === cover M)
+  assert(target h === M)
+  assert(coker h == 0)
+
+  -- testing module with generators matrix not present (cokernels)
+  M = coker b
+    
+  assert(super M == coker relations M) -- or === should work too
+  f = superMap M
+  assert(source f === M)
+  assert(target f === super M)
+  assert(ker f == 0)
+  g = cosuperMap M
+  assert(source g === cosuper M)
+  assert(target g === M)
+  assert(coker g == 0)
+  assert(cosuper M === image generators M) -- or === should work too
+  h = coverMap M
+  assert(cover M === source generators M)
+  assert(source h === cover M)
+  assert(target h === M)
+  assert(coker h == 0)
+
+  -- testing free modules
+  M = ZZ^7
+  assert(super M == coker relations M) -- or === should work too
+  f = superMap M
+  assert(source f === M)
+  assert(target f === super M)
+  assert(ker f == 0)
+  g = cosuperMap M
+  assert(source g === cosuper M)
+  assert(target g === M)
+  assert(coker g == 0)
+  assert(cosuper M === image generators M) -- or === should work too
+  h = coverMap M
+  assert(cover M === source generators M)
+  assert(source h === cover M)
+  assert(target h === M)
+  assert(coker h == 0)
+
+  f === superMap M
+  j = map(M, ZZ^1, transpose matrix{{1,0,1,2,3,4,5}})
+  assert(super j === (superMap target j) * j)
+
+  h === coverMap M
+  assert(cover j === matrix j)
+  assert(coverMap M * cover j === j)
+///
+
+TEST ///
+  R = ZZ/101[x,y,z]
+  a = matrix{{x^3, x*z, y^2, y*z^2}}
+  b = matrix{{x^3, y^3}}
+
+  M = subquotient(a,b)
+  prune M
+  assert(super M === coker relations M) -- or === should work too
+  f = superMap M
+  assert(source f === M)
+  assert(target f === super M)
+  assert(ker f == 0)
+  g = cosuperMap M
+  assert(source g === cosuper M)
+  assert(target g === M)
+  assert(coker g == 0)
+  assert(cosuper M === image generators M) -- or === should work too
+  h = coverMap M
+  assert(cover M === source generators M)
+  assert(source h === cover M)
+  assert(target h === M)
+  assert(coker h == 0)
+
+  f === superMap M
+  j = map(M, R^1, transpose matrix{{x,y,z,x-y}})
+  assert(super j === (superMap target j) * j)
+
+  h === coverMap M
+  assert(cover j === matrix j)
+  assert(coverMap M * cover j === j)
+  
+  -- testing module with no relations
+  M = image a
+    
+  assert(super M == coker relations M) -- or === should work too
+  f = superMap M
+  assert(source f === M)
+  assert(target f === super M)
+  assert(ker f == 0)
+  g = cosuperMap M
+  assert(source g === cosuper M)
+  assert(target g === M)
+  assert(coker g == 0)
+  assert(cosuper M === image generators M) -- or === should work too
+  h = coverMap M
+  assert(cover M === source generators M)
+  assert(source h === cover M)
+  assert(target h === M)
+  assert(coker h == 0)
+
+  -- testing module with generators matrix not present (cokernels)
+  M = coker b
+    
+  assert(super M == coker relations M) -- or === should work too
+  f = superMap M
+  assert(source f === M)
+  assert(target f === super M)
+  assert(ker f == 0)
+  g = cosuperMap M
+  assert(source g === cosuper M)
+  assert(target g === M)
+  assert(coker g == 0)
+  assert(cosuper M === image generators M) -- or === should work too
+  h = coverMap M
+  assert(cover M === source generators M)
+  assert(source h === cover M)
+  assert(target h === M)
+  assert(coker h == 0)
+///
+
+-*
+  restart
+  needsPackage "CanonicalMaps"
+*-
+TEST ///
+  a = matrix{{6,0,0},{0,3,0},{0,0,0},{0,0,0}}
+  b = matrix{{12,0,0},{0,3,0},{0,0,2},{0,0,0}}
+  M = subquotient(a,b)
+  prune M
+  phi = pruneMap M
+  assert(source phi === M)
+  assert(target phi === prune M)
+  assert(kernel phi == 0 and cokernel phi == 0)
+  assert((prune M).cache.pruningMap^-1 === phi)
+  assert(phi^-1 === (prune M).cache.pruningMap)
+
+  R = ZZ/101[x,y,z]
+  a = matrix{{x^3, x*z, y^2, y*z^2}}
+  b = matrix{{x^3, y^3, x^4, y^4}}
+  M = subquotient(a,b)
+
+  prune M
+  phi = pruneMap M
+  assert(source phi === M)
+  assert(target phi === prune M)
+  assert(kernel phi == 0 and cokernel phi == 0)
+  assert((prune M).cache.pruningMap^-1 === phi)
+  assert(phi^-1 === (prune M).cache.pruningMap)
+
+  M = R^{-1,2,3}
+  phi = pruneMap M
+  assert(source phi === M)
+  assert(target phi === prune M)
+  assert(kernel phi == 0 and cokernel phi == 0)
+  assert((prune M).cache.pruningMap^-1 === phi)
+  assert(phi^-1 === (prune M).cache.pruningMap)
 ///
 
 end--

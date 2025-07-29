@@ -31,7 +31,11 @@ export {
     "cosuper",
     "cosuperMap",
     "trimMap",
-    "pruneMap"
+    "pruneMap",
+    "unitorMap",
+    "counitorMap",
+    "tensorCommutativity"
+    -- "tensorAssociativity" is currently in Core: modules2.m2
     }
 
 -- TODO:
@@ -185,21 +189,22 @@ cosuperMap = method()
 cosuperMap Module := Matrix => M -> map(M, cosuper M, id_(cosuper M))
 
 pruneMap = method(Options => options prune)
-
 -- pruneMap M : M --> prune M (opposite of the current pruningMap)
 --  (pruneMap M)^-1 : prune M --> M
-
 pruneMap Module := opts -> M -> (
     M' := prune(M, opts);
     f := M'.cache.pruningMap;
     map(M', M, f^(-1))
     )
 
--- trimMap is complicated by strategies in trim.  Not sure how to handle this?
 -- trimMap M : M --> trim M (basically the identity on generators)
 --  (trimMap M)^-1 : trim M --> M (what about for ideals?)
-
-
+trimMap = method(Options => options trim)
+trimMap Module := opts -> M -> (
+    M' := trim(M, opts);
+    f := (gens M) // ((gens M') | (relations M'));
+    map(M', M, f^{0..numcols gens M' - 1})
+    )
 
 -- coverMap, superMap
 -- given a subquotient module M = P/Q of F (Q \subset P \subset F), F free.
@@ -214,6 +219,137 @@ pruneMap Module := opts -> M -> (
 -- internal info about these: (stored data)
 --   gens M := G --> F, image gens M == P
 --   relations M := cover Q --> F, image relations M == Q
+
+unitorMap = method()
+unitorMap Module := Matrix => M -> map(M, (ring M)^1 ** M, 1)
+
+counitorMap = method(Options => options Hom)
+counitorMap Module := Matrix => opts -> M -> (
+    if opts.DegreeLimit =!= null then error "no counitor map defined for truncated Hom's";
+    if opts.MinimalGenerators then
+        trimMap M
+    else
+        id_M
+    )
+
+tensorCommutativity = method()
+tensorCommutativity(Module, Module) := Matrix => (M,N) -> (
+    -- implement the isomorphism M ** N --> N ** M
+    MN := M ** N;
+    NM := N ** M;
+    m := numgens source gens M;
+    n := numgens source gens N;
+    perm := flatten for i from 0 to m - 1 list
+      for j from 0 to n - 1 list (
+          -- (i,j) (in M**N) to m*i + j
+          -- map to column (j,i) <--> n*j + i
+          m*j+i
+          );
+    FMN := source gens MN;
+    f := ((id)_FMN)_perm;
+    map(NM, MN, f)
+    )
+
+
+-*
+  restart
+  needsPackage "CanonicalMaps"
+*-
+TEST /// -- unitor
+  M = coker matrix{{3,0,0},{2,1,0},{0,0,0}}
+  f = unitorMap M
+  assert isWellDefined f
+  assert(source f === (ring M)^1 ** M)
+  assert(target f === M)
+  assert(ker f == 0)
+  assert(coker f == 0)
+  assert(f == 1)
+
+  g = counitorMap M
+  assert isWellDefined g
+  assert(source g === M)
+  assert(target g === Hom((ring M)^1, M))
+  assert(ker g == 0)
+  assert(coker g == 0)
+
+  M = prune coker matrix{{3,0,0},{2,1,0},{0,0,0}}
+  f = unitorMap M
+  assert(f == 1)
+  assert isWellDefined f
+  assert(ker f == 0)
+  assert(coker f == 0)
+
+  R = ZZ/101[x,y,z]/(x^2, y^2, z^2)
+  M = module ideal(x*y, x*z-y*z)
+  f = unitorMap M
+  assert isWellDefined f
+  assert(source f === (ring M)^1 ** M)
+  assert(target f === M)
+  assert(ker f == 0)
+  assert(coker f == 0)
+  assert(f == 1)
+
+  g = counitorMap M
+  assert isWellDefined g
+  assert(source g === M)
+  assert(target g === Hom((ring M)^1, M))
+  assert(ker g == 0)
+  assert(coker g == 0)
+
+  R = ZZ/101[x,y,z]/(x^2, y^2, z^2)
+  M = module ideal(x*y, x*z-y*z) ++ R^1/(x*y*z)
+  f = unitorMap M
+  assert isWellDefined f
+  assert(source f === (ring M)^1 ** M)
+  assert(target f === M)
+  assert(ker f == 0)
+  assert(coker f == 0)
+  assert(f == 1)
+
+  g = counitorMap M
+  assert isWellDefined g
+  assert(source g === M)
+  assert(target g === Hom((ring M)^1, M))
+  assert(ker g == 0)
+  assert(coker g == 0)
+
+  R = ZZ/101[x,y,z]
+  M = module ideal(x^2, y^5, z^10, z^9)
+  g = counitorMap(M, MinimalGenerators => false)
+  assert isWellDefined g
+  assert(source g === M)
+  assert(target g === Hom((ring M)^1, M, MinimalGenerators => false))
+  assert(ker g == 0)
+  assert(coker g == 0)
+///
+
+TEST ///
+  -- BUG, git issue #
+  R = ZZ/101[x,y,z]
+  M = subquotient(matrix{{x^2, x^2-y^2, y^2}}, matrix{{x^3-y^3, y^3 - x^3}})
+  M' = trim M
+  f = (gens M) // ((gens M') | (relations M'))
+  g = map(M', M, f^{0..numcols gens M' - 1})
+
+  assert(ker g == 0)
+  assert(coker g == 0)
+  assert isWellDefined g
+
+  f' = (gens M') // ((gens M) | (relations M))
+  g' = map(M, M', f'^{0..numcols gens M - 1})
+
+  assert(ker g' == 0)
+  assert(coker g' == 0)
+  assert isWellDefined g'
+
+  assert(g * g' == 1) -- so g, g' are inverses of each other.
+  assert(g' * g == 1)
+  
+  assert(g' == g^(-1)) -- FAILS: Macaulay2/m2/matrix.m2:110:20-119:5 has an incorrect check: raw f === raw g.
+  assert(g'^(-1) == g) -- ok 
+  
+  ///
+
 
 beginDocumentation()
 
@@ -689,11 +825,18 @@ TEST ///
   M = subquotient(a,b)
   prune M
   phi = pruneMap M
+  assert isWellDefined phi
   assert(source phi === M)
   assert(target phi === prune M)
   assert(kernel phi == 0 and cokernel phi == 0)
   assert((prune M).cache.pruningMap^-1 === phi)
   assert(phi^-1 === (prune M).cache.pruningMap)
+
+  phi = trimMap M
+  assert isWellDefined phi
+  assert(source phi === M)
+  assert(target phi === trim M)
+  assert(kernel phi == 0 and cokernel phi == 0)
 
   R = ZZ/101[x,y,z]
   a = matrix{{x^3, x*z, y^2, y*z^2}}
@@ -702,19 +845,33 @@ TEST ///
 
   prune M
   phi = pruneMap M
+  assert isWellDefined phi
   assert(source phi === M)
   assert(target phi === prune M)
   assert(kernel phi == 0 and cokernel phi == 0)
   assert((prune M).cache.pruningMap^-1 === phi)
   assert(phi^-1 === (prune M).cache.pruningMap)
 
+  phi = trimMap M
+  assert isWellDefined phi
+  assert(source phi === M)
+  assert(target phi === trim M)
+  assert(kernel phi == 0 and cokernel phi == 0)
+  
   M = R^{-1,2,3}
   phi = pruneMap M
+  assert isWellDefined phi
   assert(source phi === M)
   assert(target phi === prune M)
   assert(kernel phi == 0 and cokernel phi == 0)
   assert((prune M).cache.pruningMap^-1 === phi)
   assert(phi^-1 === (prune M).cache.pruningMap)
+
+  phi = trimMap M
+  assert isWellDefined phi
+  assert(source phi === M)
+  assert(target phi === trim M)
+  assert(kernel phi == 0 and cokernel phi == 0)
 ///
 
 end--

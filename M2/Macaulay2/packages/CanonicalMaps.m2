@@ -34,8 +34,10 @@ export {
     "pruneMap",
     "unitorMap",
     "counitorMap",
-    "tensorCommutativity"
-    -- "tensorAssociativity" is currently in Core: modules2.m2
+    "tensorCommutativity", -- needs tests
+    -- "tensorAssociativity" is currently in Core: modules2.m2, needs tests
+    "swapMap",
+    "adjunctionMap"
     }
 
 -- TODO:
@@ -251,106 +253,130 @@ tensorCommutativity(Module, Module) := Matrix => (M,N) -> (
     )
 
 
+swapMap = method()
+-- swap map Hom_R(A, Hom_R(B, C)) --> Hom_R(B, Hom_R(A, C))
+-- where R is commutative and A, B, C are R-modules
+swapMap(Module, Module, Module) := Matrix => (A, B, C) -> (
+    BC := Hom(B, C);
+    AC := Hom(A, C);
+    ABC := Hom(A, BC);
+    BAC := Hom(B, AC);
+    -- want ABC --> BAC
+    perm := tensorCommutativity(dual cover A, dual cover B) ** cover C;
+    permLift := (perm * gens ABC) //  gens BAC;
+    map(BAC, ABC, permLift)
+    )
+
+adjunctionMap = method()
+-- adjunction: Hom_R(A ** B, C) --> Hom_R(B, Hom_R(A, C))
+-- where R is commutative and A, B, C are R-modules
+adjunctionMap(Module, Module, Module) := Matrix => (A, B, C) -> (
+    )
+
+checkSwapMap = method()
+checkSwapMap(Matrix, Module, Module) := Boolean => (sw, A, B) -> (
+    -- sw := swapMap(A, B, C);
+    -- checks that this is the canonical isomorphism
+    -- from Hom(A, Hom(B,C)) --> Hom(B, Hom(A,C))
+    -- We check the following, for all psi, a, b generators of their respective modules.
+    -- psi : A --> Hom(B, C)
+    -- a in A, b in B
+    -- sw = swapMap(A,B,C) : Hom(A, Hom(B,C)) --> Hom(B, Hom(A,C))
+    -- psi(a) : B --> C
+    -- sw(psi) : B --> Hom(A,C), (sw(psi)(b))(a) == (psi(a))(b)
+    ABC := source sw;
+    BAC := target sw;
+    all(numgens ABC, abc -> (
+        all(numgens A, a -> (
+            all(numgens B, b -> (
+                psi := homomorphism ABC_{abc};
+                f1 := psi * A_{a};
+                f2 := homomorphism f1;
+                f3 := B_{b}; -- so val1 is f2 * f3
+                val1 := (homomorphism(psi * A_{a})) * B_{b};
+                g1 := sw * ABC_{abc};
+                g2 := homomorphism g1;
+                g3 := g2 * B_{b};
+                g4 := homomorphism g3;
+                g5 := A_{a}; -- so val2 is g4 * g5.
+                val2 := (homomorphism(homomorphism(sw * ABC_{abc}) * B_{b})) * A_{a};
+                val2 := ((homomorphism(sw * ABC_{abc}) * B_{b})) * A_{a};
+                result := (val1 == val2);
+                if debugLevel > 0 and not result then (
+                    << "swap map failed: abc=" << abc << " a=" << a << " b=" << b << endl;
+                    << "  val1 = " << val1 << endl;
+                    << "  val2 = " << val2 << endl;
+                    error "debug me";
+                    );
+                result
+    )))))))
+
 -*
   restart
   needsPackage "CanonicalMaps"
 *-
-TEST /// -- unitor
-  M = coker matrix{{3,0,0},{2,1,0},{0,0,0}}
-  f = unitorMap M
-  assert isWellDefined f
-  assert(source f === (ring M)^1 ** M)
-  assert(target f === M)
-  assert(ker f == 0)
-  assert(coker f == 0)
-  assert(f == 1)
-
-  g = counitorMap M
-  assert isWellDefined g
-  assert(source g === M)
-  assert(target g === Hom((ring M)^1, M))
-  assert(ker g == 0)
-  assert(coker g == 0)
-
-  M = prune coker matrix{{3,0,0},{2,1,0},{0,0,0}}
-  f = unitorMap M
-  assert(f == 1)
-  assert isWellDefined f
-  assert(ker f == 0)
-  assert(coker f == 0)
-
-  R = ZZ/101[x,y,z]/(x^2, y^2, z^2)
-  M = module ideal(x*y, x*z-y*z)
-  f = unitorMap M
-  assert isWellDefined f
-  assert(source f === (ring M)^1 ** M)
-  assert(target f === M)
-  assert(ker f == 0)
-  assert(coker f == 0)
-  assert(f == 1)
-
-  g = counitorMap M
-  assert isWellDefined g
-  assert(source g === M)
-  assert(target g === Hom((ring M)^1, M))
-  assert(ker g == 0)
-  assert(coker g == 0)
-
-  R = ZZ/101[x,y,z]/(x^2, y^2, z^2)
-  M = module ideal(x*y, x*z-y*z) ++ R^1/(x*y*z)
-  f = unitorMap M
-  assert isWellDefined f
-  assert(source f === (ring M)^1 ** M)
-  assert(target f === M)
-  assert(ker f == 0)
-  assert(coker f == 0)
-  assert(f == 1)
-
-  g = counitorMap M
-  assert isWellDefined g
-  assert(source g === M)
-  assert(target g === Hom((ring M)^1, M))
-  assert(ker g == 0)
-  assert(coker g == 0)
-
-  R = ZZ/101[x,y,z]
-  M = module ideal(x^2, y^5, z^10, z^9)
-  g = counitorMap(M, MinimalGenerators => false)
-  assert isWellDefined g
-  assert(source g === M)
-  assert(target g === Hom((ring M)^1, M, MinimalGenerators => false))
-  assert(ker g == 0)
-  assert(coker g == 0)
-///
-
 TEST ///
-  -- BUG, git issue #
-  R = ZZ/101[x,y,z]
-  M = subquotient(matrix{{x^2, x^2-y^2, y^2}}, matrix{{x^3-y^3, y^3 - x^3}})
-  M' = trim M
-  f = (gens M) // ((gens M') | (relations M'))
-  g = map(M', M, f^{0..numcols gens M' - 1})
+  debug needsPackage "CanonicalMaps"
+  C = ZZ^3 ++ ZZ^1/ideal(32)
+  B = ZZ^2 ++ ZZ^1/ideal(16)
+  A = ZZ^1/ideal(8) ++ ZZ^1/ideal(4) ++ ZZ^2
+  debugLevel = 1
+  sw = swapMap(A, B, C)
+  assert isWellDefined sw
+  assert isHomogeneous sw
+  assert(ker sw == 0)
+  assert(coker sw == 0)
+  -- note: this doesn't show that we have the correct map yet!
+  assert checkSwapMap(sw, A, B)
 
-  assert(ker g == 0)
-  assert(coker g == 0)
-  assert isWellDefined g
+  R = ZZ/101[a..d]
+  A = R^{0,1,2,3}
+  B = R^{0,10,20}
+  C = R^{0,100,200,300,400}
+  sw = swapMap(A, B, C)
+  assert isWellDefined sw
+  assert isHomogeneous sw
+  assert(ker sw == 0)
+  assert(coker sw == 0)
+  -- note: this doesn't show that we have the correct map yet!
+  debugLevel = 1
+  assert checkSwapMap(sw, A, B)
 
-  f' = (gens M') // ((gens M) | (relations M))
-  g' = map(M, M', f'^{0..numcols gens M - 1})
+  BC = Hom(B, C)
+  AC = Hom(A, C)
+  ABC = Hom(A, BC)
+  BAC = Hom(B, AC)
+  gens ABC
+  gens BAC
 
-  assert(ker g' == 0)
-  assert(coker g' == 0)
-  assert isWellDefined g'
-
-  assert(g * g' == 1) -- so g, g' are inverses of each other.
-  assert(g' * g == 1)
+  phi1 = map(BAC, ABC, 1)
+  isWellDefined phi1
+  isHomogeneous phi1 -- false
+  ker phi1 == 0
+  coker phi1 == 0
   
-  assert(g' == g^(-1)) -- FAILS: Macaulay2/m2/matrix.m2:110:20-119:5 has an incorrect check: raw f === raw g.
-  assert(g'^(-1) == g) -- ok 
+  perm = tensorCommutativity(dual cover A, dual cover B) ** cover C
+  permLift = (perm * gens ABC) //  gens BAC
+  phi = map(BAC, ABC, permLift)
+  isHomogeneous phi
+
+
+  target gens ABC
+  target gens BAC
+  permAB = tensorCommutativity(dual cover A, dual cover B)
+  permABC = (permAB) ** (cover C)
+  netList{degrees source permABC, degrees target gens ABC}
+  degrees source permABC === degrees target gens ABC -- true
+  source permABC === target gens ABC
+  target permABC === target gens BAC
+  phi = map(BAC, ABC, permABC)
+  isWellDefined phi
+  ker phi == 0
+  coker phi == 0
+  isHomogeneous phi
+
   
-  ///
-
-
+  /// 
 beginDocumentation()
 
 doc ///
@@ -873,6 +899,106 @@ TEST ///
   assert(target phi === trim M)
   assert(kernel phi == 0 and cokernel phi == 0)
 ///
+
+
+-*
+  restart
+  needsPackage "CanonicalMaps"
+*-
+TEST /// -- unitor
+  M = coker matrix{{3,0,0},{2,1,0},{0,0,0}}
+  f = unitorMap M
+  assert isWellDefined f
+  assert(source f === (ring M)^1 ** M)
+  assert(target f === M)
+  assert(ker f == 0)
+  assert(coker f == 0)
+  assert(f == 1)
+
+  g = counitorMap M
+  assert isWellDefined g
+  assert(source g === M)
+  assert(target g === Hom((ring M)^1, M))
+  assert(ker g == 0)
+  assert(coker g == 0)
+
+  M = prune coker matrix{{3,0,0},{2,1,0},{0,0,0}}
+  f = unitorMap M
+  assert(f == 1)
+  assert isWellDefined f
+  assert(ker f == 0)
+  assert(coker f == 0)
+
+  R = ZZ/101[x,y,z]/(x^2, y^2, z^2)
+  M = module ideal(x*y, x*z-y*z)
+  f = unitorMap M
+  assert isWellDefined f
+  assert(source f === (ring M)^1 ** M)
+  assert(target f === M)
+  assert(ker f == 0)
+  assert(coker f == 0)
+  assert(f == 1)
+
+  g = counitorMap M
+  assert isWellDefined g
+  assert(source g === M)
+  assert(target g === Hom((ring M)^1, M))
+  assert(ker g == 0)
+  assert(coker g == 0)
+
+  R = ZZ/101[x,y,z]/(x^2, y^2, z^2)
+  M = module ideal(x*y, x*z-y*z) ++ R^1/(x*y*z)
+  f = unitorMap M
+  assert isWellDefined f
+  assert(source f === (ring M)^1 ** M)
+  assert(target f === M)
+  assert(ker f == 0)
+  assert(coker f == 0)
+  assert(f == 1)
+
+  g = counitorMap M
+  assert isWellDefined g
+  assert(source g === M)
+  assert(target g === Hom((ring M)^1, M))
+  assert(ker g == 0)
+  assert(coker g == 0)
+
+  R = ZZ/101[x,y,z]
+  M = module ideal(x^2, y^5, z^10, z^9)
+  g = counitorMap(M, MinimalGenerators => false)
+  assert isWellDefined g
+  assert(source g === M)
+  assert(target g === Hom((ring M)^1, M, MinimalGenerators => false))
+  assert(ker g == 0)
+  assert(coker g == 0)
+///
+
+TEST ///
+  -- BUG, git issue #
+  R = ZZ/101[x,y,z]
+  M = subquotient(matrix{{x^2, x^2-y^2, y^2}}, matrix{{x^3-y^3, y^3 - x^3}})
+  M' = trim M
+  f = (gens M) // ((gens M') | (relations M'))
+  g = map(M', M, f^{0..numcols gens M' - 1})
+
+  assert(ker g == 0)
+  assert(coker g == 0)
+  assert isWellDefined g
+
+  f' = (gens M') // ((gens M) | (relations M))
+  g' = map(M, M', f'^{0..numcols gens M - 1})
+
+  assert(ker g' == 0)
+  assert(coker g' == 0)
+  assert isWellDefined g'
+
+  assert(g * g' == 1) -- so g, g' are inverses of each other.
+  assert(g' * g == 1)
+  
+  assert(g' == g^(-1)) -- FAILS: Macaulay2/m2/matrix.m2:110:20-119:5 has an incorrect check: raw f === raw g.
+  assert(g'^(-1) == g) -- ok 
+  
+  ///
 
 end--
 

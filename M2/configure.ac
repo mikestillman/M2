@@ -714,22 +714,8 @@ dnl as libflint.a, into LIBS, then mathicgb, mathic, and memtailor get confused 
 dnl of the file in their *.a file.
 TRY_STATIC=no
 
-AC_SUBST(LIBS_GDBM)
 AC_LANG(C)
-AC_CHECK_HEADER(gdbm.h,
-	test $BUILD_gdbm = yes && AC_MSG_WARN([[library gdbm exists, but we are asked to build it]]),
-	BUILD_gdbm=yes)
-if test $BUILD_gdbm = yes
-then LIBS_GDBM="-lgdbm"
-     BUILTLIBS="$LIBS_GDBM $BUILTLIBS"
-else if test $SHARED = no -a $TRY_STATIC = yes
-     then SEARCH_LIBRARIES(gdbm_close,"/usr/lib/libgdbm.a" "/usr/local/lib/libgdbm.a",,[AC_MSG_ERROR([libgdbm.a not found])])
-     else AC_SEARCH_LIBS(gdbm_close,"gdbm",,[AC_MSG_ERROR([libgdbm not found])])
-     fi
-     if test "none required" != "$ac_cv_search_gdbm_close"
-     then LIBS_GDBM=$ac_cv_search_gdbm_close
-     fi
-fi
+M2_CHECK_LIB([gdbm], [gdbm.h], [gdbm_close])
 
 AC_ARG_WITH([system-libs],
     [AS_HELP_STRING([--with-system-libs],
@@ -1921,7 +1907,6 @@ AC_MSG_NOTICE([using RANLIB            = $RANLIB])
 AC_MSG_NOTICE([using LDFLAGS           = $LDFLAGS])
 AC_MSG_NOTICE([using BLAS_LIBS         = $BLAS_LIBS])
 AC_MSG_NOTICE([using LAPACK_LIBS       = $LAPACK_LIBS])
-AC_MSG_NOTICE([using LIBS_GDBM         = $LIBS_GDBM])
 AC_MSG_NOTICE([using LIBS_GLPK         = $LIBS_GLPK])
 AC_MSG_NOTICE([using LIBS_GMP          = $LIBS_GMP])
 AC_MSG_NOTICE([with  ISSUE             = $ISSUE])

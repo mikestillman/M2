@@ -685,6 +685,28 @@ AC_ARG_ENABLE(build-libraries, AS_HELP_STRING(--enable-build-libraries=...,[list
         esac
      done])
 
+AC_DEFUN([M2_LIB_NOT_FOUND],
+    [m2_can_build_$1=no
+     for lib in $LIBLIST
+     do AS_VAR_IF([lib], [$1], [m2_can_build_$1=yes; break])
+     done
+     AS_VAR_IF([m2_can_build_$1], [yes],
+	 [AC_MSG_WARN([$1 not found; will download and build])
+	  BUILD_$1=yes],
+	 [AC_MSG_ERROR([$1 not found; install it and try again])])])
+
+dnl TODO: keep track of engine libs.  pre- and post-hooks?
+AC_DEFUN([M2_CHECK_LIB],
+    [AS_VAR_IF([BUILD_$1], [no],
+	[AC_CHECK_HEADERS([$2],
+	    [m4_ifval([$3],
+		[AC_SEARCH_LIBS([$3], [$1],
+		    [],
+		    [M2_LIB_NOT_FOUND([$1])
+		     BUILTLIBS="-l$1 $BUILTLIBS"])],
+		[])],
+	    [M2_LIB_NOT_FOUND([$1])])])])
+
 #############################################################################
 
 dnl We disable something temporarily that didn't work out, because if we put a static library, such

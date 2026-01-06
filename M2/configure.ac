@@ -653,13 +653,32 @@ AC_SUBST(FILE_PREREQS)
 # This is the list of files found in the system that we need to be there for the user who
 # installs a binary distribution.
 
-# a library is listed in BUILD_ALWAYS if and only if we *always* build it, 
-# even if the option "--disable-building" is specified:
-BUILD_ALWAYS=""
-
 for i in $LIBLIST $PROGLIST
 do eval BUILD_$i=no
 done
+
+AC_ARG_WITH([system-libs],
+    [AS_HELP_STRING([--with-system-libs],
+        [use system gc, memtailor, mathic, and mathicgb instead of building them])],,
+    [with_system_libs=no])
+
+AC_DEFUN([M2_ARG_WITH_SYSTEM],
+    [AC_ARG_WITH([system-$1],
+        [AS_HELP_STRING([--with-system-$1],
+	    [use system $1 instead of building it])],
+	[],
+	[AS_VAR_SET([with_system_$1], [$with_system_libs])])
+     AS_VAR_IF([with_system_$1], [no],
+        [AS_VAR_SET([BUILD_$1], [yes])])])
+
+dnl we build gc by default so we can configure it for large memory spaces
+dnl see issue #2445
+M2_ARG_WITH_SYSTEM([gc])
+
+dnl build mathic & friends by default
+M2_ARG_WITH_SYSTEM([memtailor])
+M2_ARG_WITH_SYSTEM([mathic])
+M2_ARG_WITH_SYSTEM([mathicgb])
 
 # Convert package identifiers used here to package names as known by the package.
 # The point is that BUILD_fflas_ffpack is a valid shell identifier, but
@@ -679,7 +698,6 @@ AC_ARG_ENABLE(build-libraries, AS_HELP_STRING(--enable-build-libraries=...,[list
      do case " $LIBLIST $PROGLIST " in
 	    *" $i "*) 
 	        eval BUILD_$i=yes 
-		BUILD_ALWAYS="$BUILD_ALWAYS $i"
 	    	;;
 	    *) AC_MSG_ERROR(--enable-build-libraries option: unrecognized library name: $i) ;;
         esac
@@ -702,10 +720,11 @@ AC_DEFUN([M2_CHECK_LIB],
 	    [m4_ifval([$3],
 		[AC_SEARCH_LIBS([$3], [$1],
 		    [],
-		    [M2_LIB_NOT_FOUND([$1])
-		     BUILTLIBS="-l$1 $BUILTLIBS"])],
+		    [M2_LIB_NOT_FOUND([$1])])],
 		[])],
-	    [M2_LIB_NOT_FOUND([$1])])])])
+	    [M2_LIB_NOT_FOUND([$1])])])
+     AS_VAR_IF([BUILD_$1], [yes],
+         [m4_ifval([$3], [BUILTLIBS="-l$1 $BUILTLIBS"])])])
 
 #############################################################################
 
@@ -714,44 +733,11 @@ dnl as libflint.a, into LIBS, then mathicgb, mathic, and memtailor get confused 
 dnl of the file in their *.a file.
 TRY_STATIC=no
 
-AC_LANG(C)
+AC_LANG([C])
 M2_CHECK_LIB([gdbm], [gdbm.h], [gdbm_close])
 
-AC_ARG_WITH([system-libs],
-    [AS_HELP_STRING([--with-system-libs],
-        [use system gc, memtailor, mathic, and mathicgb instead of building them])],,
-    [with_system_libs=no])
-
-## we build gc by default so we can configure it for large memory spaces
-## see issue #2445
-AC_ARG_WITH([system-gc],
-    [AS_HELP_STRING([--with-system-gc],
-        [use system gc instead of building it])],
-    [],
-    [with_system_gc=$with_system_libs])
-
-AS_IF([test "x$with_system_gc" = xyes],
-    [AC_MSG_CHECKING(whether package bdw-gc is provided)
-dnl Note: we don't include -lgccpp below, because linking with that library is what replaces ::new and friends with GC_MALLOC_UNCOLLECTABLE and friends:
-     if [ pkg-config --exists bdw-gc ]
-     then AC_MSG_RESULT(yes)
-          CPPFLAGS="`pkg-config --cflags-only-I bdw-gc | sed -e 's=^-I/=-isystem /=g' -e 's= -I/= -isystem /=g'` $CPPFLAGS"
-          dnl should probably use `pkg-config --libs bdw-gc` here instead
-          FOUND_gc=yes
-     else AC_MSG_RESULT(no)
-          BUILD_gc=yes
-     fi],
-    [BUILD_gc=yes])
-
-if test $BUILD_gc = yes
-then BUILTLIBS="-lgc -lpthread $BUILTLIBS"
-     BUILD_ALWAYS="$BUILD_ALWAYS gc"
-else if test $SHARED = no -a $TRY_STATIC = yes
-     then SEARCH_LIBRARIES(GC_malloc,"/usr/lib/libgc.a" "/usr/local/lib/libgc.a",,
-          [AC_MSG_ERROR([libgc.a not found])])
-     else AC_SEARCH_LIBS(GC_malloc,"gc",,[AC_MSG_ERROR([libgc not found])])
-     fi
-fi
+AC_LANG([C])
+M2_CHECK_LIB([gc], [gc.h], [GC_malloc])
 
 AC_SUBST(LIBS_GMP)
 AC_LANG(C)
@@ -1329,54 +1315,14 @@ AS_IF([test $BUILD_tbb = yes],
      AS_IF([test $CMAKE = false],
         [AC_MSG_ERROR([cmake is required to build tbb])])])
 
-AC_ARG_WITH([system-memtailor],
-    [AS_HELP_STRING([--with-system-memtailor],
-	[use system memtailor instead of building git submodule])],,
-    [with_system_memtailor=$with_system_libs])
-if test $with_system_memtailor = no
-then
-    BUILD_memtailor=yes
-    BUILTLIBS="-lmemtailor $BUILTLIBS"
-    BUILD_ALWAYS="$BUILD_ALWAYS memtailor"
-else AC_LANG(C++)
-    AC_SEARCH_LIBS(MEMTAILOR_VERSION_STRING,memtailor,,BUILD_memtailor=yes)
-    AC_CHECK_HEADER(memtailor.h,,BUILD_memtailor=yes)
-    AS_IF([test $BUILD_memtailor = yes],
-          [AC_MSG_WARN([memtailor not found, will build])])
-fi
+AC_LANG([C++])
+M2_CHECK_LIB([memtailor], [memtailor.h], [libmemtailorIsPresent])
 
-AC_ARG_WITH([system-mathic],
-    [AS_HELP_STRING([--with-system-mathic],
-	[use system mathic instead of building git submodule])],,
-    [with_system_mathic=$with_system_libs])
-if test $with_system_mathic = no
-then
-    BUILD_mathic=yes
-    BUILTLIBS="-lmathic $BUILTLIBS"
-    BUILD_ALWAYS="$BUILD_ALWAYS mathic"
-else AC_LANG(C++)
-    AC_SEARCH_LIBS(MATHIC_VERSION_STRING,mathic,,BUILD_mathic=yes)
-    AC_CHECK_HEADER(mathic.h,,BUILD_mathic=yes)
-    AS_IF([test $BUILD_mathic = yes],
-          [AC_MSG_WARN([mathic not found, will build])])
-fi
+AC_LANG([C++])
+M2_CHECK_LIB([mathic], [mathic.h], [libmathicIsPresent])
 
-AC_ARG_WITH([system-mathicgb],
-    [AS_HELP_STRING([--with-system-mathicgb],
-	[use system mathicgb instead of building git submodule])],,
-    [with_system_mathicgb=$with_system_libs])
-if test $with_system_mathicgb = no
-then
-    BUILD_mathicgb=yes
-    BUILTLIBS="-lmathicgb $BUILTLIBS"
-    BUILD_ALWAYS="$BUILD_ALWAYS mathicgb"
-else AC_LANG(C++)
-    AC_SEARCH_LIBS(MATHICGB_VERSION_STRING,mathicgb,,BUILD_mathicgb=yes)
-    AC_CHECK_HEADER(mathicgb.h,,BUILD_mathicgb=yes)
-    AC_CHECK_HEADER(mathicgb/mtbb.hpp,,BUILD_mathicgb=yes)
-    AS_IF([test $BUILD_mathicgb = yes],
-          [AC_MSG_WARN([mathicgb not found, will build])])
-fi
+AC_LANG([C++])
+M2_CHECK_LIB([mathicgb], [mathicgb.h], [libmathicgbIsPresent])
 
 AS_IF([test "x$BUILD_gtest" = "xno"],
     [AC_LANG([C++])
@@ -1887,7 +1833,6 @@ AC_SUBST(DESC,$PACKAGE_VERSION-$host_cpu-$OS-$REL)
 AC_MSG_NOTICE([using BUILDLIBLIST  = $BUILDLIBLIST])
 AC_MSG_NOTICE([using BUILDPROGLIST = $BUILDPROGLIST])
 AC_MSG_NOTICE([using BUILDLIST     = $BUILDLIST])
-AC_MSG_NOTICE([using BUILD_ALWAYS  = $BUILD_ALWAYS])
 AC_MSG_NOTICE([using FILE_PREREQS  = $FILE_PREREQS])
 AC_MSG_NOTICE([link using:])
 dnl the order of this list should agree with that in Macaulay2/bin/Makefile.in
@@ -1943,17 +1888,6 @@ complement() {
     echo
 }
 
-
-BUILDING=yes
-AC_ARG_ENABLE(building, AS_HELP_STRING(--disable-building,disable automatic building of libraries), BUILDING=$enableval)
-# This option looks useless, but it allows us to test the configure script.  After we build the libraries, we
-# run the configure script again, and it should detect the ones we've built.
-subset "$BUILDLIBLIST" "$BUILD_ALWAYS"
-sub=$?
-if test "$BUILDING" = no -a $sub = 1
-then c=`complement "$BUILDLIBLIST" "$BUILD_ALWAYS"`
-     AC_MSG_ERROR([ *** - automatic building of libraries disabled, but some must be built: $c])
-fi
 
 # Here we insert autoconf's default values so we can compute the relative locations in the directory tree
 test "$prefix" || prefix=/usr/local

@@ -713,22 +713,29 @@ AC_DEFUN([M2_LIB_NOT_FOUND],
 	  BUILD_$1=yes],
 	 [AC_MSG_ERROR([$1 not found; install it and try again])])])
 
+dnl package name -> library name
+m4_define([M2_LIBNAME],
+    [m4_case([$1],
+        [mpsolve], [mps],
+        [$1])])
+
 dnl TODO: keep track of engine libs.  pre- and post-hooks?
 AC_DEFUN([M2_CHECK_LIB],
-    [AS_VAR_IF([BUILD_$1], [no],
+    [libname=M2_LIBNAME($1)
+     AS_VAR_IF([BUILD_$1], [no],
 	[found_headers=yes
 	 for header in $2
 	 do AC_CHECK_HEADER([$header], [], [found_headers=no; break])
 	 done
 	 AS_VAR_IF([found_headers], [yes],
 	    [m4_ifval([$3],
-		[AC_SEARCH_LIBS([$3], [$1],
+		[AC_SEARCH_LIBS([$3], [$libname],
 		    [],
 		    [M2_LIB_NOT_FOUND([$1])])],
 		[])],
 	    [M2_LIB_NOT_FOUND([$1])])])
      AS_VAR_IF([BUILD_$1], [yes],
-         [m4_ifval([$3], [BUILTLIBS="-l$1 $BUILTLIBS"])])])
+         [m4_ifval([$3], [BUILTLIBS="-l$libname $BUILTLIBS"])])])
 
 #############################################################################
 
@@ -762,64 +769,13 @@ else AC_LANG(C)
 fi
 
 AC_LANG([C])
-AS_IF([test $BUILD_mpfr = no],
-    [AC_CHECK_HEADER([mpfr.h],
-        dnl need mpfr >= 4 for mpfr_nrandom, mpfr_beta, mpfr_gamma_inc
-        [AC_MSG_CHECKING([for mpfr version])
-         AC_RUN_IFELSE(
-            [AC_LANG_PROGRAM([
-                #include <stdio.h>
-                #include <mpfr.h>
-                ], [
-                puts(MPFR_VERSION_STRING);
-                if (MPFR_VERSION_MAJOR < 4)
-                  return 1;
-                else
-                  return 0;])],,
-            [AC_MSG_NOTICE([mpfr >= 4 required; will build])
-             BUILD_mpfr=yes])],
-        [AC_MSG_NOTICE([mpfr headers not found; will build])
-         BUILD_mpfr=yes])])
-if test $BUILD_mpfr = yes
-then BUILTLIBS="-lmpfr $BUILTLIBS"
-else if test $SHARED = no -a $TRY_STATIC = yes
-     then SEARCH_LIBRARIES(mpfr_digamma,"/usr/lib/libmpfr.a" "/usr/local/lib/libmpfr.a",,
-				        [AC_MSG_ERROR([libmpfr.a not found])])
-     else AC_SEARCH_LIBS(mpfr_digamma,"mpfr",,[AC_MSG_ERROR([libmpfr not found])])
-     fi
-fi
+M2_CHECK_LIB([mpfr], [mpfr.h], [mpfr_nrandom])
 
-AC_LANG(C)
-AC_CHECK_HEADER(mpfi.h,,BUILD_mpfi=yes)
-if test $BUILD_mpfi = yes
-then BUILTLIBS="-lmpfi $BUILTLIBS"
-else if test $SHARED = no -a $TRY_STATIC = yes
-     then SEARCH_LIBRARIES(mpfi_set_prec,"/usr/lib/libmpfi.a" "/usr/local/lib/libmpfi.a",,
-				        [AC_MSG_ERROR([libmpfi.a not found])])
-     else AC_SEARCH_LIBS(mpfi_set_prec,"mpfi",,[AC_MSG_ERROR([libmpfi not found])])
-     fi
-fi
+AC_LANG([C])
+M2_CHECK_LIB([mpfi], [mpfi.h], [mpfi_set_prec])
 
-# including mpsolve (requires gmp)
-AC_LANG(C)
-AC_CHECK_HEADER(mps/mps.h,LIBS="-lmps $LIBS",BUILD_mpsolve=yes)
-if test $BUILD_mpsolve = yes
-then BUILTLIBS="-lmps $BUILTLIBS"
-fi
-
-AC_SUBST(LIBS_GLPK)
-AC_LANG(C)
-AC_CHECK_HEADER(glpk.h,,BUILD_glpk=yes)
-if test $BUILD_glpk = yes
-then BUILTLIBS="-lglpk $BUILTLIBS"
-else if test $SHARED = no -a $TRY_STATIC = yes
-     then SEARCH_LIBRARIES(glp_free,"/usr/lib/libglpk.a" "/usr/local/lib/libglpk.a",,[AC_MSG_ERROR([libglpk.a not found])])
-     else AC_SEARCH_LIBS(glp_free,"glpk",,[AC_MSG_ERROR([libglpk not found])])
-     fi
-     if test "none required" != "$ac_cv_search_glp_free"
-     then LIBS_GLPK=$ac_cv_search_glp_free
-     fi
-fi
+AC_LANG([C])
+M2_CHECK_LIB([mpsolve], [mps/mps.h], [mps_mpsolve])
 
 AC_PROG_FC
 AC_FC_LIBRARY_LDFLAGS
@@ -983,6 +939,10 @@ then AC_MSG_RESULT([no, will build])
      BUILD_4ti2=yes
 fi
 PATH=$SAVE
+
+AS_VAR_IF([BUILD_4ti2], [yes],
+    [AC_LANG([C])
+     M2_CHECK_LIB([glpk], [glpk.h], [glp_free])])
 
 AC_MSG_CHECKING(whether the package cohomcalg is installed)
 if command -v cohomcalg > /dev/null
@@ -1856,7 +1816,6 @@ AC_MSG_NOTICE([using RANLIB            = $RANLIB])
 AC_MSG_NOTICE([using LDFLAGS           = $LDFLAGS])
 AC_MSG_NOTICE([using BLAS_LIBS         = $BLAS_LIBS])
 AC_MSG_NOTICE([using LAPACK_LIBS       = $LAPACK_LIBS])
-AC_MSG_NOTICE([using LIBS_GLPK         = $LIBS_GLPK])
 AC_MSG_NOTICE([using LIBS_GMP          = $LIBS_GMP])
 AC_MSG_NOTICE([with  ISSUE             = $ISSUE])
 AC_MSG_NOTICE([with  NODENAME          = $NODENAME])

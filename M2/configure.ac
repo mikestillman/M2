@@ -811,11 +811,8 @@ AS_IF([test $BUILD_givaro = no],
          BUILD_givaro=yes])])
 AS_IF([test $BUILD_givaro = yes], [BUILTLIBS="-lgivaro $BUILTLIBS"])
 
-AS_IF([test $BUILD_fflas_ffpack = no],
-    [AC_LANG([C++])
-     AC_CHECK_HEADER([fflas-ffpack/fflas-ffpack.h],,
-        [AC_MSG_NOTICE([fflas-ffpack not found; will build])
-         BUILD_fflas_ffpack=yes])])
+AC_LANG([C++])
+M2_CHECK_LIB([fflas_ffpack], [fflas-ffpack/fflas-ffpack.h])
 
 # We add these directories to the end, so the user can override this by setting CPPFLAGS.
 # /cddlib/ is more modern than /cdd/

@@ -716,7 +716,11 @@ AC_DEFUN([M2_LIB_NOT_FOUND],
 dnl TODO: keep track of engine libs.  pre- and post-hooks?
 AC_DEFUN([M2_CHECK_LIB],
     [AS_VAR_IF([BUILD_$1], [no],
-	[AC_CHECK_HEADERS([$2],
+	[found_headers=yes
+	 for header in $2
+	 do AC_CHECK_HEADER([$header], [], [found_headers=no; break])
+	 done
+	 AS_VAR_IF([found_headers], [yes],
 	    [m4_ifval([$3],
 		[AC_SEARCH_LIBS([$3], [$1],
 		    [],
@@ -1322,7 +1326,7 @@ AC_LANG([C++])
 M2_CHECK_LIB([mathic], [mathic.h], [libmathicIsPresent])
 
 AC_LANG([C++])
-M2_CHECK_LIB([mathicgb], [mathicgb.h], [libmathicgbIsPresent])
+M2_CHECK_LIB([mathicgb], [mathicgb.h mathicgb/mtbb.hpp], [libmathicgbIsPresent])
 
 AS_IF([test "x$BUILD_gtest" = "xno"],
     [AC_LANG([C++])

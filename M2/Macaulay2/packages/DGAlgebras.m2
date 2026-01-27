@@ -10,7 +10,7 @@ newPackage("DGAlgebras",
        },
      Keywords => {"Commutative Algebra"},
      DebuggingMode => false,
-     PackageExports => {"IntegralClosure", "OldChainComplexes", "Complexes"}
+     PackageExports => {"IntegralClosure", "Complexes"}
      )
 export {"DGAlgebra", 
         "DGAlgebraMap", 
@@ -184,7 +184,7 @@ setKoszulDiff (DGAlgebra,List) := opts -> (A,diffList) -> (
       definingIdeal := ideal mingens (ideal A.ring + sub(ideal polyDifferential(1,A), ambient A.ring));
       if definingIdeal == ideal vars ambient A.ring then A#(symbol zerothHomology) = coefficientRing A.ring else A#(symbol zerothHomology) = (ambient A.ring)/definingIdeal;
    );
-   if opts.InitializeComplex then A.dd = (koszul(matrix{diffList})).dd;
+   if opts.InitializeComplex then A.dd = (koszulComplex(matrix{diffList})).dd;
    A
 )
 
@@ -1579,7 +1579,7 @@ doc ///
       KS = koszulComplexDGA(S,Variable=>"U")
     Text
       To obtain the chain complex associated to the Koszul complex, one may use toComplex.  One can also obtain this complex
-      directly without using the DGAlgebras package by using the command @ TO koszul @.
+      directly without using the DGAlgebras package by using the command @ TO koszulComplex @.
     Example
       cxKR = toComplex KR
       prune HH cxKR
@@ -1751,7 +1751,7 @@ doc ///
       complexA = toComplex A
       complexA.dd
       ranks = apply(4, i -> numgens prune HH_i(complexA))
-      ranks == apply(4, i -> numgens prune HH_i(koszul vars R))
+      ranks == apply(4, i -> numgens prune HH_i(koszulComplex vars R))
     Text
       One can also compute the homology of A directly with @ TO (homology,ZZ,DGAlgebra) @.  One may also specify
       the name of the variable using the Variable option.
@@ -1779,7 +1779,7 @@ doc ///
       complexA = toComplex A
       complexA.dd
       ranks = apply(4, i -> numgens prune HH_i(complexA))
-      ranks == apply(4, i -> numgens prune HH_i(koszul gens I))
+      ranks == apply(4, i -> numgens prune HH_i(koszulComplex gens I))
     Text
       One can also compute the homology of A directly with @ TO (homology,ZZ,DGAlgebra) @.
 ///
@@ -1979,8 +1979,8 @@ doc ///
       A = koszulComplexDGA(R)
       C = toComplex A
     Text
-      Warning:  The term order that the internal command koszul uses to order the monomials is not GRevLex, and so the differentials
-      used in koszul and koszulComplexDGA will not match up exactly.  Also, this command will only execute if all of the variables
+      Warning:  The term order that the internal command koszulComplex uses to order the monomials is not GRevLex, and so the differentials
+      used in koszulComplex and koszulComplexDGA will not match up exactly.  Also, this command will only execute if all of the variables
       of the @ TO DGAlgebra @ A are of odd homological degree.  Otherwise, you need to use the function @ TO (toComplex, DGAlgebra, ZZ) @.
 ///
 
@@ -3592,7 +3592,7 @@ assert(d2*d3 == 0)
 TEST ///
 --- test 2 : homology, homologyAlgebra, HH_ZZ, HH
 R = ZZ/32003[a,b,x,y]/ideal{a^3,b^3,x^3,y^3,a*x,a*y,b*x,b*y,a^2*b^2-x^2*y^2}
-koszulR = koszul vars R
+koszulR = koszulComplex vars R
 time apply(5,i -> numgens prune HH_i(koszulR))
 A = koszulComplexDGA(R)
 HH_2(A)
@@ -3683,7 +3683,7 @@ getDegNModule(3,HA2,HA)
 TEST ///
 -- test 6 : homologyAlgebra
 R = ZZ/32003[a,b,x,y]/ideal{a^3,b^3,x^3,y^3,a*x,a*y,b*x,b*y,a^2*b^2-x^2*y^2}
-koszulR = koszul vars R
+koszulR = koszulComplex vars R
 time apply(5,i -> numgens prune HH_i(koszulR))
 A = koszulComplexDGA(R)
 time apply(5,i -> numgens prune homology(i,A))
@@ -3696,7 +3696,7 @@ assert(#(first degrees HA) == 2)
 -- same example, but not graded because of the degree change.  The homologyAlgebra function
 -- will then only return a graded algebra
 R2 = ZZ/32003[a,b,x,y,Degrees=>{1,1,2,2}]/ideal{a^3,b^3,x^3,y^3,a*x,a*y,b*x,b*y,a^2*b^2-x^2*y^2}
-koszulR2 = koszul vars R2
+koszulR2 = koszulComplex vars R2
 time apply(5,i -> numgens prune HH_i(koszulR2))
 A2 = koszulComplexDGA(R2)
 time apply(5,i -> numgens prune homology(i,A2))
@@ -4171,7 +4171,7 @@ ann ideal vars HA
 restart
 loadPackage "DGAlgebras"
 R = ZZ/32003[a,b,x,y]/ideal{a^3,b^3,x^3,y^4,a*x,a*y,b*x,b*y}
-apply((numgens R) + 1, i -> numgens prune HH_i(koszul vars R))
+apply((numgens R) + 1, i -> numgens prune HH_i(koszulComplex vars R))
 A = koszulComplexDGA(R)
 -- 1.17 seconds on mbp
 time HA = homologyAlgebra(A)
@@ -4197,7 +4197,7 @@ peek HA.cache
 restart
 loadPackage "DGAlgebras"
 R = ZZ/32003[a,b,x,y]/ideal{a^3,b^3,x^3,y^4,a*x,a*y,b*x,b*y,a^2*b^2-x^2*y^3}
-koszulR = koszul vars R
+koszulR = koszulComplex vars R
 time apply(5,i -> numgens prune HH_i(koszulR))
 A = koszulComplexDGA(R)
 -- 3.8 seconds on mbp 
@@ -4214,7 +4214,7 @@ peek HA.cache
 restart
 loadPackage "DGAlgebras"
 R = ZZ/32003[a,b,x,y]/ideal{a^3,b^3,x^3,y^3,a*x,a*y,b*x,b*y,a^2*b^2-x^2*y^2}
-koszulR = koszul vars R
+koszulR = koszulComplex vars R
 time apply(5,i -> numgens prune HH_i(koszulR))
 A = koszulComplexDGA(R)
 -- 2.7 seconds on mbp, with graded differentials
@@ -4228,7 +4228,7 @@ loadPackage "DGAlgebras"
 R2 = ZZ/32003[a,b,x,y,z]/ideal{a^4,b^4,x^3,y^3,z^3,a*x,a*y,a*z,b*x,b*y,b*z,a^3*b^3-x^2*y^2*z^2}
 A2 = koszulComplexDGA(R2)
 time apply(6, i -> numgens prune homology(i,A2))
-koszulR2 = koszul vars R2
+koszulR2 = koszulComplex vars R2
 time apply(6,i -> numgens prune HH_i(koszulR2))
 -- 56 seconds on mbp
 time HA2 = homologyAlgebra(A2)
@@ -4266,7 +4266,7 @@ gbTrace = 2
 R2 = ZZ/32003[a,b,c,x,y,z]/ideal{a^3,b^3,c^3,x^3,y^3,z^3,a*x,a*y,a*z,b*x,b*y,b*z,c*x,c*y,c*z,a^2*b^2*c^2-x^2*y^2*z^2}
 A2 = koszulComplexDGA(R2)
 time apply(7, i -> numgens prune homology(i,A2))
-koszulR2 = koszul vars R2
+koszulR2 = koszulComplex vars R2
 time apply(7,i -> numgens prune HH_i(koszulR2))
 time HA2 = homologyAlgebra(A2)
 tally ((flatten entries basis HA2) / degree)
@@ -4340,7 +4340,7 @@ dim M1
 M2 = getDegNModule(1,HA2,HA)
 reduceHilbert hilbertSeries M2
 dim M2
-K = koszul vars HA2
+K = koszulComplex vars HA2
 -- is HA2 CM?
 prune HH(K)
 -- is M CM?
@@ -4405,7 +4405,7 @@ netList allDiffs
 setDiff(A, allDiffs, InitializeComplex => false)
 H0Ring = zerothHomology A
 dim H0Ring
-K = koszul vars H0Ring
+K = koszulComplex vars H0Ring
 -- is H0Ring CM?
 prune HH(K)
 -- is M CM?

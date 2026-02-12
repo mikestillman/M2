@@ -10,11 +10,11 @@ newPackage(
     Headline => "integral closure",
     Keywords => {"Commutative Algebra"},
     PackageImports => {
-        "Fields",
         "PrimaryDecomposition",  -- only used for an obscure "rad" function
         "ReesAlgebra" -- used for integral closure of an ideal
         },
     PackageExports => {
+        "Fields",
         "MinimalPrimes" -- really helps speed up most computations here. Use minprimes.
         },
     DebuggingMode => false,

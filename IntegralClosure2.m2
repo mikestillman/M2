@@ -684,6 +684,16 @@ isNormal(Ring) := Boolean => (R) -> (
 --------------------------------------------------------------------
 -- MES TODO: don't require homogeneous!!
 conductor = method()
+conductor RingMap := Ideal => phi ->(
+    needsPackage "PushForward";
+    pf := pushFwd phi;
+    assert(pf#1_(0,0) == 1);
+    pmod := pf_0_{0};
+    ann coker pmod
+    )
+
+-*
+conductor = method()
 conductor RingMap := Ideal => (F) -> (
      --Input:  A ring map where the target is finitely generated as a 
      --module over the source.
@@ -713,7 +723,8 @@ conductor RingMap := Ideal => (F) -> (
 	       I:=ideal modulo(m,matrix{P_0}|M))))
 	  else error "conductor: expected a homogeneous ideal in a graded ring"
      )
-conductor Ring := (R) -> conductor icMap R
+*-
+ conductor Ring := (R) -> conductor icMap R
 
 icMap = method()
 icMap(Ring) := RingMap => R -> (

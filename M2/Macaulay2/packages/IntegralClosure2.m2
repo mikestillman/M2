@@ -21,10 +21,6 @@ newPackage(
     AuxiliaryFiles => true
     )
 
--- The present version (for M2 1.16) is not done being cleaned up,
--- but it does fix a bad bug involving integral closure of ideals.
--- 
-
 importFrom_Core { "generatorSymbols" } -- use as R#generatorSymbols.
 importFrom_MinimalPrimes { "rad" } -- a function we seem to be using in integralClosure.
 

@@ -2,7 +2,7 @@ todo 2-11-26 DE + MES
 
 - description of which algorithm is being used DONE
 - computing NNL or maybe conductor over ZZ?
-- over finite fields with small characteristic.
+- not working well over finite fields with small characteristic.
 - Use the Fields package instead of frac.
 - use FastMinors (or whatever it is being called now)
 - make sure PushForward can handle non-homogeneous case.

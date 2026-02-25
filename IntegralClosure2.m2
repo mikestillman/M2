@@ -15,7 +15,8 @@ newPackage(
         },
     PackageExports => {
         "Fields",
-        "MinimalPrimes" -- really helps speed up most computations here. Use minprimes.
+        "MinimalPrimes", -- really helps speed up most computations here. Use minprimes.
+	"PushForward"
         },
     DebuggingMode => false,
     AuxiliaryFiles => true
@@ -685,7 +686,7 @@ isNormal(Ring) := Boolean => (R) -> (
 -- MES TODO: don't require homogeneous!!
 conductor = method()
 conductor RingMap := Ideal => phi ->(
-    needsPackage "PushForward";
+--    needsPackage "PushForward";
     pf := pushFwd phi;
     assert(pf#1_(0,0) == 1);
     pmod := pf_0_{0};
@@ -1935,7 +1936,6 @@ doc ///
    Example
      conductor R
    Text
-   
      If the map is not {\tt icFractions(R)}, then @TO pushForward@ is called to compute
      the conductor.
   Caveat
@@ -1945,7 +1945,7 @@ doc ///
     integralClosure
     icFractions
     icMap
-    pushForward
+    pushFwd
 ///
 
 doc ///
@@ -2252,6 +2252,7 @@ document {
      SeeAlso => {"icFracP"},
      Caveat => "The interface to this algorithm will likely change eventually"     
 }
+
 
 doc ///
   Key
@@ -2565,15 +2566,17 @@ TOOSLOW ///
      a*z*u^6+9142*a*z*u^5+13715*a*z^2*u^3-9143*a*z*u^4-9145*a*u^5-13716*a*z^2*u^2-13712*a*z^2*u-13713*a*z*u^2+4568*a*z^2+9145*c*y*u-9145*c*y+4572*d*y,
      c*u^8+7111*c*z*u^6+3556*d*u^7+10667*c*z*u^5+3556*d*u^6+14224*c*z^2*u^3+14223*c*z*u^4-7112*d*z*u^4+3556*d*u^5+10668*c*z^2*u^2-7112*d*z*u^3+7112*c*z^2*u-7112*d*z*u^2+10668*d*z^2);
   R = S/I
+  time R' = integralClosure(R) 
   time R' = integralClosure(R, Strategy=>{RadicalCodim1}) -- slightly faster than without it
-
+  see ideal R'
   use R
   netList icFractions R
   assert isWellDefined icMap R
   assert(R' === target icMap R)
   assert(R === source icMap R)
-  --assert(conductor icMap R == ideal"x,y,z-u,u2-u") -- MES: get conductor working on these...
-///
+  --time conductor R very slow!
+  --assert(conductor icMap R == ideal"x,y,z-u,u2-u") -- MES: get conductor working on these
+  ///
 
 -- integrally closed test
 TEST ///
@@ -2600,6 +2603,7 @@ TEST ///
   answer = ideal(b_(1,0)*x^2-y*z, x^6-b_(1,0)*y+x^3*z, -b_(1,0)^2+x^4*z+x*z^2)
   assert(ideal R' == answer)
   use R
+  assert(conductor R== ideal(x^2,y))
   assert(conductor(R.icMap) == ideal(x^2,y))
   assert((icFractions R) == first entries substitute(matrix {{y*z/x^2, x, y, z}},frac R))
   assert isWellDefined icMap R
@@ -2635,7 +2639,8 @@ TEST ///
   use R
   assert(0 == matrix {icFractions R} - matrix {{y*z/x^2, x, y, z}})
   assert(conductor(R.icMap) == ideal(x^2,y))
-///
+  isNormal R'
+  ///
 
 -- Reduced not a domain test
 TEST ///
@@ -2801,9 +2806,10 @@ TEST ///
   R = QQ[x,y,z]/ideal(x^6-z^6-y^2*z^4)
   R' = integralClosure R
   F = R.icMap
+  describe R'
   use R
   assert(conductor F == ideal(z^3,x*z^2,x^3*z,x^4))
-  icFractions R -- MES BUG? again, these look like z^2 is is the conductor...
+  icFractions R -- not a bug: (x^2/z)*(x^3/z^2) = x^5/z^3, so need z^3 for the conductor.
 ///
 
 -- Test of not keeping the original variables
@@ -3024,12 +3030,10 @@ TEST ///
 end-------------------------------------------------------------------------
 
 -*
-
-loadPackage("MinimalPrimes",Reload =>true)
+restart
+--loadPackage("MinimalPrimes",Reload =>true)
 loadPackage("IntegralClosure2",Reload =>true)
 
-restart
-installPackage("MinimalPrimes")
 restart
 uninstallPackage("IntegralClosure2")
 restart

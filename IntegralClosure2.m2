@@ -38,14 +38,17 @@ export{
     "ringFromFractions",
     "canonicalIdeal", -- MES: David, this is in TestIdeals.m2 as well...
     -- small characteristic method
+
     "icFracP", --MES: incorporate with integralClosure.
     "icPIdeal",
     --mes--"extendIdeal",
-    "testHunekeQuestion", --MES remove? Or keep hidden?
+
+--    "testHunekeQuestion", --MES remove? Or keep hidden?
     -- optional argument names
     "Keep",
     "Index",
     "ConductorElement",
+--strategy options:
     "AllCodimensions",
     "RadicalCodim1",
     "Radical",
@@ -76,6 +79,8 @@ idealInSingLocus = method(Options => {
 	Strategy => {}
 	})
 
+--3/4/26: make this work in char p small: need an elt of the radical of the conductor
+--(== non-normal locus) -look
 idealInSingLocus Ring := Ideal => opts -> S -> (
      -- Input: ring S = S'/I, where S' is a flattened poly ring.
      --  Verbosity: if >0 display timing
@@ -151,6 +156,7 @@ integralClosure Ring := Ring => o -> (R) -> (
      isS2 := isCompleteIntersection; -- true means is, false means 'do not know'
      nsteps := 0;
      t1 := null;  -- used for timings
+--3/4/26: if  homogeneous, checking Cohen-Macaulay with res might avoid some S2 comps.
      
      allCodimensionsNotPresent := not member(AllCodimensions, strategies);
      codim1only := not member(AllCodimensions, strategies);
@@ -605,9 +611,7 @@ endomorphisms = method()
 endomorphisms(Ideal,RingElement) := (I,f) -> (
      --computes generators in field ring I of
      --Hom(I,I)
-     --assumes that f is a nonzerodivisor.
-     --NOTE: f must be IN THE CONDUCTOR; 
-     --else we get only the intersection of Hom(I,I) and f^(-1)*R.
+     --assumes that f is a nonzerodivisor in I.
      --returns the answer as a sequence (H,f) where
      --H is a matrix of numerators
      --f = is the denominator.
@@ -686,6 +690,8 @@ ringFromFractions (Matrix, RingElement) := RingMap => opts -> (H, f) ->  (
     -- linear equations(in new variables) in the ideal
     -- Quadratic relations in the new variables
     tails := (symmetricPower(2,H) // f) // Hf;
+    --3/4/26: if Hom(I,I) = R[a/f,1] then a^2/f^2 = c(a/f)+d, so a^2 = caf+df^2;
+    --so (symmetricPower(2,H) // f)  = ca+df, and ca+df //Hf = (c,d).
     tails = RtoB tails;
     quads := matrix(B, entries (symmetricPower(2,varsB) - XX * tails));
     both := ideal lins + ideal quads;
@@ -3191,6 +3197,8 @@ TEST ///
 end-------------------------------------------------------------------------
 
 -*
+
+
 restart
 loadPackage("IntegralClosure2",Reload =>true)
 needsPackage "IntegralClosure2"

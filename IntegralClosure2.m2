@@ -1,7 +1,7 @@
 newPackage(
     "IntegralClosure2",
-    Version => "1.10", 
-    Date => "31 Dec 2020",
+    Version => "1.19", 
+    Date => "2 Mar 2026",
     Authors => {
         {Name => "David Eisenbud", Email => "de@msri.org", HomePage => "http://www.msri.org/~de/"},
         {Name => "Mike Stillman", Email => "mike@math.cornell.edu", HomePage => "https://mikestillman.github.io"},
@@ -18,47 +18,48 @@ newPackage(
         "MinimalPrimes", -- really helps speed up most computations here. Use minprimes.
 	"PushForward"
         },
-    DebuggingMode => false,
+    DebuggingMode => true,
     AuxiliaryFiles => true
     )
 
 importFrom_Core { "generatorSymbols" } -- use as R#generatorSymbols.
+
+--REMOVE ME-- after removing 'rad'.
 importFrom_MinimalPrimes { "rad" } -- a function we seem to be using in integralClosure.
 
 export{
     -- methods
-     "integralClosure", 
-     "icFractions", 
-     "icMap", 
-     "conductor", 
-     "makeS2",
-     "idealizer", 
-     "ringFromFractions", 
-     -- small characteristic method
-     "icFracP", 
-     "icPIdeal",
-     --mes--"extendIdeal",
-     "testHunekeQuestion",
-     -- optional argument names
-     "Keep",
-     "Index",
-     --mes--"Denominator",
-     "ConductorElement",
-     -- strategy options for integralClosure (passed on to its subroutines)
-     "AllCodimensions",
-     "RadicalCodim1",
-     "Radical",
-     "StartWithOneMinor",
-     "SimplifyFractions",
-     "Vasconcelos"
-     } 
-
+    "integralClosure", 
+    "icFractions", 
+    "icMap", 
+    "conductor", 
+    "makeS2",
+    "idealizer", 
+    "ringFromFractions",
+    "canonicalIdeal", -- MES: David, this is in TestIdeals.m2 as well...
+    -- small characteristic method
+    "icFracP", --MES: incorporate with integralClosure.
+    "icPIdeal",
+    --mes--"extendIdeal",
+    "testHunekeQuestion", --MES remove? Or keep hidden?
+    -- optional argument names
+    "Keep",
+    "Index",
+    "ConductorElement",
+    "AllCodimensions",
+    "RadicalCodim1",
+    "Radical",
+    "StartWithOneMinor",
+    "SimplifyFractions",
+    "Vasconcelos"
+    } 
+    
 makeVariable = opts -> (
-     s := opts.Variable;
-     if instance(s,Symbol) then s else
-     if instance(s,String) then getSymbol s else
-     error "expected Variable option to provide a string or a symbol"
-     )
+    s := opts.Variable;
+    if instance(s,Symbol) then s else
+    if instance(s,String) then getSymbol s else
+    error "expected Variable option to provide a string or a symbol"
+    )
 
 integralClosure = method(Options=>{
         Variable => "w",
@@ -130,8 +131,10 @@ integralClosure Ring := Ring => o -> (R) -> (
      if ultimate(coefficientRing, R) =!= coefficientRing R
      then return integralClosure(R, coefficientRing R, o);
 
+     KR := field R;
      (S,F) := flattenRing R;
-
+     S.cache.FieldInclusion = (fieldInclusion R) * F^-1;
+     
      -- right here, we will grab the variables to be excluded
      -- this seems a bit awkward, perhaps there is a better way?
      T := ambient S;
@@ -144,8 +147,7 @@ integralClosure Ring := Ring => o -> (R) -> (
      P := ideal S;
      startingCodim := codim P;
      isCompleteIntersection := (startingCodim == numgens P);
-     G := map(frac R, frac S, substitute(F^-1 vars S, frac R));
-
+     
      isS2 := isCompleteIntersection; -- true means is, false means 'do not know'
      nsteps := 0;
      t1 := null;  -- used for timings
@@ -185,19 +187,17 @@ integralClosure Ring := Ring => o -> (R) -> (
      if not isS2 and allCodimensionsNotPresent then (
          if verbosity >= 1 then 
          << "   S2-ification " << flush;
-         t1 = (timing F'G' := makeS2(target F,Variable=>makeVariable o,Verbosity=>verbosity));
+         t1 = (timing F' := makeS2(target F,Variable=>makeVariable o,Verbosity=>verbosity));
          nsteps = nsteps + 1;
          if verbosity >= 1 then
              << t1#0 << " seconds" << endl;
-	 if F'G' === null then (
+	 if F' === null then (
              << "warning: probabilistic computation of S2-ification failed " << endl;
              << "         reverting to standard algorithm" << endl;
              strategies =  append(strategies, AllCodimensions);
              codim1only = false
-	 ) else (
-             (F', G') := F'G';
-             F = F'*F;
-	     G = G*G';
+         ) else (
+             F = F' * F;  -- F: orig R --> target F.
 	     -- also extend J to be in this ring
 	     J = trim(F' J);
 	     isS2 = true;
@@ -210,30 +210,32 @@ integralClosure Ring := Ring => o -> (R) -> (
      -------------------------------------------
      -- Step 3: incrementally add to the ring --
      -------------------------------------------
+     F0 := null; -- this is the incremental normalization map Ri --> R(i+1).
      if not isR1 or not codim1only then (     
-     -- loop (note: F : R --> Rn, G : frac Rn --> frac R)
+     -- loop (note: F : R --> Rn)
      while (
-	  F1 := F;
+          R1 := target F;
 
 	  if verbosity >= 1 then << " [step " << nsteps << ": " << flush;
 
-	  t1 = timing((F,G,J,denom) = integralClosure1(F1,G,J,denom,nsteps,makeVariable o,keepvars,strategies,verbosity));
+	  t1 = timing((F0,J,denom) = integralClosure1(R1,J,denom,nsteps,makeVariable o,keepvars,strategies,verbosity));
+          F = F0 * F;
 
-          if verbosity >= 1 then (
-		 if verbosity >= 5 then (
-		      << "  time " << t1#0<< " sec  fractions " << first entries G.matrix << "]" << endl << endl;
-		      )
-		 else (
-		      << "  time " << t1#0<< " sec  #fractions " << numColumns G.matrix << "]" << endl;
-		      );
-		 );
+          -- if verbosity >= 1 then (
+	  --        if verbosity >= 5 then (
+	  --             << "  time " << t1#0<< " sec  fractions " << first entries G.matrix << "]" << endl << endl;
+	  --             )
+	  --        else (
+	  --             << "  time " << t1#0<< " sec  #fractions " << numColumns G.matrix << "]" << endl;
+	  --             );
+	  --        );
 
 	  nsteps = nsteps + 1;
-	  nsteps < o.Limit and target F1 =!= target F
+	  nsteps < o.Limit and target F0 =!= source F0
 	  ) do (
 	  ));
-     R.icFractions = first entries G.matrix;
      R.icMap = F;
+     R.icFractions = first entries (fieldInclusion target F).matrix;
      target R.icMap
      )
 
@@ -337,8 +339,7 @@ radicalJ = (J,codim1only,nsteps,strategies,verbosity) -> (
 --     R is an affine  domain, the original ring for which we are computing the integral closure
 --     R0 is a partial normalization.
 -- Inputs:
---     F:RingMap, F : R -> R0, R0 is assumed to be a domain
---     G:RingMap  G : frac R0 --> frac R (really, the list of fractions).
+--     R0: a partial normalization of the affine domain R (which is not an argument).
 --     J:Ideal, an ideal in the non-normal ideal of R0
 --     denom: either null, or, a RingElement, a nonzero-divisor in R0, in the radical of J.
 --        if null, this function will choose an element of this radical.
@@ -349,29 +350,25 @@ radicalJ = (J,codim1only,nsteps,strategies,verbosity) -> (
 --       AllCodimensions
 --       SimplifyFractions
 --       doingMinimalization (always true, can't give this: it is currently a local variable set to true).
--- Outputs:
---     F1:RingMap, F1 : R --> R1, R1 is a (potentially) larger partial normalization.
---     G1:RingMap, G1: frac R1 --> frac R (list of fractions, one for each variable in the new R1)
+--     verbosity:ZZ
+--       0 is silent.
+-- Outputs: (F0, J1, denom1).
+--     F0:RingMap, F0: R --> R1, R1 is a (potentially) larger partial normalization.
 --     J1:Ideal, J1 = radJ R1, the extension of the radical of J to R1.
---     denom1: either null, if denom===null, or 'denom' in the ring R1.
+--     denom1: is the denom in the ring R1, if denom =!= null, otherwise it is also null.
 -- Features of the output:
---     The ring R0 is integrally closed (normal) iff target F === target F1.
+--     The ring R0 is integrally closed (normal) iff target F === R0
 --     New variables in the ring R1 will be named varname_(nsteps, 0), varnames_(nsteps, 1), ...
+--       Notice that due to the minimization step, some of these could be eliminated too.
 
-integralClosure1 = (F,G,J,denom,nsteps,varname,keepvars,strategies,verbosity) -> (
+integralClosure1 = (R0,J,denom,nsteps,varname,keepvars,strategies,verbosity) -> (
      codim1only := not member(AllCodimensions, strategies);
-
-     R0 := target F;
-     J = trim J;
-     radJ := radicalJ(J, codim1only, nsteps, strategies,verbosity);
-     if #radJ == 0 then return (F,G,ideal(1_R0),denom);
-     radJ = trim intersect radJ;
+     J = trim J; -- MES--really?
+     elapsedTime radJ := radical J;
+     if radJ == 1 then return (id_R0, radJ, denom);
 
      f := if denom === null then findSmallGen radJ else denom; -- we assume that f is a non-zero divisor!!
      
-     --TODO: put in a test for f a nzd, and an option isDomain => true
-     --syz matrix{{f}} ==0
-
      -- Compute Hom_S(radJ,radJ), using f as the common denominator.
 
      if verbosity >= 3 then <<"      small gen of radJ: " << f << endl << endl;
@@ -387,13 +384,13 @@ integralClosure1 = (F,G,J,denom,nsteps,varname,keepvars,strategies,verbosity) ->
      
      -- here is where we improve or change our fractions
      if He == 0 then (
-	  -- there are no new fractions to add, and this process will add no new fractions
-	  return (F,G,ideal(1_R0),denom);
+         -- there are no new fractions to add, and this process will add no new fractions
+         return(id_R0, radJ, denom);
 	  );
 
      if verbosity >= 6 then (
 	  << "        about to add fractions" << endl;
-          << "        " << apply(flatten entries He, g -> G(g/f)) << endl;
+--          << "        " << apply(flatten entries He, g -> G(g/f)) << endl;
 	  );
 
      if verbosity >= 2 then <<"      idlizer2:  " << flush;
@@ -415,40 +412,98 @@ integralClosure1 = (F,G,J,denom,nsteps,varname,keepvars,strategies,verbosity) ->
 	     
      if verbosity >= 6 then (
 	  << "        reduced fractions: " << endl;
-          << "        " << apply(flatten entries He, g -> G(g/fe)) << endl;
+--          << "        " << apply(flatten entries He, g -> G(g/fe)) << endl;
 	  );
 
-     t1 = timing((F0,G0) := ringFromFractions(He,fe,Variable=>varname,Index=>nsteps));
+     t1 = timing(F0 := ringFromFractions(He,fe,Variable=>varname,Index=>nsteps));
      
      if verbosity >= 2 then << t1#0 << " seconds" << endl;
-     
+
      -- These would be correct, except that we want to clean up the
      -- presentation
      R1temp := target F0;
-     if R1temp === R0 then return(F,G,radJ,denom);
+     if R1temp === R0 then return(id_R0, radJ, denom);
 
-     if doingMinimalization then (
        if verbosity >= 2 then << "      minpres:   " << flush;
        R1tempAmbient := ambient R1temp;
        keepindices := apply(keepvars, x -> index substitute(x, R1tempAmbient));
        t1 = timing(R1 := minimalPresentation(R1temp, Exclude => keepindices));
        if verbosity >= 2 then << t1#0 << " seconds" << endl;
        i := R1temp.minimalPresentationMap; -- R1temp --> R1
-       iinv := R1temp.minimalPresentationMapInv.matrix; -- R1 --> R1temp
-       iinvfrac := map(frac R1temp , frac R1, substitute(iinv,frac R1temp));
-     
-       -- We also want to trim the ring     
-       F0 = i*F0; -- R0 --> R1
+       --iinv := R1temp.minimalPresentationMapInv.matrix; -- R1 --> R1temp
+       --iinvfrac := map(field R1temp , field R1, substitute(iinv,field R1temp));
+
+       -- We also want to trim the ring
+       assert(R1 === target i);
+       
+       F0' := i*F0; -- R0 --> R1
+       -- Now construct the field inclusion R1 --> K(R0).
+       -- this is the composite: (fieldInclusion R1temp) * R1temp.minimalPresentationMapInv
+       R1.cache.FieldInclusion = (fieldInclusion R1temp) * R1temp.minimalPresentationMapInv;
        if denom === null then
-          (F0*F,G*G0*iinvfrac,F0 radJ, null)
+          (F0', F0' radJ, null)
        else
-          (F0*F,G*G0*iinvfrac,F0 radJ, F0 denom)
-       )
-     else if denom === null then
-       (F0,G0,F0 radJ,null)
+          (F0', F0' radJ, F0' denom)
+   )
+
+
+integralClosure1try2 = (F,G,J,denom,nsteps,varname,keepvars,verbosity) -> (
+    -- F : R --> Ri
+    -- G is a map Ri --> KR, we want to increase R by adding integral elements to it.
+    -- J is am ideal in Ri contained in the non-normal locus
+    -- denom is an element of Ri, a nzd in J.  Used to create fractions.
+    -- result: F: R -> R_(i+1), G : R_(i+1) --> KR.
+
+    -- The following are not well-defined what they mean yet!
+    F0 := null; -- used below, means what?
+    KR := null;
+    t1 := null;
+    Fresult := null;
+    
+    
+    R0 := source G;
+    J = trim J; -- why?
+    radJ := radical J;
+    if radJ == 1 then return "done";
+     
+    f := if denom === null then findSmallGen radJ else denom; -- we assume that f is a non-zero divisor!!
+    (He,fe) := endomorphisms(radJ,f);
+     
+    if He == 0 then (
+        -- there are no new fractions to add, and this process will add no new fractions
+        return "done"
+        );
+
+    -- Do we need tp pass G : R --> KR in?  Or place it as newR.fieldInclusion?
+    G0 := ringFromFractions(G,He,fe,Variable=>varname,Index=>nsteps); -- G0 : R1 --> KR
+     
+    -- These would be correct, except that we want to clean up the
+    -- presentation
+    R1temp := source G0;
+    if R1temp === R0 then return(F,G,radJ,denom);
+
+     R1tempAmbient := ambient R1temp;
+     keepindices := apply(keepvars, x -> index substitute(x, R1tempAmbient));
+     t1 = timing(R1 := minimalPresentation(R1temp, Exclude => keepindices));
+     i := R1temp.minimalPresentationMap; -- R1temp --> R1
+     iinv := R1temp.minimalPresentationMapInv.matrix; -- R1 --> R1temp
+     iinvfrac := map(KR , R1, substitute(iinv,field R1temp)); -- not quite right again.
+
+     -- We also want to trim the ring     
+     Fresult = i*F0; -- R0 --> R1
+     -- now determine Gresult
+     Gresult := (
+         -- map R1 --> KR
+         -- this is the composite of the inverse of the isomorphism R1temp --> R1 with R1temp --> KR.
+         );
+
+     -- the logic below seems incorrect to me.
+     if denom === null then
+       (F0*F,G*G0*iinvfrac,F0 radJ, null)
      else
-       (F0,G0,F0 radJ, F0 denom)
+       (F0*F,G*G0*iinvfrac,F0 radJ, F0 denom)
      )
+     
 
 ---------------------------------------------------
 -- Support routines, perhaps should be elsewhere --
@@ -529,7 +584,7 @@ idealizer (Ideal, RingElement) := o -> (J, g) ->  (
      -- compute R1 = Hom(J,J) = (g*J:J)/g
      -- returns a sequence (F,G), where 
      --   F : R --> R1 is the natural inclusion
-     --   G : frac R1 --> frac R, 
+     --   G : R1 --> field R, 
      -- optional arguments:
      --   o.Variable: base name for new variables added
      --   o.Index: the first subscript to use for such variables
@@ -539,17 +594,16 @@ idealizer (Ideal, RingElement) := o -> (J, g) ->  (
                     vasconcelos (J,g))
                  else 
                     endomorphisms (J,g);
-     
      if o.Verbosity >= 5 then << "endomorphism fractions:" << netList prepend(f,flatten entries H) << endl;
      if H == 0 then 
-         (id_R, map(frac R, frac R, vars frac R)) -- in this case R is isomorphic to Hom(J,J)
+         (id_R, fieldInclusion R) -- in this case R is isomorphic to Hom(J,J)
      else 
          ringFromFractions(H, f, Variable=>makeVariable o, Index=>o.Index, Verbosity => o.Verbosity)
      )
 
 endomorphisms = method()
 endomorphisms(Ideal,RingElement) := (I,f) -> (
-     --computes generators in frac ring I of
+     --computes generators in field ring I of
      --Hom(I,I)
      --assumes that f is a nonzerodivisor.
      --NOTE: f must be IN THE CONDUCTOR; 
@@ -565,7 +619,7 @@ endomorphisms(Ideal,RingElement) := (I,f) -> (
 
 vasconcelos = method()
 vasconcelos(Ideal,RingElement) := (I,f) -> (
-     --computes generators in frac ring I of
+     --computes generators in field ring I of
      --(I^(-1)*I)^(-1) = Hom(I*I^-1, I*I^-1),
      --which is in general a larger ring than Hom(I,I)
      --(though in a 1-dim local ring, with a radical ideal I = mm,
@@ -583,17 +637,87 @@ vasconcelos(Ideal,RingElement) := (I,f) -> (
      (H,f)
      )
 
-ringFromFractions = method(Options=>{
+-- ringFromFractions ----------------------
+ringFromFractions = method(Options => {
+        Variable => "w", 
+        Index => 0,
+        Verbosity => 0})
+ringFromFractions (Matrix, RingElement) := RingMap => opts -> (H, f) ->  (
+    -- f is a nonzero divisor in R
+    -- H is a (row) matrix of numerators, elements of R
+    -- STRONG ASSUMPTION: It is assumed that H/f is a ring (product of 2 such are of the form h/f, some h).
+    -- Forms the ring R1 = R[H_0/f, H_1/f, ..].
+    -- returns a ring map F, where 
+    --   F : R --> R1 is the natural inclusion
+    -- implicitly, the field of R1 is set to be the field of R.
+    -- Thus, fieldInclusion R1 : R1 --> field R has all of the fractions used.
+    -- Optional arguments:
+    --   opts.Variable: base name for new variables added, defaults to w
+    --   opts.Index: the first subscript to use for such variables, defaults to 0
+    --   so in the default case, the new variables produced are w_(0,0), w_(0,1)...
+    isgraded := isHomogeneous H and isHomogeneous f;
+    R := ring H;
+    KR := field R;
+    RtoKR := fieldInclusion R;
+    fractions := apply(first entries H,i-> RtoKR i/RtoKR f);
+    Hf := H | matrix{{f}};
+    -- Make the new polynomial ring.
+    n := numgens source H;
+    -- this next block is to avoid 0 degrees?
+    newdegs := degrees source H - toList(n:degree f);
+    if not isgraded and #newdegs#0 === 1 and any(newdegs, i -> i == {0})
+    then newdegs = for d in newdegs list if first d > 0 then d else {1};
+    degs := join(newdegs, (monoid R).Options.Degrees);
+    MO := prepend(GRevLex => n, (monoid R).Options.MonomialOrder);
+    kk := coefficientRing R;
+    var := makeVariable opts;
+    A := kk(monoid [var_(opts.Index,0)..var_(opts.Index,n-1), R#generatorSymbols,
+            MonomialOrder=>MO, Degrees => degs]);
+    I := ideal presentation R;
+    IA := ideal ((map(A,ring I,(vars A)_{n..numgens R + n-1})) (generators I));
+    B := A/IA; -- this is sometimes a slow op
+
+    -- Make the linear and quadratic relations
+    varsB := (vars B)_{0..n-1};
+    RtoB := map(B, R, (vars B)_{n..numgens R + n - 1});
+    XX := varsB | matrix{{1_B}};
+    -- Linear relations in the new variables
+    lins := XX * RtoB syz Hf; 
+    -- linear equations(in new variables) in the ideal
+    -- Quadratic relations in the new variables
+    tails := (symmetricPower(2,H) // f) // Hf;
+    tails = RtoB tails;
+    quads := matrix(B, entries (symmetricPower(2,varsB) - XX * tails));
+    both := ideal lins + ideal quads;
+	  
+    gb both; -- sometimes slow
+    Bflat := flattenRing (B/both); --sometimes very slow
+    R1 := trim Bflat_0; -- sometimes slow
+
+    -- Now construct the trivial maps 
+    F := map(R1, R, (vars R1)_{n..numgens R + n - 1});
+
+    -- Now, we need to construct the field inclusion from R1 to KR (== field R).
+    
+    elemsR := for a in gens R list RtoKR a;
+    assert(elemsR === flatten entries RtoKR.matrix);
+    G := map(KR, R1, matrix{fractions | elemsR});
+    R1.cache.FieldInclusion = G;
+    F
+    )
+ 
+ringFromFractionsOLD= method(Options=>{
 	  Variable => "w", 
 	  Index => 0,
 	  Verbosity => 0})
-ringFromFractions (Matrix, RingElement) := o -> (H, f) ->  (
+ringFromFractionsOLD (Matrix, RingElement) := o -> (H, f) ->  (
+    << "ring from fractions: " << f << "  " << H << endl;
      -- f is a nonzero divisor in R
      -- H is a (row) matrix of numerators, elements of R
      -- Forms the ring R1 = R[H_0/f, H_1/f, ..].
      -- returns a sequence (F,G), where 
      --   F : R --> R1 is the natural inclusion
-     --   G : frac R1 --> frac R, 
+     --   G : R1 --> field R, 
      -- optional arguments:
      --   o.Variable: base name for new variables added, defaults to w
      --   o.Index: the first subscript to use for such variables, defaults to 0
@@ -603,7 +727,9 @@ ringFromFractions (Matrix, RingElement) := o -> (H, f) ->  (
      --   Fix for now: if singly graded, but not homog, if a degree comes out <= 0 then set it to 1.
           isgraded := isHomogeneous H and isHomogeneous f;
           R := ring H;
-       	  fractions := apply(first entries H,i->i/f);
+          KR := field R;
+          RtoKR := fieldInclusion R;
+       	  fractions := apply(first entries H,i->RtoKR i/RtoKR f);
           Hf := H | matrix{{f}};
      	  -- Make the new polynomial ring.
      	  n := numgens source H;
@@ -637,10 +763,16 @@ ringFromFractions (Matrix, RingElement) := o -> (H, f) ->  (
 	  Bflat := flattenRing (B/both); --sometimes very slow
 	  R1 := trim Bflat_0; -- sometimes slow
 
-     	  -- Now construct the trivial maps
+          -- ZZZ
+     	  -- Now construct the trivial maps 
      	  F := map(R1, R, (vars R1)_{n..numgens R + n - 1});
-	  G := map(frac R, frac R1, matrix{fractions} | vars frac R);
 
+          --G := map(KR, field R1, matrix{fractions} | vars KR);
+
+          -- MES BUG: this line will need to change!!
+          G := map(KR, R1, matrix{fractions} | matrix {generators(KR, CoefficientRing => ZZ)});
+
+    << "  leaving ring from fractions: " << netList fractions << endl;
 	  (F, G)
      )
 
@@ -982,11 +1114,11 @@ integralClosures(Ideal) := opts -> I -> (
      IA := sub(I,A);
      ReesI := (flattenRing reesAlgebra(IA,Variable =>z))_0;
      fracs := icFractions ReesI;
-     phi := map(frac(A),frac(ReesI),gens(A_0*IA)|vars A);
-     newfracs := delete((frac A)_0, fracs/phi);
+     phi := map(field(A),field(ReesI),gens(A_0*IA)|vars A);
+     newfracs := delete((field A)_0, fracs/phi);
      -- The following two lines remove powers of t, and returns a hashtable
      L := partition(f -> degree(A_0, numerator f), newfracs);
-     toFracS := map(frac S, frac A, {0} | gens frac S);
+     toFracS := map(field S, field A, {0} | gens field S);
      result := hashTable apply(keys L, d -> d => apply(L#d, f -> toFracS(f // (A_0)^d)));
      result
     )
@@ -1079,11 +1211,12 @@ makeS2 Ring := o -> R -> (
 	  --routine...
      w := canonicalIdeal R;
      if w === null then return null;
-     if ideal(0_R):w_0 == 0 then idealizer(w,w_0,Variable=>makeVariable o)
+     result := if ideal(0_R):w_0 == 0 then idealizer(w,w_0,Variable=>makeVariable o, Verbosity => o.Verbosity)
      else (
 	  return null;
 	  error"first generator of the canonical ideal was a zerodivisor"
-	  )
+	  );
+      result
      )
 -*
 S2 = method() -- from Eisenbud's CompleteIntersectionResolutions.m2
@@ -1657,7 +1790,6 @@ doc ///
    --   time R' = integralClosure(R, Strategy => SimplifyFractions)
    --   icFractions R
 -- The use of Denominator isn't working well yet.
-     -- XXX     
      -- time R' = integralClosure(R, Denominator => x*(x+4)) -- crash!
      -- time R' = integralClosure(R, Denominator => x*(x+4), Verbosity => 2) -- crash!
      -- time R' = integralClosure(R, Denominator => x, Verbosity => 2)
@@ -1752,7 +1884,7 @@ doc ///
     F:RingMap
       The inclusion map from $R$ into $S = Hom_R(I,I)$
     G:RingMap
-      $frac S \rightarrow frac R$, giving the fractions
+      $field S \rightarrow field R$, giving the fractions
       corresponding to each generator of $S$.
   Description
    Text
@@ -1974,7 +2106,7 @@ doc ///
       $R \rightarrow S$, where $S$ is the extension ring
       of $R$ generated by the fractions $1/f H$
     G:RingMap
-      $frac S \rightarrow frac R$, the fractions
+      $S \rightarrow field R$, the fractions
   Description
    Text
      Serious restriction: It is assumed that this ring R[1/f H] is an endomorphism ring
@@ -2008,13 +2140,13 @@ doc ///
     F:RingMap
       $R \rightarrow S$, where $S$ is the so-called S2-ification of $R$
     G:RingMap
-      $frac S \rightarrow frac R$, giving the corresponding fractions
+      $field S \rightarrow field R$, giving the corresponding fractions
   Description
    Text
      A ring $S$ satisfies Serre's S2 condition if every codimension 1 ideal
      contains a nonzerodivisor and every principal ideal generated by a nonzerodivisor
      is equidimensional of codimension one.  If $R$ is an affine reduced ring, 
-     then there is a unique smallest extension $R\subset S\subset {\rm frac}(R)$ satisfying S2, 
+     then there is a unique smallest extension $R\subset S\subset {\rm field}(R)$ satisfying S2, 
      and $S$ is finite as an $R$-module.
 
      Uses the method of Vasconcelos, "Computational Methods..." p. 161, taking the idealizer
@@ -2318,6 +2450,25 @@ doc ///
     (integralClosure,Ring)
 ///
 
+-*
+  restart
+  needsPackage "IntegralClosure2"
+*-
+TEST ///
+  S = ZZ/101[y,x, MonomialOrder => Lex]
+  R = S/(y^2-x^3)
+  R' = integralClosure R
+  assert(source icMap R === R)
+  assert(target icMap R === R')
+  useTower field R
+  assert((icFractions R)_0 === y/x)
+  assert((icFractions R)_1 == y)
+  assert((icFractions R)_2 == x)
+  assert isNormal R'
+  use R
+  assert(conductor R == ideal(x,y))
+///
+
 ///
   -- This (disabled) test indicates we want to use Normaliz when computing
   -- the integral closure if a binomial ideal.
@@ -2403,17 +2554,18 @@ TEST ///
     ideal(Y_3*y-Y_2*x^2,Y_3*x-Y_4*y,Y_1*x^3-Y_2*y^5,Y_3^2-Y_2*Y_4*x,Y_1*Y_4-Y_2^2*y^3)
   R = S/J       
   R' = integralClosure R
-  KF = frac(ring ideal R')
+  KF = field(ring ideal R')
   M1 = first entries substitute(vars R, KF)
   M2 = apply(R.icFractions, i -> matrix{{i}})
 
   assert(matrix{icFractions R} == substitute(matrix {{(Y_2*y^2)/x, (Y_1*x)/y,
-                  Y_1, Y_2, Y_3, Y_4, x, y}}, frac R))
+                  Y_1, Y_2, Y_3, Y_4, x, y}}, field R))
 ///
 
 TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
   assert isNormal (QQ[x]/(x^2+1))
@@ -2432,6 +2584,7 @@ TEST ///
 TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
   debug IntegralClosure2
@@ -2483,6 +2636,7 @@ TEST ///
 TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
   debug IntegralClosure2
@@ -2503,7 +2657,9 @@ TEST ///
 
 TEST ///
 -*
+-- XXX
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
   kk=ZZ/101
@@ -2566,6 +2722,7 @@ TOOSLOW ///
      a*z*u^6+9142*a*z*u^5+13715*a*z^2*u^3-9143*a*z*u^4-9145*a*u^5-13716*a*z^2*u^2-13712*a*z^2*u-13713*a*z*u^2+4568*a*z^2+9145*c*y*u-9145*c*y+4572*d*y,
      c*u^8+7111*c*z*u^6+3556*d*u^7+10667*c*z*u^5+3556*d*u^6+14224*c*z^2*u^3+14223*c*z*u^4-7112*d*z*u^4+3556*d*u^5+10668*c*z^2*u^2-7112*d*z*u^3+7112*c*z^2*u-7112*d*z*u^2+10668*d*z^2);
   R = S/I
+  KR = field R
   time R' = integralClosure(R) 
   time R' = integralClosure(R, Strategy=>{RadicalCodim1}) -- slightly faster than without it
   see ideal R'
@@ -2588,7 +2745,7 @@ TEST ///
   time J = integralClosure (R,Variable => symbol a) 
   use ring ideal J
   assert(ideal J == ideal(u+2))
-  assert(set icFractions R === set{-2_(frac R), v_(frac R)})
+  assert(set icFractions R === set{-2_(field R), v_(field R)})
 ///
 
 -- degrees greater than 1 test
@@ -2605,7 +2762,7 @@ TEST ///
   use R
   assert(conductor R== ideal(x^2,y))
   assert(conductor(R.icMap) == ideal(x^2,y))
-  assert((icFractions R) == first entries substitute(matrix {{y*z/x^2, x, y, z}},frac R))
+  assert((icFractions R) == first entries substitute(matrix {{y*z/x^2, x, y, z}},field R))
   assert isWellDefined icMap R
   assert isNormal R'
 ///
@@ -2662,6 +2819,7 @@ TEST ///
 TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
   S = ZZ/101[symbol x,symbol y,symbol z,MonomialOrder => Lex]
@@ -2672,7 +2830,7 @@ TEST ///
   assert(ideal Q' == ideal (x^2-a_(3,0)*z, a_(3,0)*x-a_(4,0)*z, a_(3,0)^2-a_(4,0)*x, a_(4,0)^2-y^2-z^2))
   use Q
   assert(conductor(Q.icMap) == ideal(z^3,x*z^2,x^3*z,x^4))
-  assert(matrix{icFractions Q} == substitute(matrix{{x^3/z^2,x^2/z,x,y,z}},frac Q)) -- MES FLAG: this looks like z^2 is in the conductor?? possible bug?
+  assert(matrix{icFractions Q} == substitute(matrix{{x^3/z^2,x^2/z,x,y,z}},field Q)) -- MES FLAG: this looks like z^2 is in the conductor?? possible bug?
   isNormal Q'
 ///
 
@@ -2688,7 +2846,7 @@ TEST ///
   Q' = time integralClosure(Q,Variable => symbol x, Keep=>{})
   use ring ideal Q'
   assert(ideal Q' == ideal(x_(1,0)^2-a*b*c))
-  use Q
+  useTower field Q
   assert(matrix{icFractions Q} == matrix{{d/a^2,a,b,c}})
 ///
 
@@ -2710,6 +2868,7 @@ TEST ///
 TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
   R = ZZ/101[symbol a..symbol e]
@@ -2722,6 +2881,7 @@ TEST ///
       b^6*c+b*c^6+a^2*b^4*e-3*a*b^2*c^2*d*e+c^4*d^2*e-a^3*c*d*e^2-a*b*d^3*e^2+b*c*e^5,
       a^4*b^2*c-a*b*c^2*d^3-a*b^5*e-b^3*c^2*d*e-a*d^5*e+2*a^2*b*c*d*e^2+c*d^2*e^4)
   S = R/I
+  KS = field(S, Independents => {b*c*e})
   elapsedTime S' = integralClosure S
   icFractions S -- MES: Seemingly poor choice for fractions?
   M = pushForward (icMap S, S'^1);
@@ -2833,6 +2993,7 @@ TEST ///
 TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
   kk = ZZ/32003
@@ -3031,8 +3192,8 @@ end-------------------------------------------------------------------------
 
 -*
 restart
---loadPackage("MinimalPrimes",Reload =>true)
 loadPackage("IntegralClosure2",Reload =>true)
+needsPackage "IntegralClosure2"
 
 restart
 uninstallPackage("IntegralClosure2")
@@ -3044,9 +3205,7 @@ viewHelp IntegralClosure2
 
 restart
 uninstallPackage "IntegralClosure2"
-uninstallPackage "MinimalPrimes"
 restart
-installPackage "MinimalPrimes"
 installPackage "IntegralClosure2"
 check IntegralClosure2
 
@@ -3106,7 +3265,7 @@ TEST ///
   L = trim radical ideal(x_R)
   (f1,g1) = idealizer(L,L_0)
   U = target f1
-  K = frac R
+  K = field R
   f1
   g1
   L = trim ideal jacobian R
@@ -3164,7 +3323,7 @@ codim JF
 radJF = radical(JF, Strategy=>Unmixed)
 NNL = radJF
 NNL = substitute(NNL,A)
-(phi,fracs) = idealizer(NNL,NNL_0)
+(phi,fields) = idealizer(NNL,NNL_0)
 phi
 #fracs
 

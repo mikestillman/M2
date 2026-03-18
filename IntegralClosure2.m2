@@ -38,13 +38,11 @@ export{
      "icFracP", 
      "icPIdeal",
      --mes--"extendIdeal",
-     "testHunekeQuestion",
+     -- "testHunekeQuestion", -- MES remove or make hidden?
      -- optional argument names
      "Keep",
      "Index",
-     --mes--"Denominator",
      "ConductorElement",
-     -- strategy options for integralClosure (passed on to its subroutines)
      "AllCodimensions",
      "RadicalCodim1",
      "Radical",
@@ -75,6 +73,8 @@ idealInSingLocus = method(Options => {
 	Strategy => {}
 	})
 
+--3/4/26: make this work in char p small: need an elt of the radical of the conductor
+--(== non-normal locus) -look
 idealInSingLocus Ring := Ideal => opts -> S -> (
      -- Input: ring S = S'/I, where S' is a flattened poly ring.
      --  Verbosity: if >0 display timing
@@ -149,6 +149,7 @@ integralClosure Ring := Ring => o -> (R) -> (
      isS2 := isCompleteIntersection; -- true means is, false means 'do not know'
      nsteps := 0;
      t1 := null;  -- used for timings
+--3/4/26: if  homogeneous, checking Cohen-Macaulay with res might avoid some S2 comps.
      
      allCodimensionsNotPresent := not member(AllCodimensions, strategies);
      codim1only := not member(AllCodimensions, strategies);
@@ -551,9 +552,7 @@ endomorphisms = method()
 endomorphisms(Ideal,RingElement) := (I,f) -> (
      --computes generators in frac ring I of
      --Hom(I,I)
-     --assumes that f is a nonzerodivisor.
-     --NOTE: f must be IN THE CONDUCTOR; 
-     --else we get only the intersection of Hom(I,I) and f^(-1)*R.
+     --assumes that f is a nonzerodivisor in I.
      --returns the answer as a sequence (H,f) where
      --H is a matrix of numerators
      --f = is the denominator.
@@ -629,6 +628,8 @@ ringFromFractions (Matrix, RingElement) := o -> (H, f) ->  (
      	  -- linear equations(in new variables) in the ideal
      	  -- Quadratic relations in the new variables
      	  tails := (symmetricPower(2,H) // f) // Hf;
+          --3/4/26: if Hom(I,I) = R[a/f,1] then a^2/f^2 = c(a/f)+d, so a^2 = caf+df^2;
+          --so (symmetricPower(2,H) // f)  = ca+df, and ca+df //Hf = (c,d).
      	  tails = RtoB tails;
      	  quads := matrix(B, entries (symmetricPower(2,varsB) - XX * tails));
 	  both := ideal lins + ideal quads;
@@ -3031,7 +3032,6 @@ end-------------------------------------------------------------------------
 
 -*
 restart
---loadPackage("MinimalPrimes",Reload =>true)
 loadPackage("IntegralClosure2",Reload =>true)
 
 restart
@@ -3044,9 +3044,7 @@ viewHelp IntegralClosure2
 
 restart
 uninstallPackage "IntegralClosure2"
-uninstallPackage "MinimalPrimes"
 restart
-installPackage "MinimalPrimes"
 installPackage "IntegralClosure2"
 check IntegralClosure2
 

@@ -1,4 +1,4 @@
-needsPackage "ExampleIdeals"
+--needsPackage "ExampleIdeals"
 needsPackage "IntegralClosure2"
 needsPackage "ReesAlgebra"
 readExampleFile1 = (filename) -> (
@@ -42,7 +42,7 @@ runS2Examples (HashTable,ZZ) := o -> (H,i) -> (
      I := value H#i#1;
      A = (ring I)/I;
      if numgens I > 1 and char A == 0 or char A > 7 then (
-       tim := timing ((F,G) = S2ification(A));
+       tim := timing ((F,G) = makeS2(A));
        A' := target F;
        if A' =!= A then print "NOT S2";
        answer := {i, H#i#0, char ring I, numgens ring I, numgens I, numgens A', numgens ideal A', tim#0};
@@ -88,7 +88,7 @@ charPairs(ZZ,List,Ring) := (a,bs,kk) -> (
      coimage F
      )
 
-H = readExampleFile1 "examples.m2"
+H = readExampleFile1 "./IntegralClosure2/examples.m2"
 print netList(apply(keys H, h -> {h, H#h#0}), Boxes=>false, HorizontalSpace=>2)
 
 planecurves = select(keys H, i -> (I := value H#i#1; numgens I == 1 and numgens ring I == 2))
@@ -108,9 +108,12 @@ levelbig = {5,12,13,14,18,
 levelbuggy = {19,22,23,47,52,79} -- ones that crash (currently -- these will be 
   --moved out to one of the ones above when they start working)
 leveltofile = {56, 57, 58, 59, 60, 63, 64, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 81, 82, 83, 84, 85}
-end
+end--
+
 restart
-load "runexamples.m2"
+load "./IntegralClosure2/runexamples.m2"
+viewResults runExamples(H, {3})
+
 viewResults runExamples(H, {3}, Verbosity=>2, Strategy=>{SimplifyFractions})
 viewResults runExamples(H, {10}, Verbosity=>2)
 viewResults runExamples(H, {10}, Verbosity=>2, Strategy=>{SimplifyFractions})

@@ -33,7 +33,10 @@ export{
      "conductor", 
      "makeS2",
      "idealizer", 
-     "ringFromFractions", 
+     "ringFromFractions",
+     "findConductorInSubring",
+     "fractionsSpecificDenominator",
+     "showFraction",
      -- small characteristic method
      "icFracP", 
      "icPIdeal",
@@ -1110,6 +1113,89 @@ makeS2 (S/intersect(ideal"a,b", ideal"b,c",ideal"c,a"))
 --assert( (betti prune S2(-5,M)) === new BettiTally from {(0,{-6},-6) => 3, (1,{0},0) => 1} )
 ///
 *-
+
+findConductorInSubring = method()
+findConductorInSubring RingMap := (phi) -> (
+    R := source phi;
+    R' := target phi;
+    S := ambient R;
+    KR := field R;
+    condR := conductor R;
+    fibervars := for s in gens (fieldInfo KR).Finites list sub(s, S); -- TODO: remove 'sub'
+    eliminate(fibervars, lift(conductor R, S))
+    )
+
+fractionsSpecificDenominator = method()
+fractionsSpecificDenominator(RingMap, RingElement) := List => (phi, f) -> (
+    -- phi : R --> R', where R' is integral over R.
+    -- f in R is an element of the conductor of phi
+    -- returns a list of pairs {numer, denom}, all elements of R.
+    R := source phi;
+    R' := target phi;
+    if ring f =!= R then error "expected an element of the source ring";
+    S := ambient R;
+    KR := field R;
+    fibervars := for s in gens (fieldInfo KR).Finites list sub(s, S); -- TODO: remove 'sub'
+    eliminate(fibervars, lift(conductor R, S));
+    oldvars := for x in gens R list phi x;
+    if any(oldvars/index, i -> i === null) then error "old variables are not variables in the integral closure";
+    newvars := sort toList(set gens R' - set oldvars);
+    liftback := map(R, R', join(for x in newvars list x => 0, for x in gens R list (phi x) => x));
+    fracs := for g in newvars list (
+      h := (phi f) * g;
+      if not isSubset(support(h), oldvars) then error "my logic is wrong...!";
+      {liftback h, f}
+      );
+    fracs
+    )
+
+showFraction = method()
+showFraction RingElement  := (x) -> (
+    -- x is in a KR = field R.
+    den := mydenominator x;
+    (hold (den*x)) / factor den
+    )
+///
+restart
+needsPackage "IntegralClosure2"
+-- boehm6
+  S = QQ[u,v,z]
+  F = u^6+3*u^4*v^2+3*u^2*v^4+v^6-4*u^4*z^2-34*u^3*v*z^2-7*u^2*v^2*z^2+12*u*v^3*z^2+6*v^4*z^2+36*u^2*z^4+36*u*v*z^4+9*v^2*z^4
+  discriminant(F, u)
+
+  R = S/F
+  R' = integralClosure R
+  C = findConductorInSubring icMap R
+  factor C_0
+  f = promote(C_0, R) -- only one...
+  factor f
+  fractionsSpecificDenominator(icMap R, f)
+
+  oo//last//factor
+///
+
+-*
+  restart
+  needsPackage "IntegralClosure2"
+  -- test of this. --boehm19
+*-
+///
+  S = QQ[v,u, MonomialOrder => Lex]
+  F = 5*v^6+7*v^2*u^4+6*u^6+21*v^2*u^3+12*u^5+21*v^2*u^2+6*u^4+7*v^2*u
+  ideal F
+  R = S/F
+  KR = field(R, Independents => {v})
+  R' = integralClosure R
+  C = findConductorInSubring icMap R
+  use R
+  assert(C_0 == v^3)
+  factor C_0
+  f = promote(C_0, R) -- only one...
+  fracs = fractionsSpecificDenominator(icMap R, f)
+  fracs  = for x in fracs list (fieldInclusion R) x#0 / (fieldInclusion R) x#1
+  fracs/showFraction
+  assert(oo/value === fracs)
+///
 
 --------------------------------------------------------------------
 TOOSLOW = method()
@@ -3298,7 +3384,7 @@ restart
 uninstallPackage "IntegralClosure2"
 restart
 installPackage "IntegralClosure2"
-check "IntegralClosure2"
+check "IntegralClosure2" -- 3/19/2026: test 35 takes 42 sec, test 36 takes 36 sec (yes both same number!), test 40 takes 45 sec.
 
 viewHelp IntegralClosure2
 viewHelp integralClosure

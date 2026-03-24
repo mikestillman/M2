@@ -1269,6 +1269,7 @@ icFractions(RingMap, RingElement) := (F, den) -> ( -- actual denominators can be
     fden := F den;
     elems := for i from 0 to nfiber-1 list (fden * R'_i);
     den' := lift(fden, ambient R');
+
     for j from 0 to nfiber-1 list (
         g := fden * R'_j;
         if not insubring g then 0_R
@@ -1285,24 +1286,47 @@ icFractions(RingMap, RingElement) := (F, den) -> ( -- actual denominators can be
             )
         )
     )
+///--Boehm19
+restart
+needsPackage "IntegralClosure2"
+  S = QQ[u,v] -- MonomialOrder => Lex]
+  F = 5*v^6+7*v^2*u^4+6*u^6+21*v^2*u^3+12*u^5+21*v^2*u^2+6*u^4+7*v^2*u
+  ideal F
+  R = S/F
+--  KR = field(R, Independents => {v})
+  R' = integralClosure R
+  C = conductor R
+  rC = radical C
+  f = rC_0  
 
+  pushFwd icMap R
+  icFractions(icMap R,f)
+pushFwd icMap R
+gens R'
+///
 ///
 restart
 needsPackage "IntegralClosure2"
 -- boehm6
   S = QQ[u,v,z]
   F = u^6+3*u^4*v^2+3*u^2*v^4+v^6-4*u^4*z^2-34*u^3*v*z^2-7*u^2*v^2*z^2+12*u*v^3*z^2+6*v^4*z^2+36*u^2*z^4+36*u*v*z^4+9*v^2*z^4
-  discriminant(F, u)
+  factor discriminant(F, u)
 
   R = S/F
   R' = integralClosure R
+conductor R
   C = findConductorInSubring icMap R
   factor C_0
   f = promote(C_0, R) -- only one...
+
+  icFractions (icMap R,C_0)
+
   factor f
   fractionsSpecificDenominator(icMap R, f)
 
   oo//last//factor
+pf = pushFwd icMap R
+
 ///
 
 -*
@@ -1310,23 +1334,6 @@ needsPackage "IntegralClosure2"
   needsPackage "IntegralClosure2"
   -- test of this. --boehm19
 *-
-///
-  S = QQ[v,u, MonomialOrder => Lex]
-  F = 5*v^6+7*v^2*u^4+6*u^6+21*v^2*u^3+12*u^5+21*v^2*u^2+6*u^4+7*v^2*u
-  ideal F
-  R = S/F
-  KR = field(R, Independents => {v})
-  R' = integralClosure R
-  C = findConductorInSubring icMap R
-  use R
-  assert(C_0 == v^3)
-  factor C_0
-  f = promote(C_0, R) -- only one...
-  fracs = fractionsSpecificDenominator(icMap R, f)
-  fracs  = for x in fracs list (fieldInclusion R) x#0 / (fieldInclusion R) x#1
-  fracs/showFraction
-  assert(oo/value === fracs)
-///
 
 --------------------------------------------------------------------
 TOOSLOW = method()

@@ -140,8 +140,10 @@ addHook((radical, Ideal), radicalOverZZ, Strategy => OverZZ);
   I = ideal(x^6-z^6-y^2*z^4)
   singI = I + ideal jacobian I
   badPrimes singI
-
-  use S
+decompose singI
+R = S/I
+integralClosure R -- fails on codim
+use S
   assert(radical singI == ideal(6*z,6*x,2*y*z,2*x*y,2*x^2-2*z^2,x^3+2*x*z^2+y*z^2+3*z^3))
   -- this next test is not good: the ideals could come in any order, with different generators.
   assert(minimalPrimes singI === {ideal(z,x), ideal(2,x^3+y*z^2+z^3), ideal(3,y,x-z), ideal(3,y,x+z)})
@@ -1243,30 +1245,82 @@ showFractions(List, RingElement) := (x, den) -> (
         (hold (den*y)) / fden
     )
 
-icFractions(RingMap, RingElement) := (F, den) -> ( -- actual denominators can be powers of this
+icFractions(RingMap, RingElement) := (icm, den) -> ( -- actual denominators can be powers of this
     -- eventually, stash this.
-    -- F : R --> R' (R' finite over R)
-    -- den in R, an element in the radical of the conductor of F.
+    -- icm : R --> R' (R' finite over R)
+    -- den in R, an element in the radical of the conductor of icm.
     -- steps:
     --  0. consider the ring R[newvars]/J \isom R'
-    --  1. create the graph ring base[y, x]/(x - F(x), I(R), I(R'));
+    --  1. create the graph ring base[y, x]/(x - icm(x), I(R), I(R'));
     --   OR: assume that the variables of R are the last variables in a block order.
     --  2. den * (vars R' over R) = elems
     --   if elems_i is in R, then gcd over ambient of (den, elems_i). Get fraction.
     --  3. den * elems. Again, if in R, gcd over ambient of (den^2, elems_i).
     --  keep going until all elements are accounted for.
-    R := source F;
-    R' := target F;
+    R := source icm;
+    R' := target icm;
     nbase := numgens R;
     nfiber := numgens R' - nbase;
-    for i from 0 to nbase-1 do if index F (R_i) != nfiber+i then error "rings not in correct form";
+    for i from 0 to nbase-1 do if index icm (R_i) != nfiber+i then error "rings not in correct form";
     -- for now, assume they are the last how many blocks?  1 for now.  But we need to match it with R's monomial order...
     -- let's find the correct subring.
+
     i := 1;
     while numcols selectInSubring(i, vars R') > nbase do i = i+1;
     liftBack := map(R, R', matrix{{nfiber: 0}} | vars R); -- only use once you know argument is in the subring...!
-    insubring := f -> leadTerm(i, f) == f;
-    fden := F den;
+--what's wrong with this?
+    --    insubring := f -> leadTerm(i, f) == f;
+    inSubring := f -> numcols selectInSubring(i, matrix{{f}}) > 0;
+    den' := icm den;
+
+    modgens := drop(flatten entries ((pushFwd icm)_1), 1); -- remove unit element
+    modFracs := for g in modgens list(
+       j := 0;
+       while (g = den'*g; j = j+1; not inSubring g) do ();
+      (hold liftBack g)/(hold den)^j);
+
+    ringgens := select(gens R', x -> not inSubring x);
+    ringFracs := for g in ringgens list(
+       j := 0;
+       while (g = den'*g; j = j+1; not inSubring g) do ();
+      (hold liftBack g)/(hold den)^j);
+  
+{ringFracs, modFracs}
+)
+
+
+simplestElement = method()
+simplestElement Ideal := RingElement => I -> (
+    elts := I_*;
+    f0 := first sort for f in elts list {degree f, size f, f};
+    return last f0)
+
+icFractions RingMap := List => icm -> (
+    den := simplestElement radical conductor icm;
+    icFractions(icm, den)
+    )
+    
+///
+restart
+debug needsPackage "IntegralClosure2"
+S = ZZ/101[a,b,c,Degrees => {3:{1,2}}]
+I =reesIdeal ideal (a^2-b^3, a+b+c, a-1)
+I = reesIdeal ideal(a^3,b^3, c^4)
+R = ring I/I
+R = (flattenRing R)_0
+R' = integralClosure R
+R.icMap
+C = conductor R
+simplestElement C
+simplestElement radical C
+size oo
+netList I_*
+///
+    
+
+
+-*
+    fden := icm den;
     elems := for i from 0 to nfiber-1 list (fden * R'_i);
     den' := lift(fden, ambient R');
 
@@ -1286,6 +1340,7 @@ icFractions(RingMap, RingElement) := (F, den) -> ( -- actual denominators can be
             )
         )
     )
+*-
 ///--Boehm19
 restart
 needsPackage "IntegralClosure2"
@@ -1295,12 +1350,15 @@ needsPackage "IntegralClosure2"
   R = S/F
 --  KR = field(R, Independents => {v})
   R' = integralClosure R
-  C = conductor R
+icm = icMap R
+icFractions icm
+
+C = conductor R
   rC = radical C
-  f = rC_0  
+ den = rC_0  
 
   pushFwd icMap R
-  icFractions(icMap R,f)
+  icFractions(icMap R,den)
 pushFwd icMap R
 gens R'
 ///
@@ -1314,15 +1372,12 @@ needsPackage "IntegralClosure2"
 
   R = S/F
   R' = integralClosure R
-conductor R
-  C = findConductorInSubring icMap R
-  factor C_0
-  f = promote(C_0, R) -- only one...
+den = (radical conductor R)_0
+netList   icFractions (icMap R,den)
+denominator o20_0
+factor oo
+factor den
 
-  icFractions (icMap R,C_0)
-
-  factor f
-  fractionsSpecificDenominator(icMap R, f)
 
   oo//last//factor
 pf = pushFwd icMap R
@@ -2637,14 +2692,19 @@ TEST ///
   loadPackage("IntegralClosure2", Reload => true)
 *-
 TEST ///
-  S = QQ [(symbol Y)_1, (symbol Y)_2, (symbol Y)_3, (symbol Y)_4, symbol x, symbol y, Degrees => {{7, 1}, {5, 1}, {6, 1}, {6, 1}, {1, 0}, {1, 0}}, MonomialOrder => ProductOrder {4, 2}]
+restart
+needsPackage "IntegralClosure2"
+///
+///
+S = QQ [(symbol Y)_1, (symbol Y)_2, (symbol Y)_3, (symbol Y)_4, symbol x, symbol y, Degrees => {{7, 1}, {5, 1}, {6, 1}, {6, 1}, {1, 0}, {1, 0}}, MonomialOrder => ProductOrder {4, 2}]
   J =
     ideal(Y_3*y-Y_2*x^2,Y_3*x-Y_4*y,Y_1*x^3-Y_2*y^5,Y_3^2-Y_2*Y_4*x,Y_1*Y_4-Y_2^2*y^3)
   R = S/J       
   elapsedTime R' = integralClosure R
   conductor R
-  findConductorInSubring(icMap R)
-  icFractions(icMap R, oo_0)
+  den = (radical conductor R)_0
+  icFractions(icMap R, den)
+pushFwd icMap R
   KF = frac(ring ideal R')
   M1 = first entries substitute(vars R, KF)
   M2 = apply(R.icFractions, i -> matrix{{i}})
@@ -2971,7 +3031,8 @@ TEST ///
   elapsedTime S' = integralClosure S
   use S
   -- showFractions(vars S', a) -- get icFractions to work here, perhaps as icFractions(S, den).
-  icFractions S -- MES: Seemingly poor choice for fractions?
+use S
+  icFractions (icMap S, b) -- MES: Seemingly poor choice for fractions?
   M = pushForward (icMap S, S'^1);
   assert(degree (M/(M_0)) == 2) -- MES: what are we testing here?
   assert(# icFractions S == 7)

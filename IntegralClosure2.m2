@@ -26,17 +26,25 @@ importFrom_Core { "generatorSymbols" } -- use as R#generatorSymbols.
 importFrom_MinimalPrimes { "rad" } -- a function we seem to be using in integralClosure.
 
 export{
+    -- code over ZZ
+     "badPrimes",
+     "contractOverZZ",
+     "radicalOverZZ",
+     "decomposeOverZZ",
+     "OverZZ",
     -- methods
      "integralClosure", 
      "icFractions", 
      "icMap", 
      "conductor", 
      "makeS2",
+     "canonicalIdeal",
      "idealizer", 
      "ringFromFractions",
      "findConductorInSubring",
      "fractionsSpecificDenominator",
      "showFraction",
+     "showFractions",
      -- small characteristic method
      "icFracP", 
      "icPIdeal",
@@ -54,6 +62,134 @@ export{
      "Vasconcelos"
      } 
 
+----------- below: radicals, minimal primes over ZZ ----------------------
+-- to be placed elsewhere later (e.g. in MinimalPrimes package).
+badPrimes = method()
+badPrimes Ideal := (IZ) -> (
+    -- assumption: I is an ideal in a flattened polynomial ring over ZZ.
+    R := ring IZ;
+    if coefficientRing R =!= ZZ then error "expected ideal in a flattened polynomial ring over ZZ";
+    ltI := leadTerm gb IZ;
+    badP := for f in flatten entries ltI list leadCoefficient f;
+    -- now we find all primes which divide lcm badP;
+    badprimes := sort unique flatten for a in badP list (
+        if a < 0 then a = -a;
+        facs := (factor a)//toList/toList;
+        facs/first);
+    badprimes
+    )
+
+contractOverZZ = method()
+contractOverZZ(Ideal, Ring) := Ideal => (IQQ, RZ) -> (
+    -- remove all denominators, lift to RZ, find badprimes, saturate (over ZZ)
+    liftBack := map(RZ, ring IQQ, vars RZ);
+    Ilift := ideal for f in IQQ_* list (
+        g := (terms f)/leadCoefficient//gcd;
+        liftBack(1/g * f)
+        );
+    badprimes := badPrimes Ilift;
+    saturate(Ilift, product badprimes)
+    )
+
+-- need:
+-- (a) given I in R = ZZ[x], find h = product of primes in ZZ s.t. I QQ[x] \cap ZZ[x] = saturate(I, h).
+-- (b) given J in R = QQ[x], find J \cap ZZ[x] ( = saturate(I,h), all gens over ZZ, lifted to ZZ[x]).
+
+-- TODO: not tested over unflattened rings, or quotient rings.  Actually, only one test has been done!
+decomposeOverZZ = (opts, I) -> (
+    R := ring I;
+    if not isCommutative R then return null;
+    if not (instance(R, PolynomialRing) or instance(R, QuotientRing))
+      then return null;
+    if coefficientRing R =!= ZZ then return null;
+    (S, F) := flattenRing R;
+    IZ := F I;
+    badprimes := badPrimes IZ;
+    RQ := QQ (monoid R);
+    IQQ := (map(RQ, R)) I;
+    comps0 := for comp in decompose IQQ list contractOverZZ(comp, R);
+    finitecomps := flatten for p in badprimes list (
+        Sp := (ZZ/p)(monoid S);
+        Ip := (map(Sp, S, vars Sp)) I;
+        compsIp := decompose Ip;
+        for C in compsIp list (ideal p_S) + sub(C, S)
+        );
+    -- now we can remove any component of finitecomps, which contains any component of comps0
+    -- these are the only redunduncies that can occur
+    finitecompsMinimal := for c in finitecomps list (
+        if any(comps0, c0 -> isSubset(c0, c)) then continue else c
+        );
+    answer := join(comps0, finitecompsMinimal);
+    answer
+    )
+addHook((minimalPrimes, Ideal), decomposeOverZZ, Strategy => OverZZ);
+
+radicalOverZZ = (opts, I) -> (
+    ret := decomposeOverZZ(opts, I);
+    if ret === null then return null; -- this should happen quickly.
+    intersect ret)
+addHook((radical, Ideal), radicalOverZZ, Strategy => OverZZ);
+
+"TEST"  -- radical over ZZ, in progress 3/22/26
+/// 
+-*
+  restart
+  needsPackage "IntegralClosure2"
+*-
+  S = ZZ[x,y,z]
+  I = ideal(x^6-z^6-y^2*z^4)
+  singI = I + ideal jacobian I
+  badPrimes singI
+
+  use S
+  assert(radical singI == ideal(6*z,6*x,2*y*z,2*x*y,2*x^2-2*z^2,x^3+2*x*z^2+y*z^2+3*z^3))
+  -- this next test is not good: the ideals could come in any order, with different generators.
+  assert(minimalPrimes singI === {ideal(z,x), ideal(2,x^3+y*z^2+z^3), ideal(3,y,x-z), ideal(3,y,x+z)})
+
+  -- remove after this?
+  gens gb singI
+  -- bad primes: 2,3.
+  I1 = saturate(singI, 6)
+  singI : 6 == I1
+  singI : 36 == I1
+  isSubset(6 * I1, singI)
+  isSubset(36 * I1, singI)
+
+  I2 = trim(ideal 6 + singI)
+  I21 = I2 : 2
+  I2 : 2 == I2 : 4 -- true
+  I2 == intersect(I21, I2 + ideal(2)) -- true
+  I22 = trim(ideal 2 + I2)
+
+  SQ = QQ (monoid S)
+  S2 = (ZZ/2) (monoid S)
+  S3 = (ZZ/3) (monoid S)
+  
+  decompose sub(I21, S3) -- {ideal (z, x), ideal (y, x - z), ideal (y, x + z)}
+  decompose sub(I22, S2) -- {ideal(x^3+y*z^2+z^3)}
+  decompose sub(I1, SQ) -- {ideal (z, x)}
+  singIrad = intersect(ideal(x,z), ideal(2, x^3+y*z^2+z^3), ideal(3, y, x-z), ideal(3, y, x+z))
+  -- this should be the radical of singI!
+
+  (gens singIrad) % singI
+  (gens singIrad^2) % singI
+  (gens singIrad^3) % singI  
+
+  (6*z)^6 % singI
+  singIrad
+  ((6*z)^6*singIrad) : singIrad
+
+  IsingQ = sub(singI, SQ)
+  Ising2 = sub(singI, S2)
+  Ising3 = sub(singI, S3)
+  decompose IsingQ
+  decompose Ising2
+  decompose Ising3
+  
+///
+----------- above: radicals, minimal primes over ZZ ----------------------
+
+ 
 makeVariable = opts -> (
      s := opts.Variable;
      if instance(s,Symbol) then s else
@@ -116,13 +252,13 @@ integralClosure(Ring, Ring) := Ring => o -> (B,A) -> (
     C
     )
 
-integralClosure Ring := Ring => o -> (R) -> (
+integralClosure Ring := Ring => opts -> (R) -> (
      -- R: Ring, a reduced affine ring. TODO: can we handle integral closures over ZZ as well?
      --   answer: if we choose J in the non-normal ideal some other way?
      if R.?icMap then return target R.icMap;
-     verbosity := o.Verbosity;
+     verbosity := opts.Verbosity;
 
-     strategies := if instance(o.Strategy, Symbol) then {o.Strategy} else o.Strategy;
+     strategies := if instance(opts.Strategy, Symbol) then {opts.Strategy} else opts.Strategy;
      strategyList := {AllCodimensions, RadicalCodim1, Radical, 
              StartWithOneMinor, SimplifyFractions, Vasconcelos};
      if not isSubset(strategies, strategyList) then
@@ -131,7 +267,7 @@ integralClosure Ring := Ring => o -> (R) -> (
        error " expected Strategy option to include at most one of AllCodimensions, Radical, Radical";
 
      if ultimate(coefficientRing, R) =!= coefficientRing R
-     then return integralClosure(R, coefficientRing R, o);
+     then return integralClosure(R, coefficientRing R, opts);
 
      (S,F) := flattenRing R;
 
@@ -140,19 +276,19 @@ integralClosure Ring := Ring => o -> (R) -> (
      T := ambient S;
      kk := ultimate(coefficientRing,T);
      allgens := generators(T, CoefficientRing => kk);
-     keepvars := o.Keep; -- TODO MES: bug? these will not be in the correct ring, bring them over?
-       -- TODO MES: check that o.Keep contains a list of variables in the ring R?
+     keepvars := opts.Keep; -- TODO MES: bug? these will not be in the correct ring, bring them over?
+       -- TODO MES: check that opts.Keep contains a list of variables in the ring R?
      if keepvars === null then keepvars = allgens;
 
      P := ideal S;
      startingCodim := codim P;
      isCompleteIntersection := (startingCodim == numgens P);
-     G := map(frac R, frac S, substitute(F^-1 vars S, frac R));
+     --G := map(frac R, frac S, substitute(F^-1 vars S, frac R));
 
      isS2 := isCompleteIntersection; -- true means is, false means 'do not know'
      nsteps := 0;
      t1 := null;  -- used for timings
---3/4/26: if  homogeneous, checking Cohen-Macaulay with res might avoid some S2 comps.
+     --3/4/26: if  homogeneous, checking Cohen-Macaulay with res might avoid some S2 comps.
      
      allCodimensionsNotPresent := not member(AllCodimensions, strategies);
      codim1only := not member(AllCodimensions, strategies);
@@ -189,54 +325,52 @@ integralClosure Ring := Ring => o -> (R) -> (
      if not isS2 and allCodimensionsNotPresent then (
          if verbosity >= 1 then 
          << "   S2-ification " << flush;
-         t1 = (timing F'G' := makeS2(target F,Variable=>makeVariable o,Verbosity=>verbosity));
+         t1 = (timing F' := makeS2(target F,Variable=>makeVariable opts,Verbosity=>verbosity));
          nsteps = nsteps + 1;
          if verbosity >= 1 then
              << t1#0 << " seconds" << endl;
-	 if F'G' === null then (
+	 if F' === null then (
              << "warning: probabilistic computation of S2-ification failed " << endl;
              << "         reverting to standard algorithm" << endl;
              strategies =  append(strategies, AllCodimensions);
              codim1only = false
 	 ) else (
-             (F', G') := F'G';
              F = F'*F;
-	     G = G*G';
 	     -- also extend J to be in this ring
 	     J = trim(F' J);
 	     isS2 = true;
 	     )
          );
 
-     denom := null; --mes--o.Denominator; -- either null (means for the routine to find a possible denominator),
+     denom := null; --mes--opts.Denominator; -- either null (means for the routine to find a possible denominator),
      -- or a nzd in the radical of the ideal J.
      
      -------------------------------------------
      -- Step 3: incrementally add to the ring --
      -------------------------------------------
+     F0 := null; -- is set below.
      if not isR1 or not codim1only then (     
      -- loop (note: F : R --> Rn, G : frac Rn --> frac R)
      while (
-	  F1 := F;
+	  R1 := target F;
 
 	  if verbosity >= 1 then << " [step " << nsteps << ": " << flush;
 
-	  t1 = timing((F,G,J,denom) = integralClosure1(F1,G,J,denom,nsteps,makeVariable o,keepvars,strategies,verbosity));
-
-          if verbosity >= 1 then (
-		 if verbosity >= 5 then (
-		      << "  time " << t1#0<< " sec  fractions " << first entries G.matrix << "]" << endl << endl;
-		      )
-		 else (
-		      << "  time " << t1#0<< " sec  #fractions " << numColumns G.matrix << "]" << endl;
-		      );
-		 );
+          t1 = timing((F0,J,denom) = integralClosure1(R1,J,denom,nsteps,makeVariable opts,keepvars,strategies,verbosity));
+          F = F0 * F;
+          -- if verbosity >= 1 then (
+	  --        if verbosity >= 5 then (
+	  --             << "  time " << t1#0<< " sec  fractions " << first entries G.matrix << "]" << endl << endl;
+	  --             )
+	  --        else (
+	  --             << "  time " << t1#0<< " sec  #fractions " << numColumns G.matrix << "]" << endl;
+	  --             );
+	  --        );
 
 	  nsteps = nsteps + 1;
-	  nsteps < o.Limit and target F1 =!= target F
+	  nsteps < opts.Limit and target F0 =!= source F0
 	  ) do (
 	  ));
-     R.icFractions = first entries G.matrix;
      R.icMap = F;
      target R.icMap
      )
@@ -355,28 +489,23 @@ radicalJ = (J,codim1only,nsteps,strategies,verbosity) -> (
 --       doingMinimalization (always true, can't give this: it is currently a local variable set to true).
 -- Outputs:
 --     F1:RingMap, F1 : R --> R1, R1 is a (potentially) larger partial normalization.
---     G1:RingMap, G1: frac R1 --> frac R (list of fractions, one for each variable in the new R1)
 --     J1:Ideal, J1 = radJ R1, the extension of the radical of J to R1.
 --     denom1: either null, if denom===null, or 'denom' in the ring R1.
 -- Features of the output:
---     The ring R0 is integrally closed (normal) iff target F === target F1.
+--     The ring R0 is integrally closed (normal) iff R0 === R1.
 --     New variables in the ring R1 will be named varname_(nsteps, 0), varnames_(nsteps, 1), ...
 
-integralClosure1 = (F,G,J,denom,nsteps,varname,keepvars,strategies,verbosity) -> (
+integralClosure1 = (R0, J, denom, nsteps, varname, keepvars, strategies, verbosity) -> (
      codim1only := not member(AllCodimensions, strategies);
 
-     R0 := target F;
-     J = trim J;
-     radJ := radicalJ(J, codim1only, nsteps, strategies,verbosity);
-     if #radJ == 0 then return (F,G,ideal(1_R0),denom);
-     radJ = trim intersect radJ;
+     if ring J =!= R0 then error "expected ideal in given ring";
+     --J = trim J; -- this seems bad sometimes...
+     radJ := radical J;
+     if radJ == 1 then return (id_R0,ideal(1_R0),denom);
 
      f := if denom === null then findSmallGen radJ else denom; -- we assume that f is a non-zero divisor!!
      
-     --TODO: put in a test for f a nzd, and an option isDomain => true
-     --syz matrix{{f}} ==0
-
-     -- Compute Hom_S(radJ,radJ), using f as the common denominator.
+     -- Compute Hom_R0(radJ,radJ), using f as the common denominator.
 
      if verbosity >= 3 then <<"      small gen of radJ: " << f << endl << endl;
      if verbosity >= 6 then << "rad J: " << netList flatten entries gens radJ << endl;
@@ -389,22 +518,23 @@ integralClosure1 = (F,G,J,denom,nsteps,varname,keepvars,strategies,verbosity) ->
 
      --TODO: make verbosity into Verbosity, a passed option
      
-     -- here is where we improve or change our fractions
      if He == 0 then (
 	  -- there are no new fractions to add, and this process will add no new fractions
-	  return (F,G,ideal(1_R0),denom);
+	  return (id_R0,radJ,denom);
 	  );
 
      if verbosity >= 6 then (
 	  << "        about to add fractions" << endl;
-          << "        " << apply(flatten entries He, g -> G(g/f)) << endl;
+          -- << "        " << apply(flatten entries He, g -> G(g/f)) << endl;
 	  );
 
      if verbosity >= 2 then <<"      idlizer2:  " << flush;
+
+     -- here is where we improve or change our fractions
      
     -- This is almost always a bad idea:  !!
     -- the issue is that the fraction field operations can be very bad.
-       if member(SimplifyFractions, strategies)
+       if false and member(SimplifyFractions, strategies)
        then (He,fe) = (
      	    Hef := apply(flatten entries He, h->h/f);
      	    Henum := Hef/numerator;
@@ -419,40 +549,34 @@ integralClosure1 = (F,G,J,denom,nsteps,varname,keepvars,strategies,verbosity) ->
 	     
      if verbosity >= 6 then (
 	  << "        reduced fractions: " << endl;
-          << "        " << apply(flatten entries He, g -> G(g/fe)) << endl;
+          --<< "        " << apply(flatten entries He, g -> G(g/fe)) << endl;
 	  );
 
-     t1 = timing((F0,G0) := ringFromFractions(He,fe,Variable=>varname,Index=>nsteps));
-     
+     t1 = timing(F0 := ringFromFractions(He, fe, Variable=>varname, Index=>nsteps));
+      
      if verbosity >= 2 then << t1#0 << " seconds" << endl;
      
      -- These would be correct, except that we want to clean up the
      -- presentation
      R1temp := target F0;
-     if R1temp === R0 then return(F,G,radJ,denom);
+     if R1temp === R0 then return(id_R0, radJ,denom);
 
-     if doingMinimalization then (
-       if verbosity >= 2 then << "      minpres:   " << flush;
-       R1tempAmbient := ambient R1temp;
-       keepindices := apply(keepvars, x -> index substitute(x, R1tempAmbient));
-       t1 = timing(R1 := minimalPresentation(R1temp, Exclude => keepindices));
-       if verbosity >= 2 then << t1#0 << " seconds" << endl;
-       i := R1temp.minimalPresentationMap; -- R1temp --> R1
-       iinv := R1temp.minimalPresentationMapInv.matrix; -- R1 --> R1temp
-       iinvfrac := map(frac R1temp , frac R1, substitute(iinv,frac R1temp));
+     if verbosity >= 2 then << "      minpres:   " << flush;
+     R1tempAmbient := ambient R1temp;
+     keepindices := apply(keepvars, x -> index substitute(x, R1tempAmbient));
+     t1 = timing(R1 := minimalPresentation(R1temp, Exclude => keepindices));
+     if verbosity >= 2 then << t1#0 << " seconds" << endl;
+     i := R1temp.minimalPresentationMap; -- R1temp --> R1
+     -- iinv := R1temp.minimalPresentationMapInv.matrix; -- R1 --> R1temp
+     --   iinvfrac := map(frac R1temp , frac R1, substitute(iinv,frac R1temp));
      
        -- We also want to trim the ring     
-       F0 = i*F0; -- R0 --> R1
+       F0' := i*F0; -- R0 --> R1
        if denom === null then
-          (F0*F,G*G0*iinvfrac,F0 radJ, null)
+          (F0', F0' radJ, null) -- 3/21/26: TODO: replace null with the actual denominator used?
        else
-          (F0*F,G*G0*iinvfrac,F0 radJ, F0 denom)
-       )
-     else if denom === null then
-       (F0,G0,F0 radJ,null)
-     else
-       (F0,G0,F0 radJ, F0 denom)
-     )
+          (F0', F0' radJ, F0' denom)
+    )
 
 ---------------------------------------------------
 -- Support routines, perhaps should be elsewhere --
@@ -527,30 +651,31 @@ idealizer = method(Options=>{
         }
     )
 
-idealizer (Ideal, RingElement) := o -> (J, g) ->  (
+idealizer (Ideal, RingElement) := opts -> (J, g) ->  (
      -- J is an ideal in a ring R containing a nonzerodivisor
      -- g is a nonzero divisor in J
-     -- compute R1 = Hom(J,J) = (g*J:J)/g
-     -- returns a sequence (F,G), where 
+     -- compute R1 = Hom(J,J) = (g*J:J)/g (default, Strategy => {})
+     --   or computes R1 = Hom(J^-1, J^-1), where J^-1 = Hom_R(J,R) (Strategy => {Vasconcelos})
+     -- returns a RingMap F, where 
      --   F : R --> R1 is the natural inclusion
-     --   G : frac R1 --> frac R, 
-     -- optional arguments:
-     --   o.Variable: base name for new variables added
-     --   o.Index: the first subscript to use for such variables
+     -- Optional arguments:
+     --   opts.Variable: base name for new variables added
+     --   opts.Index: the first subscript to use for such variables
      R := ring J;
 
-     (H, f) := if member(Vasconcelos, o.Strategy) then (
+     (H, f) := if member(Vasconcelos, opts.Strategy) then (
                     vasconcelos (J,g))
                  else 
                     endomorphisms (J,g);
      
-     if o.Verbosity >= 5 then << "endomorphism fractions:" << netList prepend(f,flatten entries H) << endl;
+     if opts.Verbosity >= 5 then << "endomorphism fractions:" << netList prepend(f,flatten entries H) << endl;
      if H == 0 then 
-         (id_R, map(frac R, frac R, vars frac R)) -- in this case R is isomorphic to Hom(J,J)
+         id_R -- in this case R is isomorphic to Hom(J,J)
      else 
-         ringFromFractions(H, f, Variable=>makeVariable o, Index=>o.Index, Verbosity => o.Verbosity)
+         ringFromFractions(H, f, Variable=>makeVariable opts, Index=>opts.Index, Verbosity => opts.Verbosity)
      )
 
+-- private function for `idealizer`
 endomorphisms = method()
 endomorphisms(Ideal,RingElement) := (I,f) -> (
      --computes generators in frac ring I of
@@ -565,6 +690,7 @@ endomorphisms(Ideal,RingElement) := (I,f) -> (
      (H,f)
      )
 
+-- private function for `idealizer`
 vasconcelos = method()
 vasconcelos(Ideal,RingElement) := (I,f) -> (
      --computes generators in frac ring I of
@@ -589,65 +715,62 @@ ringFromFractions = method(Options=>{
 	  Variable => "w", 
 	  Index => 0,
 	  Verbosity => 0})
-ringFromFractions (Matrix, RingElement) := o -> (H, f) ->  (
-     -- f is a nonzero divisor in R
-     -- H is a (row) matrix of numerators, elements of R
-     -- Forms the ring R1 = R[H_0/f, H_1/f, ..].
-     -- returns a sequence (F,G), where 
-     --   F : R --> R1 is the natural inclusion
-     --   G : frac R1 --> frac R, 
-     -- optional arguments:
-     --   o.Variable: base name for new variables added, defaults to w
-     --   o.Index: the first subscript to use for such variables, defaults to 0
-     --   so in the default case, the new variables produced are w_{0,0}, w_{0,1}...
-     -- MES TODO: possible problem: in the inhomogeneous case, we might generate variables of degree 0.
-     --   While this shouldn't be a problem, 'decompose' fails under this situation.
-     --   Fix for now: if singly graded, but not homog, if a degree comes out <= 0 then set it to 1.
-          isgraded := isHomogeneous H and isHomogeneous f;
-          R := ring H;
-       	  fractions := apply(first entries H,i->i/f);
-          Hf := H | matrix{{f}};
-     	  -- Make the new polynomial ring.
-     	  n := numgens source H;
-     	  newdegs := degrees source H - toList(n:degree f);
-          if not isgraded and #newdegs#0 === 1 and any(newdegs, i -> i == {0})
-          then newdegs = for d in newdegs list if first d > 0 then d else {1};
-     	  degs := join(newdegs, (monoid R).Options.Degrees);
-     	  MO := prepend(GRevLex => n, (monoid R).Options.MonomialOrder);
-          kk := coefficientRing R;
-	  var := makeVariable o;
-     	  A := kk(monoid [var_(o.Index,0)..var_(o.Index,n-1), R#generatorSymbols,
-		    MonomialOrder=>MO, Degrees => degs]);
-     	  I := ideal presentation R;
-     	  IA := ideal ((map(A,ring I,(vars A)_{n..numgens R + n-1})) (generators I));
-     	  B := A/IA; -- this is sometimes a slow op
+ringFromFractions (Matrix, RingElement) := RingMap => opts -> (H, f) ->  (
+    -- f is a nonzero divisor in R
+    -- H is a (row) matrix of numerators, elements of R
+    -- Forms the ring R1 = R[H_0/f, H_1/f, ..].
+    -- returns a ring map F, where 
+    --   F : R --> R1 is the natural inclusion
+    -- Optional arguments:
+    --   opts.Variable: base name for new variables added, defaults to w
+    --   opts.Index: the first subscript to use for such variables, defaults to 0
+    --   so in the default case, the new variables produced are w_(0,0), w_(0,1)...
+    -- ASSUMPTIONS:
+    --   a. H/f = Hom(I,I), for some ideal in R.
+    --   b. R is presented as a flattened ring: kk[vars]/ideal, where kk is the base field.
+    isgraded := isHomogeneous H and isHomogeneous f;
+    R := ring H;
+    Hf := H | matrix{{f}};
+    -- Make the new polynomial ring.
+    -- This section avoids creating degree zero variables.
+    n := numgens source H;
+    newdegs := degrees source H - toList(n:degree f);
+    if not isgraded and #newdegs#0 === 1 and any(newdegs, i -> i == {0})
+    then newdegs = for d in newdegs list if first d > 0 then d else {1};
+    degs := join(newdegs, (monoid R).Options.Degrees);
+    -- 
+    MO := prepend(GRevLex => n, (monoid R).Options.MonomialOrder);
+    kk := coefficientRing R;
+    var := makeVariable opts; -- TODO 3/20/26: use variable iterators?
+    A := kk(monoid [var_(opts.Index,0)..var_(opts.Index,n-1), R#generatorSymbols, -- 3/20/26: could use `gens ambient R`.
+            MonomialOrder=>MO, Degrees => degs]);
+    I := ideal presentation R;
+    IA := ideal ((map(A,ring I,(vars A)_{n..numgens R + n-1})) (generators I));
+    B := A/IA; -- this is sometimes a slow op
 
-     	  -- Make the linear and quadratic relations
-     	  varsB := (vars B)_{0..n-1};
-     	  RtoB := map(B, R, (vars B)_{n..numgens R + n - 1});
-     	  XX := varsB | matrix{{1_B}};
-     	  -- Linear relations in the new variables
-     	  lins := XX * RtoB syz Hf; 
-     	  -- linear equations(in new variables) in the ideal
-     	  -- Quadratic relations in the new variables
-     	  tails := (symmetricPower(2,H) // f) // Hf;
-          --3/4/26: if Hom(I,I) = R[a/f,1] then a^2/f^2 = c(a/f)+d, so a^2 = caf+df^2;
-          --so (symmetricPower(2,H) // f)  = ca+df, and ca+df //Hf = (c,d).
-     	  tails = RtoB tails;
-     	  quads := matrix(B, entries (symmetricPower(2,varsB) - XX * tails));
-	  both := ideal lins + ideal quads;
+    -- Make the linear and quadratic relations
+    varsB := (vars B)_{0..n-1};
+    RtoB := map(B, R, (vars B)_{n..numgens R + n - 1});
+    XX := varsB | matrix{{1_B}};
+    -- Linear relations in the new variables
+    lins := XX * RtoB syz Hf; 
+    -- linear equations(in new variables) in the ideal
+    -- Quadratic relations in the new variables
+    tails := (symmetricPower(2,H) // f) // Hf;
+    --3/4/26: if Hom(I,I) = R[a/f,1] then a^2/f^2 = c(a/f)+d, so a^2 = caf+df^2;
+    --so (symmetricPower(2,H) // f)  = ca+df, and ca+df //Hf = (c,d).
+    tails = RtoB tails;
+    quads := matrix(B, entries (symmetricPower(2,varsB) - XX * tails));
+    both := ideal lins + ideal quads;
 	  
-	  gb both; -- sometimes slow
-	  Bflat := flattenRing (B/both); --sometimes very slow
-	  R1 := trim Bflat_0; -- sometimes slow
+    gb both; -- sometimes slow
+    Bflat := flattenRing (B/both); --sometimes very slow
+    R1 := trim Bflat_0; -- sometimes slow
 
-     	  -- Now construct the trivial maps
-     	  F := map(R1, R, (vars R1)_{n..numgens R + n - 1});
-	  G := map(frac R, frac R1, matrix{fractions} | vars frac R);
-
-	  (F, G)
-     )
-
+    -- Now construct the return value
+    F := map(R1, R, (vars R1)_{n..numgens R + n - 1});
+    F
+    )
 
 fInIdeal = (f,I) -> (
      -- << "warning: fix fInIdeal" << endl;
@@ -687,49 +810,14 @@ isNormal(Ring) := Boolean => (R) -> (
      )
 
 --------------------------------------------------------------------
--- MES TODO: don't require homogeneous!!
 conductor = method()
 conductor RingMap := Ideal => phi ->(
---    needsPackage "PushForward";
     pf := pushFwd phi;
     assert(pf#1_(0,0) == 1);
     pmod := pf_0_{0};
     ann coker pmod
     )
-
--*
-conductor = method()
-conductor RingMap := Ideal => (F) -> (
-     --Input:  A ring map where the target is finitely generated as a 
-     --module over the source.
-     --Output: The conductor of the target into the source.
-     --Assumption: if R = source F, then R.icFractions is set
-     --  or R is homogeneous
-     R := source F;
-     if false and R.?icFractions
-       then (
-            -- MES TODO: why is this commented out?
-	    -- here we have a set of fractions which generate the integral closure
-	    L := R.icFractions;
-	    L = apply(L, h -> {numerator h, denominator h});
-	    L = select(L, h -> h#1 != 1);
-	    ans := ideal(1_R);
-	    scan(L, h -> (
-		      L1 := (ideal h#1) : h#0;
-		      ans = trim intersect(ans, L1);
-		      ));
-	    ans
-	    )
-     else if isHomogeneous (source F)
-     	  then(M := presentation pushForward(F, (target F)^1);
-     	       P := target M;
-     	       intersect apply((numgens P)-1, i->(
-	       m:=matrix{P_(i+1)};
-	       I:=ideal modulo(m,matrix{P_0}|M))))
-	  else error "conductor: expected a homogeneous ideal in a graded ring"
-     )
-*-
- conductor Ring := (R) -> conductor icMap R
+conductor Ring := Ideal => R -> conductor icMap R
 
 icMap = method()
 icMap(Ring) := RingMap => R -> (
@@ -1061,20 +1149,21 @@ canonicalIdeal Ring := R -> (
      trim (f^-1) promote(Jp,S)
      )
 
-makeS2 = method(Options=>{
-	  Variable => "w",
-	  Verbosity => 0})
-makeS2 Ring := o -> R -> (
+makeS2 = method(Options => {
+        Variable => "w",
+        Verbosity => 0 -- 3/20/26: not currently used!?
+        })
+-- note, see also S2 in CompleteIntersectionResolutions
+makeS2 Ring := RingMap => opts -> R -> (
      --try to find the S2-ification of a domain (or more generally an
      --unmixed, generically Gorenstein ring) R.
      --    Input: R, an affine ring
-     --    Output: (like "idealizer") a sequence whose 
-     -- first element is a map of rings from R to its S2-ification,
-     --and whose second element is a list of the fractions adjoined 
+     --    Output: (like "idealizer") a RingMap F : R --> R'
+     --      where R' is the "S2-ification" of R.
      --to obtain the S2-ification.
      --    Uses the method of Vasconcelos, "Computational Methods..." p. 161, taking the idealizer
-     --of a canonical ideal.
-     --Assumes that first element of canonicalIdeal R is a nonzerodivisor; else returns error.
+     --    of a canonical ideal.
+     --Assumes that first element of canonicalIdeal R is a nonzerodivisor; else raises error (or returns null?!)
      --CAVEAT:
           --If w_0 turns out to be a zerodivisor
 	  --then we should replace it with a general element of w. But if things
@@ -1082,37 +1171,13 @@ makeS2 Ring := o -> R -> (
 	  --or some such. How should this be done?? There should be a "general element"
 	  --routine...
      w := canonicalIdeal R;
-     if w === null then return null;
-     if ideal(0_R):w_0 == 0 then idealizer(w,w_0,Variable=>makeVariable o)
+     if w === null then return null; -- 3/20/26: when does this happen?
+     if ideal(0_R):w_0 == 0 then idealizer(w,w_0,Variable=>makeVariable opts)
      else (
 	  return null;
 	  error"first generator of the canonical ideal was a zerodivisor"
 	  )
      )
--*
-S2 = method() -- from Eisenbud's CompleteIntersectionResolutions.m2
-S2(ZZ,Module) := Matrix => (b,M)-> (
-     --returns a map M --> M', where M' = \oplus_{d>=b} H^0(\tilde M).
-     --the map is equal to the S2-ification AT LEAST in degrees >=b.
-     S := ring M;
-     r:= regularity M;
-     if b>r+1 then return id_(truncate(b,M));
-     tbasis := basis(r+1-b,S^1); --(vars S)^[r-b];
-     t := map(S^1, module ideal tbasis, tbasis);
-     s:=Hom(t,M)
-     --could truncate source and target; but if we do it with
-     --the following line then we get subquotients AND AN ERROR!
---     inducedMap(truncate(b,target s),truncate(b,source s),s)
-     )
- TEST ///--of S2
-S = ZZ/101[a,b,c];
-M = S^1/intersect(ideal"a,b", ideal"b,c",ideal"c,a");
-assert( (hf(-7..1,coker S2(-5,M))) === (0, 3, 3, 3, 3, 3, 3, 2, 0))
-makeS2 (S/intersect(ideal"a,b", ideal"b,c",ideal"c,a"))
--- 'betti' no longer accepts non-free modules
---assert( (betti prune S2(-5,M)) === new BettiTally from {(0,{-6},-6) => 3, (1,{0},0) => 1} )
-///
-*-
 
 findConductorInSubring = method()
 findConductorInSubring RingMap := (phi) -> (
@@ -1121,8 +1186,10 @@ findConductorInSubring RingMap := (phi) -> (
     S := ambient R;
     KR := field R;
     condR := conductor R;
-    fibervars := for s in gens (fieldInfo KR).Finites list sub(s, S); -- TODO: remove 'sub'
-    eliminate(fibervars, lift(conductor R, S))
+    indeps := support first independentSets ideal R;
+    fibervars := sort toList(set gens S - set indeps);
+    --fibervars := for s in gens (fieldInfo KR).Finites list sub(s, S); -- TODO: remove 'sub'
+    eliminate(fibervars, lift(condR, S))
     )
 
 fractionsSpecificDenominator = method()
@@ -1148,6 +1215,18 @@ fractionsSpecificDenominator(RingMap, RingElement) := List => (phi, f) -> (
       );
     fracs
     )
+fractionsSpecificDenominator(RingMap, RingElement) := List => (phi, f) -> (
+    -- phi : R --> R', where R' is integral over R.
+    -- f in R is an element of the conductor of phi
+    -- returns a list of pairs {numer, denom}, all elements of R.
+
+    -- (phi f) * vars target F
+    -- lift answer back to R
+    --
+    numers := (phi f) * vars target phi;
+    numersR := sub(numers, source phi); -- assumes TOO MUCH! need more robust way to lift back.
+    flatten entries(1/f * numersR) -- TODO: this is NOT what we want!  Want denominator factored.
+    )
 
 showFraction = method()
 showFraction RingElement  := (x) -> (
@@ -1155,6 +1234,58 @@ showFraction RingElement  := (x) -> (
     den := mydenominator x;
     (hold (den*x)) / factor den
     )
+
+showFractions = method()
+showFractions(List, RingElement) := (x, den) -> (
+    -- x is a list of elements which can have den as a denominator
+    fden := factor den;
+    for y in x list 
+        (hold (den*y)) / fden
+    )
+
+icFractions(RingMap, RingElement) := (F, den) -> ( -- actual denominators can be powers of this
+    -- eventually, stash this.
+    -- F : R --> R' (R' finite over R)
+    -- den in R, an element in the radical of the conductor of F.
+    -- steps:
+    --  0. consider the ring R[newvars]/J \isom R'
+    --  1. create the graph ring base[y, x]/(x - F(x), I(R), I(R'));
+    --   OR: assume that the variables of R are the last variables in a block order.
+    --  2. den * (vars R' over R) = elems
+    --   if elems_i is in R, then gcd over ambient of (den, elems_i). Get fraction.
+    --  3. den * elems. Again, if in R, gcd over ambient of (den^2, elems_i).
+    --  keep going until all elements are accounted for.
+    R := source F;
+    R' := target F;
+    nbase := numgens R;
+    nfiber := numgens R' - nbase;
+    for i from 0 to nbase-1 do if index F (R_i) != nfiber+i then error "rings not in correct form";
+    -- for now, assume they are the last how many blocks?  1 for now.  But we need to match it with R's monomial order...
+    -- let's find the correct subring.
+    i := 1;
+    while numcols selectInSubring(i, vars R') > nbase do i = i+1;
+    liftBack := map(R, R', matrix{{nfiber: 0}} | vars R); -- only use once you know argument is in the subring...!
+    insubring := f -> leadTerm(i, f) == f;
+    fden := F den;
+    elems := for i from 0 to nfiber-1 list (fden * R'_i);
+    den' := lift(fden, ambient R');
+    for j from 0 to nfiber-1 list (
+        g := fden * R'_j;
+        if not insubring g then 0_R
+        else (
+            g1 := liftBack g;
+            g1h := lift(g1, ambient R);
+            denh := lift(den, ambient R);
+            h := gcd(g1h, denh);
+            if h != 1 then (
+                g1h = g1h // h;
+                denh = denh // h;
+                );
+            (hold g1h) / factor denh
+            )
+        )
+    )
+
 ///
 restart
 needsPackage "IntegralClosure2"
@@ -2045,23 +2176,21 @@ doc ///
   Headline
     find presentation for f.g. ring  
   Usage
-    (F,G) = ringFromFractions(H,f)
+    F = ringFromFractions(H,f)
   Inputs
     H:Matrix
       a one row matrix over a ring $R$
     f:RingElement
     Variable => Symbol
-     name of symbol used for new variables
+      name of symbol used for new variables
     Index => ZZ
-     the starting index for new variables
+      the starting index for new variables
     Verbosity => ZZ
-     values up to 6 are implemented. Larger values show more output.
+      values up to 6 are implemented. Larger values show more output.
   Outputs
     F:RingMap
       $R \rightarrow S$, where $S$ is the extension ring
       of $R$ generated by the fractions $1/f H$
-    G:RingMap
-      $frac S \rightarrow frac R$, the fractions
   Description
    Text
      Serious restriction: It is assumed that this ring R[1/f H] is an endomorphism ring
@@ -2071,10 +2200,10 @@ doc ///
    Example
      R = QQ[x,y]/(y^2-x^3)
      H = (y * ideal(x,y)) : ideal(x,y)
-     (F,G) = ringFromFractions(((gens H)_{1}), H_0);
+     F = ringFromFractions(((gens H)_{1}), H_0);
      S = target F
      F
-     G
+     ideal S
 ///
 
 doc ///
@@ -2085,7 +2214,7 @@ doc ///
   Headline
     compute the S2ification of a reduced ring
   Usage
-    (F,G) = makeS2 R
+    F = makeS2 R
   Inputs
     R:Ring
       an equidimensional reduced (or just unmixed and genericaly Gorenstein) affine ring
@@ -2094,8 +2223,6 @@ doc ///
   Outputs
     F:RingMap
       $R \rightarrow S$, where $S$ is the so-called S2-ification of $R$
-    G:RingMap
-      $frac S \rightarrow frac R$, giving the corresponding fractions
   Description
    Text
      A ring $S$ satisfies Serre's S2 condition if every codimension 1 ideal
@@ -2115,10 +2242,12 @@ doc ///
      A = ZZ/101[a..d];
      I = monomialCurveIdeal(A,{1,3,4})
      R = A/I;
-     (F,G) = makeS2 R
+     F = makeS2 R
+     describe target F
   Caveat
      Assumes that first element of canonicalIdeal R is a nonzerodivisor; else returns error.
-     The return value of this function is likely to change in the future
+     The return value of this function has changed in M2 version 1.26.05
+     from a sequence of two ring maps, to a single ring map.
   SeeAlso
     integralClosure
 ///
@@ -2437,6 +2566,7 @@ doc ///
 TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   debug loadPackage("IntegralClosure2", Reload => true)
 *-
   debug IntegralClosure2
@@ -2452,8 +2582,22 @@ TEST ///
   R1=ringFromFractions vasconcelos(K,f)
   R2=ringFromFractions endomorphisms(K,f)
   betti res I -- NOT depth 2.
+
+  elapsedTime R' = integralClosure R
+  condR = conductor icMap R
+  use R
+  assert(condR == ideal(d^2,c*d,b*d,c^2,b*c))
+  icFractions(icMap R, condR_-1)
+  use R
+  fractionsSpecificDenominator(icMap R, d^2)
+  showFractions(oo, d^2)
+  
+  I = ideal I_*
   time integralClosure(S/I, Strategy => {Vasconcelos})
+
+  I = ideal I_*
   time integralClosure(S/I, Strategy => {})
+
   makeS2 R
 ///
 
@@ -2480,16 +2624,20 @@ TEST ///
   syz gens J
 ///
 
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
   S = QQ [(symbol Y)_1, (symbol Y)_2, (symbol Y)_3, (symbol Y)_4, symbol x, symbol y, Degrees => {{7, 1}, {5, 1}, {6, 1}, {6, 1}, {1, 0}, {1, 0}}, MonomialOrder => ProductOrder {4, 2}]
   J =
     ideal(Y_3*y-Y_2*x^2,Y_3*x-Y_4*y,Y_1*x^3-Y_2*y^5,Y_3^2-Y_2*Y_4*x,Y_1*Y_4-Y_2^2*y^3)
   R = S/J       
-  R' = integralClosure R
+  elapsedTime R' = integralClosure R
+  conductor R
+  findConductorInSubring(icMap R)
+  icFractions(icMap R, oo_0)
   KF = frac(ring ideal R')
   M1 = first entries substitute(vars R, KF)
   M2 = apply(R.icFractions, i -> matrix{{i}})
@@ -2599,7 +2747,7 @@ TEST ///
   I = monomialCurveIdeal(S,{1,3,4})
   R = S/I
   J = ideal integralClosure R
-  J' = ideal integralClosure(target (makeS2 R)_0)
+  J' = ideal integralClosure(target (makeS2 R))
   assert(J' == substitute(J, ring J'))
   J'' = monomialCurveIdeal(S', {1,2,3,4})
   use S'
@@ -2612,7 +2760,7 @@ TEST ///
   assert(source f === R)
 ///     
 
-TOOSLOW ///
+TOOSLOW /// -- TODO: no longer so slow
 -*
   restart
   loadPackage("IntegralClosure2", Reload => true)
@@ -2628,6 +2776,7 @@ TOOSLOW ///
       );
 
   D = createD();
+  D' = integralClosure D
   assert(numgens integralClosure(D, Strategy=>{RadicalCodim1})==numgens D+2)
 
   D = createD();
@@ -2656,6 +2805,8 @@ TOOSLOW ///
   time R' = integralClosure(R) 
   time R' = integralClosure(R, Strategy=>{RadicalCodim1}) -- slightly faster than without it
   see ideal R'
+  use R
+  icFractions(icMap R, x)
   use R
   netList icFractions R
   assert isWellDefined icMap R
@@ -2794,11 +2945,12 @@ TEST ///
 ///
 
 --Ex from Wolmer's book - tests longer example and published result.
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
   R = ZZ/101[symbol a..symbol e]
   I = ideal(a^2*b*c^2+b^2*c*d^2+a^2*d^2*e+a*b^2*e^2+c^2*d*e^2,
       a*b^3*c+b*c^3*d+a^3*b*e+c*d^3*e+a*d*e^3,
@@ -2810,13 +2962,15 @@ TEST ///
       a^4*b^2*c-a*b*c^2*d^3-a*b^5*e-b^3*c^2*d*e-a*d^5*e+2*a^2*b*c*d*e^2+c*d^2*e^4)
   S = R/I
   elapsedTime S' = integralClosure S
+  use S
+  -- showFractions(vars S', a) -- get icFractions to work here, perhaps as icFractions(S, den).
   icFractions S -- MES: Seemingly poor choice for fractions?
   M = pushForward (icMap S, S'^1);
   assert(degree (M/(M_0)) == 2) -- MES: what are we testing here?
   assert(# icFractions S == 7)
 
    -- this is part of the above example.  But what to really place into the test?
-  StoS2 = (makeS2 S)_0;
+  StoS2 = (makeS2 S)
   S2 = target StoS2 -- MES: this doesn't set fractions.  Should it?
   
 -*  
@@ -3366,7 +3520,99 @@ TEST ///
   icFractions A2
 ///
 
+-*
+  restart
+  needsPackage "IntegralClosure2"
+  -- basic tests of ringFromFractions
+*-
+TEST ///
+  assert(false)
+
+  -- 3/20/26: should H contain f as an entry? Or is it removed?
+///
+
+-*
+  restart
+  needsPackage "IntegralClosure2"
+  -- basic tests of makeS2
+*-
+TEST ///
+  S = ZZ/101[symbol a .. symbol d]
+  I = monomialCurveIdeal(S, {1,3,4})
+  R = S/I
+  canonicalIdeal R
+  F = makeS2 R
+  assert(conductor F == ideal(a,b,c,d))
+  assert(source F === R)
+  target F
+  w = first fractionsSpecificDenominator(F, b)
+  assert(value numerator w == a*c) -- fails currently, as frac changes denominator...
+  assert(value denominator w == b) -- fails currently
+///
+  
+-*
+  restart
+  needsPackage "IntegralClosure2"
+  -- test of makeS2, Wolmer's example
+*-
+TEST ///
+  S = ZZ/101[symbol a..symbol e]
+  I = ideal(a^2*b*c^2+b^2*c*d^2+a^2*d^2*e+a*b^2*e^2+c^2*d*e^2,
+      a*b^3*c+b*c^3*d+a^3*b*e+c*d^3*e+a*d*e^3,
+      a^5+b^5+c^5+d^5-5*a*b*c*d*e+e^5,
+      a^3*b^2*c*d-b*c^2*d^4+a*b^2*c^3*e-b^5*d*e-d^6*e+3*a*b*c*d^2*e^2-a^2*b*e^4-d*e^6,
+      a*b*c^5-b^4*c^2*d-2*a^2*b^2*c*d*e+a*c^3*d^2*e-a^4*d*e^2+b*c*d^2*e^3+a*b*e^5,
+      a*b^2*c^4-b^5*c*d-a^2*b^3*d*e+2*a*b*c^2*d^2*e+a*d^4*e^2-a^2*b*c*e^3-c*d*e^5,
+      b^6*c+b*c^6+a^2*b^4*e-3*a*b^2*c^2*d*e+c^4*d^2*e-a^3*c*d*e^2-a*b*d^3*e^2+b*c*e^5,
+      a^4*b^2*c-a*b*c^2*d^3-a*b^5*e-b^3*c^2*d*e-a*d^5*e+2*a^2*b*c*d*e^2+c*d^2*e^4)
+  R = S/I
+  elapsedTime F = makeS2 R;
+  R' = target F
+  gens R' -- two new generators, both of degree 5.
+  assert(numgens R' === 2 + numgens S)
+  assert(flatten degrees R' === {5, 5, 1, 1, 1, 1, 1})
+  assert(conductor F == ideal(a,b,c,d,e))
+  use R
+  ws = fractionsSpecificDenominator(F, b)
+  w = first ws
+  assert(numerator w == a*d^4*e - c*d*e^4) -- this one happens to work out.
+  assert(value denominator w == b)
+  assert(value denominator ws_1 == b) -- fails, as it changes denominator to e...
+///
+
+-*
+-- XXX
+  restart
+  needsPackage "IntegralClosure2"
+  --vanHoeij2
+*-
+TEST ///
+  S = QQ[x,y]
+  --S = QQ[x,y, MonomialOrder => Lex]
+  --S = QQ[y,x, MonomialOrder => Lex]
+  I = ideal"y20+y13x+x4y5+x3(x+1)2"
+  R = S/I
+  elapsedTime R' = integralClosure R
+  -- elapsedTime R' = integralClosure(R, Verbosity => 6)
+  see ideal R'
+
+  elapsedTime conductor R
+  elapsedTime findConductorInSubring icMap R -- actually, in S!?
+  use R
+  icFractions(icMap R, y^13)
+  icFractions(icMap R, x^3+x^2)
+
+  -- the following is for S = QQ[x,y].  Different monomial orders will have different values
+  assert(numcols selectInSubring(1, vars R') == 4)
+  assert(numcols selectInSubring(2, vars R') == 3)
+  assert(numcols selectInSubring(3, vars R') == 2) -- x,y.
+  assert(selectInSubring(4, vars R') == 0)  -- nothing
+///
+
+
+
 end-------------------------------------------------------------------------
+
 
 -*
 restart
@@ -3389,6 +3635,7 @@ check "IntegralClosure2" -- 3/19/2026: test 35 takes 42 sec, test 36 takes 36 se
 viewHelp IntegralClosure2
 viewHelp integralClosure
 
+needsPackage "IntegralClosure2"
 
 loadPackage("IntegralClosure2", Reload=>true)
 /// MIKETEST
@@ -3937,5 +4184,4 @@ FastMinors?
      "S2Last", 
      "S2None", -- when to do S2-ification
      "RadicalBuiltin" -- true: use 'intersect decompose' to get radical, other wise use 'rad' in PrimaryDecomposition package
-
 

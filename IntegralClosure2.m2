@@ -16,7 +16,7 @@ newPackage(
     PackageExports => {
         "Fields",
         "MinimalPrimes", -- really helps speed up most computations here. Use minprimes.
-	"PushForward"
+        "PushForward"
         },
     DebuggingMode => false,
     AuxiliaryFiles => true
@@ -54,6 +54,7 @@ export{
      "Keep",
      "Index",
      "ConductorElement",
+     "Denominator",
      "AllCodimensions",
      "RadicalCodim1",
      "Radical",
@@ -571,9 +572,11 @@ integralClosure1 = (R0, J, denom, nsteps, varname, keepvars, strategies, verbosi
      i := R1temp.minimalPresentationMap; -- R1temp --> R1
      -- iinv := R1temp.minimalPresentationMapInv.matrix; -- R1 --> R1temp
      --   iinvfrac := map(frac R1temp , frac R1, substitute(iinv,frac R1temp));
-     
        -- We also want to trim the ring     
        F0' := i*F0; -- R0 --> R1
+
+       -- if nsteps == 4 then 
+       --     error "debug me";
        if denom === null then
           (F0', F0' radJ, null) -- 3/21/26: TODO: replace null with the actual denominator used?
        else
@@ -813,7 +816,8 @@ isNormal(Ring) := Boolean => (R) -> (
 
 --------------------------------------------------------------------
 conductor = method()
-conductor RingMap := Ideal => phi ->(
+conductor RingMap := Ideal => phi -> (
+    -- 3/25/26 TODO: do we want to cache the results?
     pf := pushFwd phi;
     assert(pf#1_(0,0) == 1);
     pmod := pf_0_{0};
@@ -822,30 +826,25 @@ conductor RingMap := Ideal => phi ->(
 conductor Ring := Ideal => R -> conductor icMap R
 
 icMap = method()
-icMap(Ring) := RingMap => R -> (
-     -- 1 argument: a ring.  May be a quotient ring, or a tower ring.
-     -- Returns: The map from R to the integral closure of R.  
-     -- Note:  This is a map where the target is finitely generated as
-     -- a module over the source, so it can be used as the input to
-     -- conductor and other methods that require this. 
-     if R.?icMap then R.icMap
-     else if isNormal R then id_R
-     else (
-	  integralClosure R;
-	  R.icMap
-	  )
-     )
+icMap Ring := RingMap => R -> R.icMap ??= (
+    -- 1 argument: a ring.  May be a quotient ring, or a tower ring.
+    -- Returns: The map from R to the integral closure of R.  
+    -- Note:  This is a map where the target is finitely generated as
+    -- a module over the source, so it can be used as the input to
+    -- conductor and other methods that require this. 
+    R' := integralClosure R;
+    R.icMap
+    )
 
 --------------------------------------------------------------------
-icFractions = method()
-icFractions(Ring) := Matrix => (R) -> (
-     if R.?icFractions then R.icFractions
-     else if isNormal R then vars R -- MES TODO: is this too expensive?
-     else (
-	  integralClosure R;
-     	  R.icFractions	  
-     )
-)
+icFractions = method(Options => {
+        Denominator => null, -- if not null, should be a ring element in the radical of the conductor
+        Module => false} -- if true, all module generators, otherwise all ring generators.
+    )
+icFractions Ring := List => opts -> R -> R.icFractions ??= (
+    f := icMap R;
+    icFractions(f, opts)
+    )
 
 --------------------------------------------------------------------
 
@@ -1245,48 +1244,63 @@ showFractions(List, RingElement) := (x, den) -> (
         (hold (den*y)) / fden
     )
 
-icFractions(RingMap, RingElement) := (icm, den) -> ( -- actual denominators can be powers of this
-    -- eventually, stash this.
-    -- icm : R --> R' (R' finite over R)
-    -- den in R, an element in the radical of the conductor of icm.
-    -- steps:
-    --  0. consider the ring R[newvars]/J \isom R'
-    --  1. create the graph ring base[y, x]/(x - icm(x), I(R), I(R'));
-    --   OR: assume that the variables of R are the last variables in a block order.
-    --  2. den * (vars R' over R) = elems
-    --   if elems_i is in R, then gcd over ambient of (den, elems_i). Get fraction.
-    --  3. den * elems. Again, if in R, gcd over ambient of (den^2, elems_i).
-    --  keep going until all elements are accounted for.
-    R := source icm;
-    R' := target icm;
-    nbase := numgens R;
-    nfiber := numgens R' - nbase;
-    for i from 0 to nbase-1 do if index icm (R_i) != nfiber+i then error "rings not in correct form";
-    -- for now, assume they are the last how many blocks?  1 for now.  But we need to match it with R's monomial order...
-    -- let's find the correct subring.
+-- icFractions(RingMap, RingElement) := (icm, den) -> ( -- actual denominators can be powers of this
+--     -- eventually, stash this.
+--     -- icm : R --> R' (R' finite over R)
+--     -- den in R, an element in the radical of the conductor of icm.
+--     -- steps:
+--     --  0. consider the ring R[newvars]/J \isom R'
+--     --  1. create the graph ring base[y, x]/(x - icm(x), I(R), I(R'));
+--     --   OR: assume that the variables of R are the last variables in a block order.
+--     --  2. den * (vars R' over R) = elems
+--     --   if elems_i is in R, then gcd over ambient of (den, elems_i). Get fraction.
+--     --  3. den * elems. Again, if in R, gcd over ambient of (den^2, elems_i).
+--     --  keep going until all elements are accounted for.
+--     R := source icm;
+--     R' := target icm;
+--     nbase := numgens R;
+--     nfiber := numgens R' - nbase;
+--     for i from 0 to nbase-1 do if index icm (R_i) != nfiber+i then error "rings not in correct form";
+--     -- for now, assume they are the last how many blocks?  1 for now.  But we need to match it with R's monomial order...
+--     -- let's find the correct subring.
 
-    i := 1;
-    while numcols selectInSubring(i, vars R') > nbase do i = i+1;
-    liftBack := map(R, R', matrix{{nfiber: 0}} | vars R); -- only use once you know argument is in the subring...!
---what's wrong with this?
-    --    insubring := f -> leadTerm(i, f) == f;
-    inSubring := f -> numcols selectInSubring(i, matrix{{f}}) > 0;
-    den' := icm den;
+--     i := 1;
+--     while numcols selectInSubring(i, vars R') > nbase do i = i+1;
+--     liftBack := map(R, R', matrix{{nfiber: 0}} | vars R); -- only use once you know argument is in the subring...!
+-- --what's wrong with this?
+--     --    insubring := f -> leadTerm(i, f) == f;
+--     inSubring := f -> numcols selectInSubring(i, matrix{{f}}) > 0;
+--     den' := icm den;
 
-    modgens := drop(flatten entries ((pushFwd icm)_1), 1); -- remove unit element
-    modFracs := for g in modgens list(
-       j := 0;
-       while (g = den'*g; j = j+1; not inSubring g) do ();
-      (hold liftBack g)/(hold den)^j);
+--     modgens := drop(flatten entries ((pushFwd icm)_1), 1); -- remove unit element
+--     modFracs := for g in modgens list(
+--        j := 0;
+--        while (g = den'*g; j = j+1; not inSubring g) do ();
+--       (hold liftBack g)/(hold den)^j);
 
-    ringgens := select(gens R', x -> not inSubring x);
-    ringFracs := for g in ringgens list(
-       j := 0;
-       while (g = den'*g; j = j+1; not inSubring g) do ();
-      (hold liftBack g)/(hold den)^j);
+--     ringgens := select(gens R', x -> not inSubring x);
+--     ringFracs := for g in ringgens list(
+--        j := 0;
+--        while (g = den'*g; j = j+1; not inSubring g) do ();
+--       (hold liftBack g)/(hold den)^j);
   
-{ringFracs, modFracs}
-)
+-- {ringFracs, modFracs}
+-- )
+
+leadCoefficientsOfVariable = method()
+leadCoefficientsOfVariable(List, RingElement) := (L, w) -> (
+    -- Not correct yet.
+    -- want it to be w * (stuff in later block) - (stuff in later block)?
+    -- consider the block w is in.
+    -- then take elements whose coeff in w is in later subring only, and same with degree 0 term.
+    b := 0;
+    while member(w, flatten entries selectInSubring(b, vars ring w)) do b = b+1;
+    << "first block not containing " << w << " is " << b << endl;
+    L0 := select(L, f -> degree_w f == 1 and
+                   numcols selectInSubring(b, matrix{{diff(w, f)}}) > 0
+                   );
+    for f in L0 list leadMonomial diff(w, f)
+    )
 
 
 simplestElement = method()
@@ -1295,11 +1309,47 @@ simplestElement Ideal := RingElement => I -> (
     f0 := first sort for f in elts list {degree f, size f, f};
     return last f0)
 
-icFractions RingMap := List => icm -> (
-    den := simplestElement radical conductor icm;
-    icFractions(icm, den)
+-- TODO: this code if one of the variables is not a variable!
+--          (i.e. there is a quotient element linear with this variable).
+--       also, number of blocks might depend on monomial order, not just number of blocks!
+--         and might be different for leadTerm, selectInSubring?
+--         In the code below, we assume they are the same!
+
+icFractions RingMap := List => opts -> F -> (
+    -- F: R --> R' should be a module finite extension of R, e.g. the integral closure.
+    den := opts.Denominator ?? (
+        simplestElement radical conductor F
+        );
+    R := source F;
+    R' := target F;
+    ----if R === R' then return {};
+    -- we need to determine how many/which variables of R' are from R.
+    -- and we need to be able to determine whether an element of R' is in image F,
+    -- and if so, lift it back.
+    nbase := numgens R;
+    nfiber := numgens R' - nbase;
+    for i from 0 to nbase-1 do if index F (R_i) != nfiber+i then error "rings not in correct form";
+    nblocksForSubring := 0;
+    while numcols selectInSubring(nblocksForSubring, vars R') > nbase do nblocksForSubring = nblocksForSubring + 1;
+    liftBack := map(R, R', matrix{{nfiber: 0}} | vars R); -- only use once you know argument is in the subring...!
+    --what's wrong with this? Anything?
+    --    insubring := f -> leadTerm(i, f) == f;
+    inSubring := f -> numcols selectInSubring(nblocksForSubring, matrix{{f}}) > 0;
+    den' := F den;
+
+    gensOverR := if opts#Module then
+                     drop(flatten entries ((pushFwd F)_1), 1) -- remove unit element
+                 else
+                     select(gens R', x -> not inSubring x);
+    ourfracs := for g in gensOverR list ( -- if g is already in the subring, this fails!
+       if inSubring g then continue;
+       j := 0;
+       while (g = den'*g; j = j+1; not inSubring g) do ();
+       (hold liftBack g)/(hold den)^j
+       );
+    ourfracs
     )
-    
+
 ///
 restart
 debug needsPackage "IntegralClosure2"
@@ -1314,7 +1364,7 @@ C = conductor R
 simplestElement C
 simplestElement radical C
 size oo
-netList I_*
+
 ///
     
 
@@ -2910,7 +2960,8 @@ TEST ///
   use R
   assert(conductor R== ideal(x^2,y))
   assert(conductor(R.icMap) == ideal(x^2,y))
-  assert((icFractions R) == first entries substitute(matrix {{y*z/x^2, x, y, z}},frac R))
+  assert(#(icFractions R) === 1)
+  assert(value (icFractions R)_0 === y*z/x^2)
   assert isWellDefined icMap R
   assert isNormal R'
 ///
@@ -2926,7 +2977,8 @@ TEST ///
   use ring ideal R'
   assert(ideal R' == ideal(-x^6+a_(1,0)*y-x^3*z,-a_(1,0)*x^2+y*z,a_(1,0)^2-x^4*z-x*z^2))
   use R
-  assert(0 == matrix{icFractions R} - matrix {{y*z/x^2, x, y, z}})
+  assert(#(icFractions R) === 1)
+  assert(value (icFractions R)_0 === y*z/x^2)
   assert isWellDefined icMap R'
   assert isNormal R'
 ///
@@ -2942,7 +2994,8 @@ TEST ///
   use ring ideal R'
   assert(ideal R' == ideal(a_(1,0)*x^2-y*z,a_(1,0)*y-x^6-x^3*z,a_(1,0)^2-x^4*z-x*z^2))
   use R
-  assert(0 == matrix {icFractions R} - matrix {{y*z/x^2, x, y, z}})
+  assert(#(icFractions R) === 1)
+  assert(value (icFractions R)_0 === y*z/x^2)
   assert(conductor(R.icMap) == ideal(x^2,y))
   isNormal R'
   ///
@@ -2977,7 +3030,7 @@ TEST ///
   assert(ideal Q' == ideal (x^2-a_(3,0)*z, a_(3,0)*x-a_(4,0)*z, a_(3,0)^2-a_(4,0)*x, a_(4,0)^2-y^2-z^2))
   use Q
   assert(conductor(Q.icMap) == ideal(z^3,x*z^2,x^3*z,x^4))
-  assert(matrix{icFractions Q} == substitute(matrix{{x^3/z^2,x^2/z,x,y,z}},frac Q)) -- MES FLAG: this looks like z^2 is in the conductor?? possible bug?
+  assert(matrix{(icFractions Q)/value} == matrix{{x^3/z^2,x^2/z}}) -- MES FLAG: this looks like z^2 is in the conductor?? possible bug?
   isNormal Q'
 ///
 
@@ -2994,7 +3047,7 @@ TEST ///
   use ring ideal Q'
   assert(ideal Q' == ideal(x_(1,0)^2-a*b*c))
   use Q
-  assert(matrix{icFractions Q} == matrix{{d/a^2,a,b,c}})
+  assert(matrix{(icFractions Q)/value} == matrix{{d/a^2}}) -- BUG: Keep => {} is not compatible with our impl of icFractions!
 ///
 
 -- rational quartic, to make sure S2 is not being forgotten!
@@ -3009,6 +3062,9 @@ TEST ///
   R' = integralClosure R
   assert(numgens R' == 5)
   assert isNormal R'
+  icFractions R
+  integralClosure R'
+  icFractions R'
 ///
 
 --Ex from Wolmer's book - tests longer example and published result.
@@ -3142,6 +3198,7 @@ TEST ///
 TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
   kk = ZZ/32003
@@ -3156,13 +3213,15 @@ TEST ///
   time R' = integralClosure(R, Verbosity => 3) -- this one takes perhaps too long for a test
   assert(numgens R' == 13)
   assert(numgens ideal gens gb ideal R' == 54) -- this is not an invariant...!
+  -- this is not satisfactory: want to know at least one denominator.  e.g. one used in doing the integral closure.
+  icFractions(R, Denominator => b_R) -- MES: these fractions are messier than they could be?
 
   -- clear R, and do another one
   R1 = (ring I)/(ideal I_*)
   time R1'=integralClosure(R1, Verbosity => 3, Strategy => {RadicalCodim1})
   assert(numgens R1' == 13)
   assert(numgens ideal gens gb ideal R1' == 54) -- this is not an invariant!
-  icFractions R1 -- MES: these fractions are messier than they could be?
+  icFractions(R1, Denominator => b_R1) -- MES: these fractions are messier than they could be?
 ///
 
 -- see https://github.com/Macaulay2/M2/issues/933
@@ -3453,16 +3512,18 @@ TEST ///
   radical conductor R
   elapsedTime icFracP R -- < 1 sec
 
-  R = make2'3 17
-  elapsedTime R' = integralClosure R -- 17 sec
-  icFractions R -- 17 new fractions
-  use R
-  radical conductor R
-  elapsedTime icFracP R -- 4 sec
+  -- the following takes too long for a test
+  -- R = make2'3 17
+  -- elapsedTime R' = integralClosure R -- 17 sec
+  -- icFractions R -- 17 new fractions
+  -- use R
+  -- radical conductor R
+  -- elapsedTime icFracP R -- 4 sec
   ///
 
 
 -*
+-- YYY
 -- TODO: determine if this is a bug.
   restart
   needsPackage "IntegralClosure2"
@@ -3481,6 +3542,8 @@ TEST ///
   -- Please explain why w_(1,0) disappeared!
   -- Doug
 
+  use frac A -- w_(1,0) is indeed written in terms of w_(1,1) (and x^2*y).
+   (y^2*z/x^2)^2 + y*z/x +  x^2*y == 0
   conductor A
 ///
 
@@ -3515,9 +3578,10 @@ TEST ///
 *-
 TEST ///
   R=QQ[y,x];
+  R=ZZ/32003[y,x];
   b=(y^12-4*y^10*x+6*y^8*x^2-4*y^6*x^3+8*y^5*x^7+y^4*x^4+8*y^3*x^8-x^13);
   A=R/ideal(b)
-  A' = integralClosure A
+  A' = integralClosure(A, Verbosity => 6)
   conductor A
   icFractions A
   see ideal A'
@@ -3526,6 +3590,16 @@ TEST ///
   time icf=icFractions(A);
   toString icf
 
+  restart
+  needsPackage "IntegralClosure2"
+  errorDepth=0
+  R=QQ[y,x];
+  b=(y^12-4*y^10*x+6*y^8*x^2-4*y^6*x^3+8*y^5*x^7+y^4*x^4+8*y^3*x^8-x^13);
+  A=R/ideal(b)
+  A' = integralClosure(A, Verbosity => 6, Limit => 5)
+  use A
+  icFractions(A, Denominator => y^4 + 6*y^2*x + x^2)
+  
   --The outputs (below) are clearly a mess, and not even close to being correct. Do you know why this was the answer?
   -- :
   --  {{x^3, y^2*x^2, y^4-16*y^2*x, 1280*w_(4,0)-37*y^3*x+85072*y*x^2,
@@ -3556,6 +3630,283 @@ TEST ///
 -*
   restart
   needsPackage "IntegralClosure2"
+  -- this is investigating a bug in an example of Doug Leonard
+*-
+TEST /// -- of endomorphisms, and ringFromFractions
+-- YYY
+  debug needsPackage "IntegralClosure2"
+  kk = QQ
+  kk = ZZ/32003
+  S = kk[w_(3,0)..w_(3,3), y, x, Degrees => {2:5, 2:6, 2:1}, MonomialOrder => VerticalList{MonomialSize => 32, GRevLex => {2:5, 2:6}, 3:(GRevLex => {}), GRevLex => {2:1}, Position => Up}]
+  I = ideal(
+      x^13-y^12-8*y^5*x^7+4*y^10*x-8*y^3*x^8-6*y^8*x^2+4*y^6*x^3-y^4*x^4,
+      w_(3,1)*y^4+6*w_(3,1)*y^2*x+w_(3,1)*x^2-y^2*x^7-x^8+96*y^3*x^3+16*y*x^4,
+      w_(3,1)*x^6+20*w_(3,1)*y^3*x+4*w_(3,1)*y*x^2-y^10-8*y^3*x^7+9*y^8*x+12*y*x^8-55*y^6*x^2+319*y^4*x^3+64*y^2*x^4,
+      w_(3,1)*y^2*x^4+5*w_(3,1)*x^5-16*w_(3,1)*y^3-x^11-4*y^8+80*y*x^7+40*y^6*x-260*y^4*x^2,
+      4*w_(3,0)*x-w_(3,1)*y^3-5*w_(3,1)*y*x+y*x^7-96*y^2*x^3+80*x^4,
+      4*w_(3,0)*y+w_(3,1)*y^2+w_(3,1)*x-x^7+96*y*x^3,
+      4*w_(3,3)*y-w_(3,1)*y^2*x^2-5*w_(3,1)*x^3+x^9-96*y*x^5+4*y^4-64*y^2*x,
+      w_(3,3)*x^2-4*w_(3,1)*y^2-y^7-4*x^7+10*y^5*x-64*y^3*x^2-16*y*x^3,
+      w_(3,2)*x-20*w_(3,1)*y-5*y^6+51*y^4*x-336*y^2*x^2+80*x^3,
+      w_(3,2)*y-5*w_(3,3)*x+20*x^6+y^5-16*y^3*x+160*y*x^2,
+      w_(3,1)^2-8*w_(3,1)*y^3*x+32*w_(3,1)*y*x^2-y^8*x+14*y^6*x^2-129*y^4*x^3+256*y^2*x^4,
+      w_(3,0)*w_(3,1)-13*w_(3,1)*y^2*x^2+15*w_(3,1)*x^3-y^7*x^2+5*x^9+15*y^5*x^3-144*y^3*x^4-80*y*x^5,
+      w_(3,0)^2+12*w_(3,1)*y^3*x^2+52*w_(3,1)*y*x^3-12*y*x^9-y^6*x^3+16*y^4*x^4+992*y^2*x^5-400*x^6,
+      w_(3,1)*w_(3,3)-8*w_(3,1)*x^5+81*w_(3,1)*y^3-16*w_(3,1)*y*x-y^5*x^5+15*y^3*x^6+20*y^8-64*y*x^7-200*y^6*x+1300*y^4*x^2,
+      4*w_(3,0)*w_(3,3)+1109*w_(3,1)*y^2*x+145*w_(3,1)*x^2-4*y^4*x^6-32*y^9-192*y^2*x^7+400*y^7*x+175*x^8-2880*y^5*x^2+17488*y^3*x^3+3600*y*x^4,
+      w_(3,1)*w_(3,2)+783*w_(3,1)*y^2*x+159*w_(3,1)*x^2-5*y^4*x^6-20*y^9-84*y^2*x^7+280*y^7*x-79*x^8-2100*y^5*x^2+12784*y^3*x^3+1264*y*x^4,
+      w_(3,0)*w_(3,2)-56*w_(3,1)*y^3*x+503*w_(3,1)*y*x^2-5*y^3*x^7-20*y^8*x-23*y*x^8+300*y^6*x^2-2300*y^4*x^3+8688*y^2*x^4-1600*x^5,
+      2*w_(3,3)^2-81*w_(3,1)*y^2*x^3-81*w_(3,1)*x^4-2*y^2*x^9-16*y^7*x^3-15*x^10+160*y^5*x^4-1040*y^3*x^5-1552*y*x^6-2*y^6+64*y^4*x-512*y^2*x^2,
+      4*w_(3,2)*w_(3,3)-7*w_(3,1)*y^3*x^3-351*w_(3,1)*y*x^4-13*y*x^10-80*y^6*x^4+800*y^4*x^5-5872*y^2*x^6-4*y^7+1280*x^7+108*y^5*x-1024*y^3*x^2+5120*y*x^3,
+      w_(3,2)^2+10*w_(3,1)*x^5-480*w_(3,1)*y^3+3200*w_(3,1)*y*x-25*x^11-40*y^3*x^6-121*y^8+160*y*x^7+2022*y^6*x-16081*y^4*x^2+53760*y^2*x^3-6400*x^4)
+  R = S/I
+  f = y^4+6*y^2*x+x^2
+  radJ = ideal(y^4+6*y^2*x+x^2,
+      x^5+20*y^3+4*y*x,
+      y*x^4-116*y^2-20*x,
+      5*y^2*x^3+29*x^4+16*y,
+      80*w_(3,0)+w_(3,1)*x^4-96*w_(3,1)*y+400*y^2*x^2+2000*x^3,
+      4*w_(3,3)+5*w_(3,1)*y^3*x+29*w_(3,1)*y*x^2-316*y^3-64*y*x,
+      4*w_(3,2)+25*w_(3,1)*y^2*x^2+145*w_(3,1)*x^3-3268*y^2*x-4*x^2,
+      29*w_(3,1)*y^3*x^2+169*w_(3,1)*y*x^3-16*w_(3,1))
+  -- first step: is this correct:
+  assert(f == radJ_0)
+  (He1,f1) = endomorphisms(radJ,f);
+  assert(((f*radJ):radJ) == ideal He1 + ideal f)
+  fe = y^4+6*y^2*x+x^2
+  He = matrix {{x^8+20*y^3*x^3+4*y*x^4, y^3*x^6+5*y*x^7+96*y^2*x^3+16*x^4, w_(3,1)*y*x^4-116*w_(3,1)*y^2-20*w_(3,1)*x+40*y^2*x^6+4*x^7-4560*y^3*x^2-784*y*x^3, 5*w_(3,1)*y^2*x^3+29*w_(3,1)*x^4+16*w_(3,1)*y+84*y^3*x^5+484*y*x^6+640*y^2*x^2+64*x^3, 4*w_(3,3)*x+5*w_(3,1)*y^3*x^2+29*w_(3,1)*y*x^3-20*y^2*x^5-100*x^6+4*y^3*x-64*y*x^2}}
+  assert(He1 == He)
+  assert(f1 == fe)
+  member(f, ideal He) -- OK.  endomorphisms removes it from the list of generators.  But what if it isn't a generator?
+    -- TODO: 3/31/26: find an example of this...
+  -- second step: is this correct?  (answer: no, if endomorphisms is correct.
+  errorDepth=0
+  F = ringFromFractions(He, fe, Variable=>symbol w, Index=>7);
+  see ideal gens gb ideal target F -- WRONG!!
+
+  -- now we try out the parts of ringFromFractions
+  H = He
+  f = fe
+  R = ring H;
+  Hf = H | matrix{{f}};
+  n = numgens source H
+  assert(n == 5)
+  newdegs = degrees source H - toList(n:degree f)
+  if #newdegs#0 === 1 and any(newdegs, i -> i == {0})
+    then newdegs = for d in newdegs list if first d > 0 then d else {1};
+  degs = join(newdegs, (monoid R).Options.Degrees);
+  assert(degs == {{4}, {5}, {6}, {6}, {6}, {5}, {5}, {6}, {6}, {1}, {1}})
+  MO = prepend(GRevLex => n, (monoid R).Options.MonomialOrder);
+  kk = coefficientRing R
+  varm = symbol w
+  A = kk(monoid [varm_(7,0)..varm_(7,n-1), R#generatorSymbols, -- 3/20/26: could use `gens ambient R`.
+          MonomialOrder=>MO, Degrees => degs]);
+  I = ideal presentation R;
+  IA = ideal ((map(A,ring I,(vars A)_{n..numgens R + n-1})) (generators I));
+  B = A/IA; -- this is sometimes a slow op
+  varsB = (vars B)_{0..n-1}
+  RtoB = map(B, R, (vars B)_{n..numgens R + n - 1})
+  newfracs = for i from 0 to n-1 list (H_(0,i) / f)
+  BtoK = map(frac R, B, matrix{newfracs} | (vars frac R))
+  XX = varsB | matrix{{1_B}}
+  syzHf = RtoB syz Hf; 
+  lins = XX * syzHf;
+  assert(BtoK lins == 0) -- linear equations are fine.
+  sH = symmetricPower(2, H)
+  IfHf = ideal(f * Hf)
+  sH % IfHf == 0
+  tails = sH // gens IfHf
+  tails = RtoB tails
+  quads = matrix(B, entries (symmetricPower(2,varsB) - XX * tails));
+  assert(BtoK quads == 0) -- this is ok.
+  fm = matrix{{f}}  -- divide sH by f:
+    q = sH // fm
+    sH - fm * q -- this should be 0!!
+    sH % fm == 0
+    tails2a = sH // fm
+    rem = remainder(sH, fm)
+    q = quotient(sH, fm)
+    assert(rem == 0)
+    assert(sH - fm * q == 0) -- FAILS!!
+    sH - (sH + (sH % fm)) -- this should be zero!?
+    degrees source fm , degrees target sH -- different!
+
+    assert( (matrix{{f}} * tails2a) - sH == 0)
+    tails := (symmetricPower(2,H) // f) // Hf;
+    --3/4/26: if Hom(I,I) = R[a/f,1] then a^2/f^2 = c(a/f)+d, so a^2 = caf+df^2;
+    --so (symmetricPower(2,H) // f)  = ca+df, and ca+df //Hf = (c,d).
+
+
+  both := ideal lins + ideal quads;
+	  
+    gb both; -- sometimes slow
+    Bflat := flattenRing (B/both); --sometimes very slow
+    R1 := trim Bflat_0; -- sometimes slow
+
+    -- Now construct the return value
+    F := map(R1, R, (vars R1)_{n..numgens R + n - 1});
+    F
+  
+///
+
+-*
+-- TODO: this should be a git issue, and needs to be addressed!!
+  restart
+*-
+TEST ///
+  kk = QQ
+  kk = ZZ/32003
+  S = kk[w_(3,0)..w_(3,3), y, x, Degrees => {2:5, 2:6, 2:1}, MonomialOrder => VerticalList{MonomialSize => 32, GRevLex => {2:5, 2:6}, 3:(GRevLex => {}), GRevLex => {2:1}, Position => Up}]
+  I = ideal(
+      x^13-y^12-8*y^5*x^7+4*y^10*x-8*y^3*x^8-6*y^8*x^2+4*y^6*x^3-y^4*x^4,
+      w_(3,1)*y^4+6*w_(3,1)*y^2*x+w_(3,1)*x^2-y^2*x^7-x^8+96*y^3*x^3+16*y*x^4,
+      w_(3,1)*x^6+20*w_(3,1)*y^3*x+4*w_(3,1)*y*x^2-y^10-8*y^3*x^7+9*y^8*x+12*y*x^8-55*y^6*x^2+319*y^4*x^3+64*y^2*x^4,
+      w_(3,1)*y^2*x^4+5*w_(3,1)*x^5-16*w_(3,1)*y^3-x^11-4*y^8+80*y*x^7+40*y^6*x-260*y^4*x^2,
+      4*w_(3,0)*x-w_(3,1)*y^3-5*w_(3,1)*y*x+y*x^7-96*y^2*x^3+80*x^4,
+      4*w_(3,0)*y+w_(3,1)*y^2+w_(3,1)*x-x^7+96*y*x^3,
+      4*w_(3,3)*y-w_(3,1)*y^2*x^2-5*w_(3,1)*x^3+x^9-96*y*x^5+4*y^4-64*y^2*x,
+      w_(3,3)*x^2-4*w_(3,1)*y^2-y^7-4*x^7+10*y^5*x-64*y^3*x^2-16*y*x^3,
+      w_(3,2)*x-20*w_(3,1)*y-5*y^6+51*y^4*x-336*y^2*x^2+80*x^3,
+      w_(3,2)*y-5*w_(3,3)*x+20*x^6+y^5-16*y^3*x+160*y*x^2,
+      w_(3,1)^2-8*w_(3,1)*y^3*x+32*w_(3,1)*y*x^2-y^8*x+14*y^6*x^2-129*y^4*x^3+256*y^2*x^4,
+      w_(3,0)*w_(3,1)-13*w_(3,1)*y^2*x^2+15*w_(3,1)*x^3-y^7*x^2+5*x^9+15*y^5*x^3-144*y^3*x^4-80*y*x^5,
+      w_(3,0)^2+12*w_(3,1)*y^3*x^2+52*w_(3,1)*y*x^3-12*y*x^9-y^6*x^3+16*y^4*x^4+992*y^2*x^5-400*x^6,
+      w_(3,1)*w_(3,3)-8*w_(3,1)*x^5+81*w_(3,1)*y^3-16*w_(3,1)*y*x-y^5*x^5+15*y^3*x^6+20*y^8-64*y*x^7-200*y^6*x+1300*y^4*x^2,
+      4*w_(3,0)*w_(3,3)+1109*w_(3,1)*y^2*x+145*w_(3,1)*x^2-4*y^4*x^6-32*y^9-192*y^2*x^7+400*y^7*x+175*x^8-2880*y^5*x^2+17488*y^3*x^3+3600*y*x^4,
+      w_(3,1)*w_(3,2)+783*w_(3,1)*y^2*x+159*w_(3,1)*x^2-5*y^4*x^6-20*y^9-84*y^2*x^7+280*y^7*x-79*x^8-2100*y^5*x^2+12784*y^3*x^3+1264*y*x^4,
+      w_(3,0)*w_(3,2)-56*w_(3,1)*y^3*x+503*w_(3,1)*y*x^2-5*y^3*x^7-20*y^8*x-23*y*x^8+300*y^6*x^2-2300*y^4*x^3+8688*y^2*x^4-1600*x^5,
+      2*w_(3,3)^2-81*w_(3,1)*y^2*x^3-81*w_(3,1)*x^4-2*y^2*x^9-16*y^7*x^3-15*x^10+160*y^5*x^4-1040*y^3*x^5-1552*y*x^6-2*y^6+64*y^4*x-512*y^2*x^2,
+      4*w_(3,2)*w_(3,3)-7*w_(3,1)*y^3*x^3-351*w_(3,1)*y*x^4-13*y*x^10-80*y^6*x^4+800*y^4*x^5-5872*y^2*x^6-4*y^7+1280*x^7+108*y^5*x-1024*y^3*x^2+5120*y*x^3,
+      w_(3,2)^2+10*w_(3,1)*x^5-480*w_(3,1)*y^3+3200*w_(3,1)*y*x-25*x^11-40*y^3*x^6-121*y^8+160*y*x^7+2022*y^6*x-16081*y^4*x^2+53760*y^2*x^3-6400*x^4)
+  R = S/I
+  f = y^4+6*y^2*x+x^2
+  H = matrix {{x^8+20*y^3*x^3+4*y*x^4, y^3*x^6+5*y*x^7+96*y^2*x^3+16*x^4, w_(3,1)*y*x^4-116*w_(3,1)*y^2-20*w_(3,1)*x+40*y^2*x^6+4*x^7-4560*y^3*x^2-784*y*x^3, 5*w_(3,1)*y^2*x^3+29*w_(3,1)*x^4+16*w_(3,1)*y+84*y^3*x^5+484*y*x^6+640*y^2*x^2+64*x^3, 4*w_(3,3)*x+5*w_(3,1)*y^3*x^2+29*w_(3,1)*y*x^3-20*y^2*x^5-100*x^6+4*y^3*x-64*y*x^2}}
+  sH = symmetricPower(2, H)
+  fm = matrix{{f}}
+  assert(target sH === target fm)
+  assert(sH % fm == 0)
+  assert(remainder(sH, fm) == 0)
+  q = sH // fm
+  assert(source q === source sH)
+  assert(source fm === target q)
+  fmq = fm * q
+  assert(fmq == sH) -- FAILS!!
+  assert(source fmq === source sH) -- ok 
+  assert(target fmq === target sH) -- ok
+  Hf = H | fm
+  IHf = ideal Hf
+  IfHf = f * IHf
+  fhfm = gens IfHf
+  assert(sH % fhfm == 0) -- ok
+  q2 = sH // fhfm
+  assert(source q2 === source sH) -- ok
+  assert(source fhfm === target q2) -- ok
+  fhfmq = fhfm * q2
+  assert(fhfmq == sH) -- OK!!
+  assert(source fhfmq === source sH) -- ok 
+  assert(target fhfmq === target sH) -- ok
+
+  -- the change of basis matrix is screwed up...  We don't even need H...
+  gbTrace=3
+  fm = ideal gens (G = gb(ideal f, ChangeMatrix => true))
+  hm = getChangeMatrix G
+  assert(hm_1 * f == fm_1) -- 2 of them are incorrect, this is the first one.
+
+  -- let's lift up and do this over S
+  fS = lift(f, S)
+  f1 = ideal fS + I
+  Gf1 = gb(f1, ChangeMatrix => true)
+  gbf1 = gens Gf1
+  ch1 = getChangeMatrix Gf1
+  assert(gens f1 * ch1 - gbf1 == 0)
+  see ideal gbf1
+  (gbf1) % I
+  gbf1 % I
+  leadTerm gens gb I
+  leadTerm Gf1
+
+  -- OK, appears ok over S.
+  -- It is possibly a reduction issue since elements are represented by polys over ZZ.
+  S = QQ[x,y,z]
+  I = ideal(2*x^6-7*y^2)
+  R = S/I
+  f = ideal(x^4, 3*x^3*y-x*z)
+  gbf = gens (G = gb(ideal f, ChangeMatrix => true))
+  chf = getChangeMatrix G
+  (gens f) * chf - gbf == 0
+
+  w_(3,0) * f == fm_2
+  w_(3,1) * f == fm_3
+  w_(3,2) * f - fm_4
+  f * flatten entries hm
+  flatten entries gens G
+
+  -- here is the first one that screws up:
+  g = H_(0,1) * H_(0,4)
+  g % f
+  f * (g // f) - g
+  G = gb(fm, ChangeMatrix => true)
+  
+  gens gb fm - f * getChangeMatrix G
+
+  see ideal gens G
+  see ideal getChangeMatrix G
+
+  J = ideal lift(f, ambient R) + ideal R
+  see ideal gens gb J
+  (gens gb J) % (ideal R)
+  -- let's get to the bottom of this!
+  -- this makes it seem like a engine GB error...!
+  gens gb fm
+  see ideal oo
+  fm = matrix entries fm
+  G = gb(fm, ChangeMatrix => true)
+  getChangeMatrix G
+  q' = sH // G
+  debug Core
+  (a1,a2,a3) = rawGBMatrixLift(raw G, raw sH)
+///
+
+TEST /// -- for debugging the above problem, drilled down even more
+-- YYY This is the one to debug right now!!
+restart
+  kk = QQ
+  S = kk[w_(3,0)..w_(3,3), y, x, Degrees => {2:5, 2:6, 2:1}, MonomialOrder => VerticalList{MonomialSize => 32, GRevLex => {2:5, 2:6}, 3:(GRevLex => {}), GRevLex => {2:1}, Position => Up}]
+  I = ideal(
+      x^13-y^12-8*y^5*x^7+4*y^10*x-8*y^3*x^8-6*y^8*x^2+4*y^6*x^3-y^4*x^4,
+      w_(3,1)*y^4+6*w_(3,1)*y^2*x+w_(3,1)*x^2-y^2*x^7-x^8+96*y^3*x^3+16*y*x^4,
+      w_(3,1)*x^6+20*w_(3,1)*y^3*x+4*w_(3,1)*y*x^2-y^10-8*y^3*x^7+9*y^8*x+12*y*x^8-55*y^6*x^2+319*y^4*x^3+64*y^2*x^4,
+      w_(3,1)*y^2*x^4+5*w_(3,1)*x^5-16*w_(3,1)*y^3-x^11-4*y^8+80*y*x^7+40*y^6*x-260*y^4*x^2,
+      4*w_(3,0)*x-w_(3,1)*y^3-5*w_(3,1)*y*x+y*x^7-96*y^2*x^3+80*x^4,
+      4*w_(3,0)*y+w_(3,1)*y^2+w_(3,1)*x-x^7+96*y*x^3,
+      4*w_(3,3)*y-w_(3,1)*y^2*x^2-5*w_(3,1)*x^3+x^9-96*y*x^5+4*y^4-64*y^2*x,
+      w_(3,3)*x^2-4*w_(3,1)*y^2-y^7-4*x^7+10*y^5*x-64*y^3*x^2-16*y*x^3,
+      w_(3,2)*x-20*w_(3,1)*y-5*y^6+51*y^4*x-336*y^2*x^2+80*x^3,
+      w_(3,2)*y-5*w_(3,3)*x+20*x^6+y^5-16*y^3*x+160*y*x^2,
+      w_(3,1)^2-8*w_(3,1)*y^3*x+32*w_(3,1)*y*x^2-y^8*x+14*y^6*x^2-129*y^4*x^3+256*y^2*x^4,
+      w_(3,0)*w_(3,1)-13*w_(3,1)*y^2*x^2+15*w_(3,1)*x^3-y^7*x^2+5*x^9+15*y^5*x^3-144*y^3*x^4-80*y*x^5,
+      w_(3,0)^2+12*w_(3,1)*y^3*x^2+52*w_(3,1)*y*x^3-12*y*x^9-y^6*x^3+16*y^4*x^4+992*y^2*x^5-400*x^6,
+      w_(3,1)*w_(3,3)-8*w_(3,1)*x^5+81*w_(3,1)*y^3-16*w_(3,1)*y*x-y^5*x^5+15*y^3*x^6+20*y^8-64*y*x^7-200*y^6*x+1300*y^4*x^2,
+      4*w_(3,0)*w_(3,3)+1109*w_(3,1)*y^2*x+145*w_(3,1)*x^2-4*y^4*x^6-32*y^9-192*y^2*x^7+400*y^7*x+175*x^8-2880*y^5*x^2+17488*y^3*x^3+3600*y*x^4,
+      w_(3,1)*w_(3,2)+783*w_(3,1)*y^2*x+159*w_(3,1)*x^2-5*y^4*x^6-20*y^9-84*y^2*x^7+280*y^7*x-79*x^8-2100*y^5*x^2+12784*y^3*x^3+1264*y*x^4,
+      w_(3,0)*w_(3,2)-56*w_(3,1)*y^3*x+503*w_(3,1)*y*x^2-5*y^3*x^7-20*y^8*x-23*y*x^8+300*y^6*x^2-2300*y^4*x^3+8688*y^2*x^4-1600*x^5,
+      2*w_(3,3)^2-81*w_(3,1)*y^2*x^3-81*w_(3,1)*x^4-2*y^2*x^9-16*y^7*x^3-15*x^10+160*y^5*x^4-1040*y^3*x^5-1552*y*x^6-2*y^6+64*y^4*x-512*y^2*x^2,
+      4*w_(3,2)*w_(3,3)-7*w_(3,1)*y^3*x^3-351*w_(3,1)*y*x^4-13*y*x^10-80*y^6*x^4+800*y^4*x^5-5872*y^2*x^6-4*y^7+1280*x^7+108*y^5*x-1024*y^3*x^2+5120*y*x^3,
+      w_(3,2)^2+10*w_(3,1)*x^5-480*w_(3,1)*y^3+3200*w_(3,1)*y*x-25*x^11-40*y^3*x^6-121*y^8+160*y*x^7+2022*y^6*x-16081*y^4*x^2+53760*y^2*x^3-6400*x^4)
+  R = S/I
+  f = y^4+6*y^2*x+x^2
+  H = matrix {{x^8+20*y^3*x^3+4*y*x^4, y^3*x^6+5*y*x^7+96*y^2*x^3+16*x^4, w_(3,1)*y*x^4-116*w_(3,1)*y^2-20*w_(3,1)*x+40*y^2*x^6+4*x^7-4560*y^3*x^2-784*y*x^3, 5*w_(3,1)*y^2*x^3+29*w_(3,1)*x^4+16*w_(3,1)*y+84*y^3*x^5+484*y*x^6+640*y^2*x^2+64*x^3, 4*w_(3,3)*x+5*w_(3,1)*y^3*x^2+29*w_(3,1)*y*x^3-20*y^2*x^5-100*x^6+4*y^3*x-64*y*x^2}}
+  g = H_(0,1) * H_(0,4)
+  fm = ideal f
+
+  assert(g % f == 0)
+  assert(f * (g // f) - g == 0) -- FAILS
+  G = gb(fm, ChangeMatrix => true)
+  assert((gens gb fm) - (gens fm * getChangeMatrix G) == 0) -- FAILS
+///
+-*
+  restart
+  needsPackage "IntegralClosure2"
    -- email from Doug 12 June 2024
 *-
 TEST ///
@@ -3570,7 +3921,7 @@ TEST ///
 
   A2=R2/ideal(GB2);
 
-  elapsedTime icfp=icFracP A2;
+  elapsedTime icfp=icFracP A2; -- 42 sec
   toString icfp
   --1(unnecessary),f2624,f2924,f3224 (should be f2315x99),f3430
 
@@ -3578,14 +3929,14 @@ TEST ///
   elapsedTime A2' = integralClosure A2; -- .4 sec
   --pushFwd icMap A2
   --conductor A2 -- takes awhile!!  Why!?
-  elapsedTime icf2=icFractions A2;
+  use A2
+  elapsedTime icf2=icFractions(A2, Denominator => z19)
+  
   toString icf2
   --f2624,f3430,f2315,(missing f2924),z1912,y159,y129,x99,u90
 
   time G2=gens gb ideal integralClosure A2;
   toString G2
-
-  icFractions A2
 ///
 
 -*
@@ -3613,9 +3964,10 @@ TEST ///
   assert(conductor F == ideal(a,b,c,d))
   assert(source F === R)
   target F
-  w = first fractionsSpecificDenominator(F, b)
-  assert(value numerator w == a*c) -- fails currently, as frac changes denominator...
-  assert(value denominator w == b) -- fails currently
+  use R
+  w = first icFractions(F, Denominator => b)
+  assert(value numerator w == a*c)
+  assert(value denominator w == b)
 ///
   
 -*
@@ -3639,13 +3991,14 @@ TEST ///
   gens R' -- two new generators, both of degree 5.
   assert(numgens R' === 2 + numgens S)
   assert(flatten degrees R' === {5, 5, 1, 1, 1, 1, 1})
+  use R
   assert(conductor F == ideal(a,b,c,d,e))
   use R
-  ws = fractionsSpecificDenominator(F, b)
+  ws = icFractions(F, Denominator => b)
   w = first ws
   assert(numerator w == a*d^4*e - c*d*e^4) -- this one happens to work out.
   assert(value denominator w == b)
-  assert(value denominator ws_1 == b) -- fails, as it changes denominator to e...
+  assert(value denominator ws_1 == b)
 ///
 
 -*
@@ -3665,10 +4018,10 @@ TEST ///
   see ideal R'
 
   elapsedTime conductor R
-  elapsedTime findConductorInSubring icMap R -- actually, in S!?
+  icFractions R
   use R
-  icFractions(icMap R, y^13)
-  icFractions(icMap R, x^3+x^2)
+  icFractions(icMap R, Denominator => y^13)
+  icFractions(icMap R, Denominator => x^3+x^2)
 
   -- the following is for S = QQ[x,y].  Different monomial orders will have different values
   assert(numcols selectInSubring(1, vars R') == 4)

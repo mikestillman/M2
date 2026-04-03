@@ -4142,13 +4142,13 @@ TEST ///
 
 
 -- Tests that Mike has added:
-loadPackage "IntegralClosure2"
+needsPackage "IntegralClosure2"
 S = ZZ/101[a..d]
 I = ideal(b^2-b)
 R = S/I
 integralClosure(R)
 
--- M2 crash:
+-- 
 kk = QQ
 R = kk[x,y,z, MonomialOrder => Lex]
 p1 = ideal"x,y,z"
@@ -4164,7 +4164,7 @@ decompose oo
 
 factor F
 A = R/F
-loadPackage "IntegralClosure2"
+needsPackage "IntegralClosure2"
 
 ideal F + ideal jacobian matrix{{F}}
 decompose oo

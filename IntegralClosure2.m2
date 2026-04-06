@@ -3901,9 +3901,28 @@ restart
 
   assert(g % f == 0)
   assert(f * (g // f) - g == 0) -- FAILS
+  gbTrace=15
   G = gb(fm, ChangeMatrix => true)
-  assert((gens gb fm) - (gens fm * getChangeMatrix G) == 0) -- FAILS
+  assert((gens G) - (gens fm * getChangeMatrix G) == 0) -- FAILS
+  see ideal getChangeMatrix G
+  see ideal leadTerm ideal R
 ///
+
+TEST /// -- bugs involving use_denom, denom, and ideals/modules over poly rings over QQ
+-- what to check?
+S = QQ[x,y]
+I = ideal(3*x^3-y^2-y, y^4)
+f = x^3 * I_0 + x*y*I_1
+R = S/I
+fR = promote(f, R)
+
+see ideal gens gb ideal R
+
+J = ideal(x^3)
+///
+
+
+
 -*
   restart
   needsPackage "IntegralClosure2"

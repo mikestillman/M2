@@ -33,7 +33,8 @@ export{
      "decomposeOverZZ",
      "OverZZ",
     -- methods
-     "integralClosure", 
+     "integralClosure",
+     "icDenominator",
      "icFractions", 
      "icMap", 
      "conductor", 
@@ -273,6 +274,7 @@ integralClosure Ring := Ring => opts -> (R) -> (
      then return integralClosure(R, coefficientRing R, opts);
 
      (S,F) := flattenRing R;
+     flattenMap := F;
 
      -- right here, we will grab the variables to be excluded
      -- this seems a bit awkward, perhaps there is a better way?
@@ -320,6 +322,16 @@ integralClosure Ring := Ring => opts -> (R) -> (
        << endl;
        );
 
+     radJ := radical J;
+     if radJ == 1 then (
+         isR1 = true;
+         );
+
+     -- denom := null; --mes--opts.Denominator; -- either null (means for the routine to find a possible denominator),
+     -- or a nzd in the radical of the ideal J.
+     denom := findSmallGen radJ;
+     R.icDenominator = flattenMap^(-1) denom;
+   
      ------------------------------
      -- Step 2: make the ring S2 --
      ------------------------------
@@ -341,16 +353,17 @@ integralClosure Ring := Ring => opts -> (R) -> (
              F = F'*F;
 	     -- also extend J to be in this ring
 	     J = trim(F' J);
+             denom = F' denom;
 	     isS2 = true;
 	     )
          );
 
-     denom := null; --mes--opts.Denominator; -- either null (means for the routine to find a possible denominator),
-     -- or a nzd in the radical of the ideal J.
      
      -------------------------------------------
      -- Step 3: incrementally add to the ring --
      -------------------------------------------
+
+     
      F0 := null; -- is set below.
      if not isR1 or not codim1only then (     
      -- loop (note: F : R --> Rn, G : frac Rn --> frac R)
@@ -507,7 +520,8 @@ integralClosure1 = (R0, J, denom, nsteps, varname, keepvars, strategies, verbosi
      if radJ == 1 then return (id_R0,ideal(1_R0),denom);
 
      f := if denom === null then findSmallGen radJ else denom; -- we assume that f is a non-zero divisor!!
-     
+
+     << "denominator used for Hom is: " << toString f << endl;
      -- Compute Hom_R0(radJ,radJ), using f as the common denominator.
 
      if verbosity >= 3 then <<"      small gen of radJ: " << f << endl << endl;
@@ -575,8 +589,6 @@ integralClosure1 = (R0, J, denom, nsteps, varname, keepvars, strategies, verbosi
        -- We also want to trim the ring     
        F0' := i*F0; -- R0 --> R1
 
-       -- if nsteps == 4 then 
-       --     error "debug me";
        if denom === null then
           (F0', F0' radJ, null) -- 3/21/26: TODO: replace null with the actual denominator used?
        else
@@ -841,9 +853,13 @@ icFractions = method(Options => {
         Denominator => null, -- if not null, should be a ring element in the radical of the conductor
         Module => false} -- if true, all module generators, otherwise all ring generators.
     )
-icFractions Ring := List => opts -> R -> R.icFractions ??= (
+icFractions Ring := List => opts -> R -> (
     f := icMap R;
-    icFractions(f, opts)
+    denom := opts.Denominator ?? R.icDenominator;
+    if opts.Denominator === null then
+        icFractions(f, Denominator => R.icDenominator, Module => opts#Module)
+    else
+        icFractions(f, opts)
     )
 
 --------------------------------------------------------------------
@@ -1173,7 +1189,10 @@ makeS2 Ring := RingMap => opts -> R -> (
 	  --routine...
      w := canonicalIdeal R;
      if w === null then return null; -- 3/20/26: when does this happen?
-     if ideal(0_R):w_0 == 0 then idealizer(w,w_0,Variable=>makeVariable opts)
+     if ideal(0_R):w_0 == 0 then (
+         result := idealizer(w,w_0,Variable=>makeVariable opts);
+         return result;
+         )
      else (
 	  return null;
 	  error"first generator of the canonical ideal was a zerodivisor"
@@ -1317,11 +1336,14 @@ simplestElement Ideal := RingElement => I -> (
 
 icFractions RingMap := List => opts -> F -> (
     -- F: R --> R' should be a module finite extension of R, e.g. the integral closure.
-    den := opts.Denominator ?? (
-        simplestElement radical conductor F
-        );
     R := source F;
     R' := target F;
+    den := opts.Denominator ?? (
+        if R.?icDenominator then
+            R.icDenominator
+        else
+            simplestElement radical conductor F
+        );
     ----if R === R' then return {};
     -- we need to determine how many/which variables of R' are from R.
     -- and we need to be able to determine whether an element of R' is in image F,
@@ -2699,10 +2721,8 @@ TEST ///
   condR = conductor icMap R
   use R
   assert(condR == ideal(d^2,c*d,b*d,c^2,b*c))
-  icFractions(icMap R, condR_-1)
+  icFractions(R, Denominator => R.icDenominator)
   use R
-  fractionsSpecificDenominator(icMap R, d^2)
-  showFractions(oo, d^2)
   
   I = ideal I_*
   time integralClosure(S/I, Strategy => {Vasconcelos})
@@ -2853,18 +2873,24 @@ TEST ///
   assert isIsomorphism F
 ///     
 
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
   kk=ZZ/101
   S = kk[a,b,d,e]
   S' = kk[a,b,c,d,e]
   I = monomialCurveIdeal(S,{1,3,4})
   R = S/I
   J = ideal integralClosure R
-  J' = ideal integralClosure(target (makeS2 R))
+  use R
+  assert(value first icFractions R == d^2/e)
+
+  Rtilde = target makeS2 R
+  J' = ideal integralClosure(Rtilde)
+  icFractions Rtilde
   assert(J' == substitute(J, ring J'))
   J'' = monomialCurveIdeal(S', {1,2,3,4})
   use S'
@@ -2872,7 +2898,7 @@ TEST ///
   assert(J'' == phi J)
   use R
   assert(first icFractions R == (d^2/e))
-  (f,g) = makeS2 R
+  f = makeS2 R
   assert(isWellDefined f)
   assert(source f === R)
 ///     
@@ -2905,11 +2931,12 @@ TOOSLOW /// -- TODO: no longer so slow
 
 ///
 
-TOOSLOW ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TOOSLOW ///
   S = ZZ/32003[a,b,c,d,x,y,z,u]
   I = ideal(
      a*x-b*y,
@@ -2923,7 +2950,7 @@ TOOSLOW ///
   time R' = integralClosure(R, Strategy=>{RadicalCodim1}) -- slightly faster than without it
   see ideal R'
   use R
-  icFractions(icMap R, x)
+  icFractions(icMap R)
   use R
   netList icFractions R
   assert isWellDefined icMap R
@@ -2934,11 +2961,12 @@ TOOSLOW ///
   ///
 
 -- integrally closed test
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
   R = QQ[u,v]/ideal(u+2)
   time J = integralClosure (R,Variable => symbol a) 
   use ring ideal J
@@ -2947,11 +2975,12 @@ TEST ///
 ///
 
 -- degrees greater than 1 test
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
   R = ZZ/101[symbol x..symbol z,Degrees=>{2,5,6}]/(z*y^2-x^5*z-x^8)
   time R' = integralClosure (R,Variable => symbol b) 
   use ring ideal R'
@@ -2967,11 +2996,12 @@ TEST ///
 ///
 
 -- multigraded test
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
   R = ZZ/101[symbol x..symbol z,Degrees=>{{1,2},{1,5},{1,6}}]/(z*y^2-x^5*z-x^8)
   time R' = integralClosure (R,Variable=>symbol a) 
   use ring ideal R'
@@ -2984,11 +3014,12 @@ TEST ///
 ///
 
 -- multigraded homogeneous test
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
   R = ZZ/101[symbol x..symbol z,Degrees=>{{4,2},{10,5},{12,6}}]/(z*y^2-x^5*z-x^8)
   time R' = integralClosure (R,Variable=>symbol a) 
   use ring ideal R'
@@ -3001,11 +3032,12 @@ TEST ///
   ///
 
 -- Reduced not a domain test
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
   S=ZZ/101[symbol a,symbol b,symbol c, symbol d]
   I=ideal(a*(b-c),c*(b-d),b*(c-d))
   R=S/I                              
@@ -3017,11 +3049,12 @@ TEST ///
 ///
 
 --Craig's example as a test
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
   S = ZZ/101[symbol x,symbol y,symbol z,MonomialOrder => Lex]
   I = ideal(x^6-z^6-y^2*z^4)
   Q = S/I
@@ -3035,11 +3068,12 @@ TEST ///
 ///
 
 --Mike's inhomogeneous test
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
   R = QQ[symbol a..symbol d]
   I = ideal(a^5*b*c-d^2)
   Q = R/I
@@ -3051,11 +3085,12 @@ TEST ///
 ///
 
 -- rational quartic, to make sure S2 is not being forgotten!
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
   S = QQ[a..d]
   I = monomialCurveIdeal(S,{1,3,4})
   R = S/I
@@ -3086,16 +3121,19 @@ TEST ///
   S = R/I
   elapsedTime S' = integralClosure S
   use S
-  -- showFractions(vars S', a) -- get icFractions to work here, perhaps as icFractions(S, den).
-use S
-  icFractions (icMap S, b) -- MES: Seemingly poor choice for fractions?
+  icFractions S
+  icFractions(icMap S, Denominator => b)
   M = pushForward (icMap S, S'^1);
   assert(degree (M/(M_0)) == 2) -- MES: what are we testing here?
-  assert(# icFractions S == 7)
+  assert(# icFractions S == 2)
 
    -- this is part of the above example.  But what to really place into the test?
   StoS2 = (makeS2 S)
   S2 = target StoS2 -- MES: this doesn't set fractions.  Should it?
+  conductor StoS2
+  icFractions(StoS2, Denominator => a_S)
+  icFractions(StoS2)
+  
   
 -*  
   time integralClosure(S2, Verbosity => 3) -- MES: example where jacobian time is long, whole thing is very long
@@ -3152,22 +3190,24 @@ use S
 ///
 
 -- Test of isNormal
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
   S = ZZ/101[x,y,z]/ideal(x^2-y, x*y-z^2)
   assert not isNormal S
   assert isNormal integralClosure S
 ///
 
 -- Test of icMap and conductor
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
   R = QQ[x,y,z]/ideal(x^6-z^6-y^2*z^4)
   R' = integralClosure R
   F = R.icMap
@@ -3178,11 +3218,12 @@ TEST ///
 ///
 
 -- Test of not keeping the original variables
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
   R = QQ[x,y]/(y^2-x^3)
   R' = integralClosure(R, Keep=>{})
   assert(numgens R' == 1)
@@ -3194,13 +3235,14 @@ TEST ///
   assert(source F === R)
 ///
 
---huneke2
-TEST ///
+
 -*
   restart
   needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
+--huneke2
   kk = ZZ/32003
   S = kk[a,b,c]
   F = a^2*b^2*c+a^4+b^4+c^4
@@ -3225,22 +3267,24 @@ TEST ///
 ///
 
 -- see https://github.com/Macaulay2/M2/issues/933
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
     S = QQ[a..f]
     I = ideal(a*b*c,a*d*f,c*e*f,b*e*d)
     assert (integralClosure I == integralClosure trim I)
 ///
 
 -- added from bug-integralClosure.m2 May 2020
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
     debug IntegralClosure2 -- for extendIdeal
     S = ZZ/101[a,b,c,d]
     K =ideal(a,b)
@@ -3256,11 +3300,12 @@ TEST ///
     assert(integralClosure ideal"a2,b2" == ideal"a2,ab,b2")
 ///
 
-TEST ///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST ///
     debug IntegralClosure2 -- for extendIdeal
     S = ZZ/101[a,b,c]/ideal(a^3-b*(b-c)*(b+c))
     K =ideal(a,b)
@@ -3276,11 +3321,12 @@ TEST ///
     assert(integralClosure I == I) 
 ///
 
-TEST///
 -*
   restart
+  needsPackage "IntegralClosure2"
   loadPackage("IntegralClosure2", Reload => true)
 *-
+TEST///
     debug IntegralClosure2 -- for extendIdeal
     S = ZZ/101[a,b,c]/ideal(a^3-b^2*c)
     K =ideal(a,b)
@@ -3300,15 +3346,16 @@ TEST///
 load "./IntegralClosure2/HarbourneExamples.m2"
 -- an example of Brian Harbourne
 
+-*
+  restart
+  needsPackage "IntegralClosure2"
+  loadPackage("IntegralClosure2", Reload => true)
+*-
 TEST ///
 -- An example construction communicated to us by Craig Huneke
 -- Start with a polynomial f (but generally not quasi-homog), 
 -- consider the Jacobian ideal J, then f is in the integral closure of J.
 -- Actually, is this true?
--*
-    restart
-    loadPackage("IntegralClosure2", Reload =>true)
-*-
   kk = ZZ/32003
   S = kk[x,y,z,t]
   F = poly"xy-(z-t2)(z-t3)(z-t4)"
@@ -3320,6 +3367,11 @@ TEST ///
 ///
 
 -- a homogeneous example which extends the ground field
+-*
+  restart
+  needsPackage "IntegralClosure2"
+  loadPackage("IntegralClosure2", Reload => true)
+*-
 TEST ///
   kk = QQ
   R = kk[x,y, z]
@@ -3344,6 +3396,11 @@ TEST ///
   assert(isPrime G_0)  -- G_0 is a cubic over kk
 ///
 
+-*
+  restart
+  needsPackage "IntegralClosure2"
+  loadPackage("IntegralClosure2", Reload => true)
+*-
 TEST ///
   -- git issue #1117
   R = QQ[a,b,c,d,e,f]
@@ -3358,6 +3415,11 @@ TEST ///
   assert(K == J + F)
 ///
 
+-*
+  restart
+  needsPackage "IntegralClosure2"
+  loadPackage("IntegralClosure2", Reload => true)
+*-
 TEST ///
   -- git issue #846
   R = QQ[x,y]
@@ -3365,6 +3427,11 @@ TEST ///
   assert(integralClosure I == ideal(x^2, x*y, y^2))
 ///
 
+-*
+  restart
+  needsPackage "IntegralClosure2"
+  loadPackage("IntegralClosure2", Reload => true)
+*-
 TEST ///
   -- bug mentioned on 22 Dec 2020 in googlegroup.
   -- fixed later in Dec 2020.
@@ -3375,6 +3442,11 @@ TEST ///
   assert(integralClosure I == ideal(y, x^2))
 ///
 
+-*
+  restart
+  needsPackage "IntegralClosure2"
+  loadPackage("IntegralClosure2", Reload => true)
+*-
 TEST ///
   R = QQ[x,y]/(x^3-y^2)
   I = ideal(y)
@@ -3383,6 +3455,11 @@ TEST ///
   assert(integralClosure I == ideal(y, x^2))
 ///
 
+-*
+  restart
+  needsPackage "IntegralClosure2"
+  loadPackage("IntegralClosure2", Reload => true)
+*-
 TEST ///
   R = QQ[x,y]
   assert(integralClosure R === R)
@@ -3439,7 +3516,7 @@ TEST ///
   conductor R
   use R
   assert member(v*y^3, conductor R)
-  for g in v*y^3 * icFractions R list lift(g, R)
+  for g in v*y^3 * icFractions R list lift(value g, R)
   for g in oo list g/(v*y^3)
   icFracP R
 
@@ -3463,7 +3540,7 @@ TEST ///
   icFractions R -- new fraction is u*x^4/v == -(u*y^4+v*z^4)/u
   use R
   conductor R == ideal(u,v)
-  elapsedTime icFracP R -- 38 sec -- TODO: place an assert here for the answer...
+--  elapsedTime icFracP R -- 38 sec -- TODO: place an assert here for the answer...
 
   R = make2'2 23
   elapsedTime R' = integralClosure R -- 0.04 sec
@@ -3578,7 +3655,7 @@ TEST ///
 *-
 TEST ///
   R=QQ[y,x];
-  R=ZZ/32003[y,x];
+  --R=ZZ/32003[y,x];
   b=(y^12-4*y^10*x+6*y^8*x^2-4*y^6*x^3+8*y^5*x^7+y^4*x^4+8*y^3*x^8-x^13);
   A=R/ideal(b)
   A' = integralClosure(A, Verbosity => 6)
@@ -3589,9 +3666,14 @@ TEST ///
   toString G
   time icf=icFractions(A);
   toString icf
+///
 
+-- Same example as above, done partially.  Several examples below relate to this (current) bug.
+-*
   restart
   needsPackage "IntegralClosure2"
+*-
+TEST ///
   errorDepth=0
   R=QQ[y,x];
   b=(y^12-4*y^10*x+6*y^8*x^2-4*y^6*x^3+8*y^5*x^7+y^4*x^4+8*y^3*x^8-x^13);
@@ -3636,7 +3718,7 @@ TEST /// -- of endomorphisms, and ringFromFractions
 -- YYY
   debug needsPackage "IntegralClosure2"
   kk = QQ
-  kk = ZZ/32003
+  --kk = ZZ/32003
   S = kk[w_(3,0)..w_(3,3), y, x, Degrees => {2:5, 2:6, 2:1}, MonomialOrder => VerticalList{MonomialSize => 32, GRevLex => {2:5, 2:6}, 3:(GRevLex => {}), GRevLex => {2:1}, Position => Up}]
   I = ideal(
       x^13-y^12-8*y^5*x^7+4*y^10*x-8*y^3*x^8-6*y^8*x^2+4*y^6*x^3-y^4*x^4,
@@ -3675,14 +3757,14 @@ TEST /// -- of endomorphisms, and ringFromFractions
   assert(((f*radJ):radJ) == ideal He1 + ideal f)
   fe = y^4+6*y^2*x+x^2
   He = matrix {{x^8+20*y^3*x^3+4*y*x^4, y^3*x^6+5*y*x^7+96*y^2*x^3+16*x^4, w_(3,1)*y*x^4-116*w_(3,1)*y^2-20*w_(3,1)*x+40*y^2*x^6+4*x^7-4560*y^3*x^2-784*y*x^3, 5*w_(3,1)*y^2*x^3+29*w_(3,1)*x^4+16*w_(3,1)*y+84*y^3*x^5+484*y*x^6+640*y^2*x^2+64*x^3, 4*w_(3,3)*x+5*w_(3,1)*y^3*x^2+29*w_(3,1)*y*x^3-20*y^2*x^5-100*x^6+4*y^3*x-64*y*x^2}}
-  assert(He1 == He)
+  if char kk == 0 then assert(He1 == He)
   assert(f1 == fe)
   member(f, ideal He) -- OK.  endomorphisms removes it from the list of generators.  But what if it isn't a generator?
     -- TODO: 3/31/26: find an example of this...
   -- second step: is this correct?  (answer: no, if endomorphisms is correct.
   errorDepth=0
   F = ringFromFractions(He, fe, Variable=>symbol w, Index=>7);
-  see ideal gens gb ideal target F -- WRONG!!
+  --see ideal gens gb ideal target F -- WRONG!!
 
   -- now we try out the parts of ringFromFractions
   H = He
@@ -3752,10 +3834,11 @@ TEST /// -- of endomorphisms, and ringFromFractions
 -*
 -- TODO: this should be a git issue, and needs to be addressed!!
   restart
+  needsPackage "IntegralClosure2"
 *-
 TEST ///
   kk = QQ
-  kk = ZZ/32003
+  --kk = ZZ/32003
   S = kk[w_(3,0)..w_(3,3), y, x, Degrees => {2:5, 2:6, 2:1}, MonomialOrder => VerticalList{MonomialSize => 32, GRevLex => {2:5, 2:6}, 3:(GRevLex => {}), GRevLex => {2:1}, Position => Up}]
   I = ideal(
       x^13-y^12-8*y^5*x^7+4*y^10*x-8*y^3*x^8-6*y^8*x^2+4*y^6*x^3-y^4*x^4,
@@ -3807,7 +3890,6 @@ TEST ///
   assert(target fhfmq === target sH) -- ok
 
   -- the change of basis matrix is screwed up...  We don't even need H...
-  gbTrace=3
   fm = ideal gens (G = gb(ideal f, ChangeMatrix => true))
   hm = getChangeMatrix G
   assert(hm_1 * f == fm_1) -- 2 of them are incorrect, this is the first one.
@@ -3825,16 +3907,6 @@ TEST ///
   leadTerm gens gb I
   leadTerm Gf1
 
-  -- OK, appears ok over S.
-  -- It is possibly a reduction issue since elements are represented by polys over ZZ.
-  S = QQ[x,y,z]
-  I = ideal(2*x^6-7*y^2)
-  R = S/I
-  f = ideal(x^4, 3*x^3*y-x*z)
-  gbf = gens (G = gb(ideal f, ChangeMatrix => true))
-  chf = getChangeMatrix G
-  (gens f) * chf - gbf == 0
-
   w_(3,0) * f == fm_2
   w_(3,1) * f == fm_3
   w_(3,2) * f - fm_4
@@ -3847,11 +3919,6 @@ TEST ///
   f * (g // f) - g
   G = gb(fm, ChangeMatrix => true)
   
-  gens gb fm - f * getChangeMatrix G
-
-  see ideal gens G
-  see ideal getChangeMatrix G
-
   J = ideal lift(f, ambient R) + ideal R
   see ideal gens gb J
   (gens gb J) % (ideal R)
@@ -3859,7 +3926,7 @@ TEST ///
   -- this makes it seem like a engine GB error...!
   gens gb fm
   see ideal oo
-  fm = matrix entries fm
+  fm = matrix entries gens fm
   G = gb(fm, ChangeMatrix => true)
   getChangeMatrix G
   q' = sH // G
@@ -3867,9 +3934,28 @@ TEST ///
   (a1,a2,a3) = rawGBMatrixLift(raw G, raw sH)
 ///
 
+-*
+  restart
+  needsPackage "IntegralClosure2"
+*-
+TEST ///
+  -- OK, appears ok over S.
+  -- It is possibly a reduction issue since elements are represented by polys over ZZ.
+  S = QQ[x,y,z]
+  I = ideal(2*x^6-7*y^2)
+  R = S/I
+  f = ideal(x^4, 3*x^3*y-x*z)
+  gbf = gens (G = gb(ideal f, ChangeMatrix => true))
+  chf = getChangeMatrix G
+  assert((gens f) * chf - gbf == 0)
+///
+
+-*
+  restart
+  needsPackage "IntegralClosure2"
+*-
 TEST /// -- for debugging the above problem, drilled down even more
 -- YYY This is the one to debug right now!!
-restart
   kk = QQ
   S = kk[w_(3,0)..w_(3,3), y, x, Degrees => {2:5, 2:6, 2:1}, MonomialOrder => VerticalList{MonomialSize => 32, GRevLex => {2:5, 2:6}, 3:(GRevLex => {}), GRevLex => {2:1}, Position => Up}]
   I = ideal(
@@ -3908,6 +3994,10 @@ restart
   see ideal leadTerm ideal R
 ///
 
+-*
+  restart
+  needsPackage "IntegralClosure2"
+*-
 TEST /// -- bugs involving use_denom, denom, and ideals/modules over poly rings over QQ
 -- what to check?
 S = QQ[x,y]
@@ -3917,11 +4007,8 @@ R = S/I
 fR = promote(f, R)
 
 see ideal gens gb ideal R
-
 J = ideal(x^3)
 ///
-
-
 
 -*
   restart

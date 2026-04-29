@@ -2905,7 +2905,7 @@ TEST ///
   assert(ideal R' == ideal(-x^6+a_(1,0)*y-x^3*z,-a_(1,0)*x^2+y*z,a_(1,0)^2-x^4*z-x*z^2))
   use R
   assert(#(icFractions R) === 1)
-  assert(value (icFractions R)_0 === y*z/x^2)
+  assert(value (icFractions R)_0 == y*z/x^2)
   assert isWellDefined icMap R'
   assert isNormal R'
 ///
@@ -3548,18 +3548,19 @@ TEST ///
 -- BUG!!!!
   restart
   needsPackage "IntegralClosure2"
-  --Doug: Did I ask you about this before?
+  --Doug said: Did I ask you about this before?
 *-
 TEST ///
   R=QQ[y,x];
   --R=ZZ/32003[y,x];
   b=(y^12-4*y^10*x+6*y^8*x^2-4*y^6*x^3+8*y^5*x^7+y^4*x^4+8*y^3*x^8-x^13);
   A=R/ideal(b)
-  A' = integralClosure(A, Verbosity => 6)
+  --elapsedTime A' = integralClosure(A, Verbosity => 6)
+  elapsedTime A' = integralClosure A -- not short, but used to be a SERIOUS BUG
   conductor A
   icFractions A
-  see ideal A'
-  time G=gens gb ideal integralClosure(A); -- SERIOUS BUG!!?
+  time G=gens gb ideal A';
+  see ideal G
   toString G
   time icf=icFractions(A);
   toString icf
@@ -3924,8 +3925,9 @@ TEST ///
 
   A2=R2/ideal(GB2);
 
-  elapsedTime icfp=icFracP A2; -- 42 sec
-  toString icfp
+--TODO: improve this next call?
+  -- elapsedTime icfp=icFracP A2; -- 42 sec
+  --   toString icfp
   --1(unnecessary),f2624,f2924,f3224 (should be f2315x99),f3430
 
   -- Is this algorithm correct for char=2?
@@ -3940,17 +3942,6 @@ TEST ///
 
   time G2=gens gb ideal integralClosure A2;
   toString G2
-///
-
--*
-  restart
-  needsPackage "IntegralClosure2"
-  -- basic tests of ringFromFractions
-*-
-TEST ///
-  assert(false)
-
-  -- 3/20/26: should H contain f as an entry? Or is it removed?
 ///
 
 -*

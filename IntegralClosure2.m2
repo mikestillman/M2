@@ -1251,7 +1251,7 @@ icFractions RingMap := List => opts -> F -> (
     nblocksForSubring := 0;
     while numcols selectInSubring(nblocksForSubring, vars R') > nbase do nblocksForSubring = nblocksForSubring + 1;
     liftBack := map(R, R', matrix{{nfiber: 0}} | vars R); -- only use once you know argument is in the subring...!
-    --what's wrong with this? Anything?
+    --ISSUE:  seems that leadTerm uses blocks differently than selectInSubring
     --    insubring := f -> leadTerm(i, f) == f;
     inSubring := f -> numcols selectInSubring(nblocksForSubring, matrix{{f}}) > 0;
     den' := F den;
@@ -3497,8 +3497,7 @@ TEST ///
 
 
 -*
--- YYY
--- TODO: determine if this is a bug.
+-- This is not a bug
   restart
   needsPackage "IntegralClosure2"
 -- email from Doug Leonard, July 13, 2025, 8:28 pm
@@ -3555,6 +3554,7 @@ TEST ///
   --R=ZZ/32003[y,x];
   b=(y^12-4*y^10*x+6*y^8*x^2-4*y^6*x^3+8*y^5*x^7+y^4*x^4+8*y^3*x^8-x^13);
   A=R/ideal(b)
+
   --elapsedTime A' = integralClosure(A, Verbosity => 6)
   elapsedTime A' = integralClosure A -- not short, but used to be a SERIOUS BUG
   conductor A
@@ -3579,7 +3579,7 @@ TEST ///
   A' = integralClosure(A, Verbosity => 6, Limit => 6)
   use A
   icFractions(A, Denominator => y^4 + 6*y^2*x + x^2)
-  
+transpose gens trim ideal A'  
   --The outputs (below) are clearly a mess, and not even close to being correct. Do you know why this was the answer?
   -- :
   --  {{x^3, y^2*x^2, y^4-16*y^2*x, 1280*w_(4,0)-37*y^3*x+85072*y*x^2,
@@ -3662,7 +3662,6 @@ TEST /// -- of endomorphisms, and ringFromFractions
   -- second step: is this correct?  (answer: no, if endomorphisms is correct.
   errorDepth=0
   F = ringFromFractions(He, fe, Variable=>symbol w, Index=>7);
-  --see ideal gens gb ideal target F -- WRONG!!
 
   -- now we try out the parts of ringFromFractions
   H = He

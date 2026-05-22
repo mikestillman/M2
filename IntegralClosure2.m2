@@ -3510,9 +3510,24 @@ TEST ///
 -- email from Doug Leonard, July 13, 2025, 8:28 pm
 *-
 TEST ///
-  R=QQ[x,y,z];
+  R=QQ[x,y,z];  -- POINT: this is an integral extension over QQ[y,z].
+  -- want the integral as a QQ[y,z]-algebra.
+  -- w(x^6) = w(y^3*z^2) > weights of other terms.
+  -- w(x) = (5,3)
+  -- w(y) = (6,6)
+  -- w(z) = (6,0) -- would like this to be (1,0), y to be (1,1).
+  -- induces weights on the fractions.
+  -- 1, x, x2, x3, x4, x5
+  -- 
   I=ideal(x^6+x^3*z+y^3*z^2);
   A=R/I;
+  A' = integralClosure A
+  icFractions A
+  -- module basis: 1, x, x^2, (x^3+z)/z (wt (9,9)), (x^4+x*z)/(y*z) (wt (8,6))
+  --  and (x^5+x^2*z)/(y^2*z) -- wt (7,3)
+  -- f53, f73, f86, f99, f106.
+  -- (f var) * (f var) = 
+  
   time ic0=integralClosure(A,Verbosity=>6)
   -- It looks like the fractions produced are:
   -- w_(0,0)=y^2z/x
@@ -4153,12 +4168,12 @@ radical ideal oo
   restart
   loadPackage"IntegralClosure2"
 *-
-  R=ZZ/2[x,y,Weights=>{{8,9},{0,1}}]
+  R=ZZ/2[y,x,Weights=>{{9,8},{1,0}}]
   I=ideal(y^8+y^2*x^3+x^9) -- eliminates x and y at some point. 
   A = R/I
   elapsedTime A' = integralClosure(A, Verbosity => 1) -- MES TODO: the ideal is messy, also: is the answer correct, given ZZ/2??
 
-  R=ZZ/2[x,y,Weights=>{{31,12},{0,1}}]
+  R=ZZ/2[y,x,Weights=>{{31,12},{1,0}}] -- 
   I=ideal"y12+y11+y10x2+y8x9+x31" -- really long, should it really be this bad?
   A = R/I
   elapsedTime A' = integralClosure(A, Verbosity => 1) -- MES TODO: pretty bad timing

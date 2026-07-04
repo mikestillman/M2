@@ -370,11 +370,19 @@ interiorLatticePoint Matrix := List => A -> (
     if numrows A == 0 then return toList(numcols A : 0);
     r := map(RR_53, rawConeInteriorPoint raw(-A));
     rE := (entries r)#0;
-    if rE#0 != 1.0 then return null;
+    -- rE#0 is the engine's full-dimensionality flag (1.0 iff the LP depth tStar
+    -- exceeds the engine tolerance); this is exactly the test coneFullDim does.
+    if rE#0 != 1.0 then return null;         -- cone has empty interior
     tStar := rE#1;
+    -- tStar is the LP depth: the largest value with A*x >= tStar for some x in
+    -- the unit box.  When the flag is set the engine guarantees tStar > 0, so a
+    -- non-positive tStar is an inconsistent numerical result; the scaling loop
+    -- below needs tStar > 0 to terminate, so fail loudly rather than spin.
+    if tStar <= 0 then
+        error "interiorLatticePoint: the LP reported the cone is full-dimensional, but the interior point it returned is not strictly interior (tStar <= 0)";
     xFloat := drop(rE, 2);
     rowBound := max apply(entries A, row -> sum(row, abs));
-    scale := if tStar > 0 then ceiling(rowBound / (2.0 * tStar)) + 1 else 1_ZZ;
+    scale := ceiling(rowBound / (2.0 * tStar)) + 1;
     xInt := apply(xFloat, v -> round(scale * v));
     while any(flatten entries (A * (transpose matrix {xInt})), v -> v <= 0) do (
         scale = 2 * scale;
@@ -405,12 +413,6 @@ weightsFromConeAndQ = (M, Q, n) -> (
 
 -- Triangulation-level dispatches on the topcom (Matrix, List) methods,
 -- so users can compare engine-LP and topcom paths.
-topcomIsRegularTriangulation Triangulation := opts -> T -> (
-    topcomIsRegularTriangulation(matrix T, max T, Homogenize => false)
-    )
-topcomRegularTriangulationWeights Triangulation := opts -> T -> (
-    topcomRegularTriangulationWeights(matrix T, max T, Homogenize => false)
-    )
 topcomIsRegularTriangulation Triangulation := opts -> T -> (
     topcomIsRegularTriangulation(matrix T, max T, Homogenize => false)
     )
@@ -685,8 +687,27 @@ wallCircuits(Matrix, List) := (Amat, tri) -> (
     triset := set (tri/sort);
     -- True iff some c\{v} for v in S is in `tri`.
     sideInTri := (S, c) -> any(S, v -> member(sort toList(set c - set {v}), triset));
+    -- Insertion walls: each unused column v must be lifted strictly above the
+    -- lower hull, i.e. above the simplex sigma of `tri` whose cell contains v.
+    -- That is one extra facet inequality per unused column (the circuit of
+    -- sigma cup {v}); the codim-2 walls alone only constrain used simplices.
+    -- A fine triangulation has no unused columns, so this list is then empty.
+    AmatQ := promote(Amat, QQ);
+    used := set flatten tri;
+    insertWalls := for v from 0 to numcols Amat - 1 list (
+        if used#?v then continue;
+        sigma := null;
+        for t in tri do (
+            lam := flatten entries solve(AmatQ_t, AmatQ_{v});
+            if all(lam, x -> x >= 0) then (sigma = t; break);
+            );
+        if sigma === null then
+            error("wallCircuits: unused column " | toString v |
+                " lies in no simplex of the triangulation (not a valid triangulation)");
+        sort append(sigma, v)
+        );
     seen := new MutableHashTable;
-    for c in codim2s tri list (
+    for c in join(codim2s tri, insertWalls) list (
         Z := syz Amat_c;
         assert(numcols Z == 1);
         z := flatten entries Z;
@@ -3511,6 +3532,33 @@ assert(isSubset(set present, set inTri));
 assert(#z == #c);
 assert all(inTri, v -> z#(position(c, x -> x == v)) > 0);
 assert all(notInTri, v -> z#(position(c, x -> x == v)) < 0);
+///
+
+-*
+restart
+needsPackage "Triangulations"
+*-
+TEST ///
+-- wallCircuits must include an insertion-circuit inequality for each column a
+-- non-fine triangulation leaves unused; without them the (engine) secondary
+-- cone is too large and regularTriangulationWeights can return weights that
+-- induce a strict refinement of the triangulation.
+  needsPackage "Polyhedra"
+  sq9 = matrix {{-1,-1,1,1,-1,0,0,1,0},{-1,1,-1,1,0,-1,1,0,0}}
+
+  -- non-fine triangulation (only the 4 corners); the exact case that failed.
+  T = triangulation(sq9, {{0,1,2},{1,2,3}})
+  assert(not isFine T)
+  w = regularTriangulationWeights(T, Strategy => Engine)
+  assert(w =!= null)
+  -- (a) weights reproduce the triangulation, and
+  assert(sort(regularSubdivision(matrix T, matrix{w})/sort) === sort((max T)/sort))
+  -- (b) weights land strictly inside the secondary cone (contract of
+  --     interiorLatticePoint + weightsFromConeAndQ).
+  M = secondaryCone T; Q = degreeMatrix T;
+  assert all(flatten entries (M * (Q * transpose matrix{w})), x -> x > 0)
+  -- (c) the fix adds inequalities beyond the single codim-2 wall.
+  assert(#wallCircuits T > 1)
 ///
 
 -*

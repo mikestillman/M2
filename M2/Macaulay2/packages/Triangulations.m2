@@ -190,33 +190,12 @@ regularFineFanTriangulation Matrix := Triangulation => A -> (
     )
 
 
--- TODO: I am not sure that this is correct, therefore, this is not exported.
+-- naiveIsTriangulation is kept (unexported) as an alias for the wall-local
+-- test in isWellDefined (see wellDefinedTriangulation below).  Its former
+-- independent check -- convex-hull facets plus oriented circuits -- was
+-- unreliable on non-fine and vector-configuration inputs.
 naiveIsTriangulation = method()
-naiveIsTriangulation(Matrix, List, List) := (A, circuits, tri) -> (
-    aA := augment A;
-    -- H := first halfspaces convexHull aA;
-    H := transpose(-(first fourierMotzkin aA));
-    myfacets := for e in entries H list (
-        positions(flatten entries(matrix {e} * aA), x -> x == 0)
-        );
-    -- test 1: each wall should be in a facet of the convex hull, or occur exactly twice.
-    -- This is NOT correct?!
-    walls := tally flatten for t in tri list subsets(t,#t-1);
-    test1 := for k in keys walls list (
-        if any(myfacets, f -> isSubset(k,f)) then 
-          walls#k == 1
-        else
-          walls#k == 2
-        );
-    if any(test1, x -> not x) then return false;
-    -- test 2: for each oriented circuit Z = (Z+, Z-)
-    test2 := for z in circuits list (
-      # select(tri, t -> isSubset(z_0, t)),
-      # select(tri, t -> isSubset(z_1, t))
-      );
-    all(test2, x -> x#0 == 0 or x#1 == 0)
-    )
-naiveIsTriangulation(Matrix, List) := (A, tri) -> naiveIsTriangulation(A, orientedCircuits A, tri)
+naiveIsTriangulation(Matrix, List) := (A, tri) -> isWellDefined(A, tri)
 
 -- Allow both rays and points, i.e. homogenized A or not.
 -- Homogenize => null (default) auto-detects from max-simplex sizes:
@@ -268,38 +247,119 @@ vectors Triangulation := List => T -> T.vectors
 max Triangulation := List => T -> T.max
 matrix Triangulation := opts -> T -> T.cache.matrix
 
-isWellDefined Triangulation := Boolean => T -> (
-    topcomIsTriangulation(matrix T, max T, Homogenize => false)
+-- isWellDefined -- topcom-free test that a set of max simplices really
+-- triangulates its point/vector configuration.  Uniform over point sets,
+-- acyclic (pointed) vector configs, and totally cyclic (complete-fan)
+-- vector configs; uses only engine linear algebra (det, syz), no Polyhedra.
+--
+-- Setup.  Let m = numRows M.  A vector configuration in R^m is used as is,
+-- so m is its ambient dimension.  A point set of dimension d is first
+-- homogenized (a row of 1's is appended), giving m = d+1 rows.  Either way
+-- each max simplex t is an m-subset of the columns, spanning the
+-- full-dimensional cone posHull(M_t).  A valid triangulation is a set of
+-- such cones that
+--   (a) meet face-to-face (no overlaps) and
+--   (b) cover posHull(M) (no gaps),
+-- where posHull(M) is the whole space in the totally cyclic case.
+--
+-- Let N(u) = number of max cones containing a generic direction u; a valid
+-- triangulation is exactly N == 1 throughout the interior of posHull(M).
+--
+-- Algorithm.
+--   1. Full-dimensional: each t has m columns and det(M_t) != 0.  (A wrong
+--      size or degenerate simplex means T is not well defined -> false, not
+--      an error.)
+--   2. Wall-balance.  A wall w is an (m-1)-subset of some t; its columns M_w
+--      are independent (by step 1), so the orthogonal complement is a line,
+--      spanned by the wall normal phi = syz(transpose M_w) (the wall's
+--      circuit).  Let s_i = phi . M_i for every column i of the *whole*
+--      configuration; the two open halfspaces phi>0 and phi<0 split the
+--      points (s_i=0 lies on the wall's hyperplane and counts for neither
+--      side).  For a simplex meeting w the apex a = t\w has s_a != 0 (a is
+--      off the hyperplane), so it lies on one side; let P, N count the
+--      simplices at w on the + and - side.  Require
+--          some point has s_i > 0  ==>  P == 1
+--          some point has s_i < 0  ==>  N == 1
+--   3. Cover anchor.  Let u0 be the barycenter of the first simplex (sum of
+--      its generators): u0 is in the *open* cone of that simplex.  Require
+--      that exactly one max cone contains u0 (solve M_t x = u0, all x >= 0).
+--
+-- Why steps 2+3 give N == 1 (hence exactly (a)+(b)).  Crossing a wall w, N
+-- changes only by (simplices with facet w on the entered side) minus (those
+-- on the left side); step 2 makes this change 0 across every interior wall
+-- (both sides populated: P == N == 1) and, at a boundary wall of a pointed
+-- posHull(M), the empty outer side has no simplex while the inner side has
+-- one -- exactly what is needed and no cone outside posHull(M).  So N is
+-- constant on the connected interior of posHull(M); step 3 pins that
+-- constant to 1 at u0.  Steps 2 alone would leave the constant free in the
+-- totally cyclic case (no boundary to anchor N=0 outside), where a k-fold
+-- cover -- e.g. the union of two fans on disjoint rays -- has every wall
+-- balanced; step 3 rules that out.  A gap makes some interior wall have a
+-- populated side with no simplex (P==0 or N==0), caught by step 2; an
+-- overlap sharing a wall gives P>=2 or N>=2, also step 2; an overlap not
+-- sharing a wall raises N above 1, caught by step 3.  Conversely a genuine
+-- triangulation passes all three, so the test is exact.
+--
+-- wellDefinedTriangulation is the private core: M is the m-row config matrix
+-- (already homogenized for a point set), tri a list of m-subsets.
+wellDefinedTriangulation = (M, tri) -> (
+    m := numRows M;
+    if #tri == 0 then return false;                    -- no simplices
+    if not all(tri, t -> #t == m) then return false;   -- wrong simplex size
+    if any(tri, t -> det(M_t) == 0) then return false;  -- degenerate simplex
+    -- step 2: wall-balance.  group the apex vertices by wall (each
+    -- (m-1)-subset of some simplex), then check each wall.
+    wallApex := new MutableHashTable;
+    for t in tri do for a in t do (
+        w := select(t, x -> x != a);
+        wallApex#w = (if wallApex#?w then wallApex#w else {}) | {a};
+        );
+    for w in keys wallApex do (
+        phi := syz transpose M_w;                  -- wall normal (circuit)
+        s := flatten entries (transpose phi * M);  -- phi . M_i, every column
+        hasPos := any(s, x -> x > 0);
+        hasNeg := any(s, x -> x < 0);
+        P := number(wallApex#w, a -> s#a > 0);
+        N := number(wallApex#w, a -> s#a < 0);
+        if hasPos and P != 1 then return false;    -- gap or overlap on + side
+        if hasNeg and N != 1 then return false;    -- gap or overlap on - side
+        );
+    -- step 3: cover anchor.  u0 = barycenter of the first simplex is in its
+    -- open cone; a single cover contains it in exactly one max cone.  This
+    -- pins the (otherwise free, in the totally cyclic case) cover multiplicity
+    -- to 1, rejecting balanced multi-covers such as a union of two fans.
+    u0 := promote(M_(tri#0) * transpose matrix {toList(m : 1)}, QQ);
+    covers := number(tri, t -> all(flatten entries solve(promote(M_t, QQ), u0), x -> x >= 0));
+    if covers != 1 then return false;
+    true
+    )
+
+isWellDefined Triangulation := Boolean => T -> wellDefinedTriangulation(matrix T, max T)
+
+-- isWellDefined(Matrix, List): the same test at the (config matrix,
+-- simplices) level.  The simplex size selects point set vs vector config
+-- exactly as `triangulation` does (size numRows A + 1 homogenizes; size
+-- numRows A uses A as is); any other size cannot be a triangulation.
+isWellDefined(Matrix, List) := Boolean => (A, tri) -> (
+    if #tri == 0 then return false;
+    d := numRows A;
+    sizes := unique(tri/length);
+    M := if sizes === {d+1} then augment A
+         else if sizes === {d} then A
+         else return false;
+    wellDefinedTriangulation(M, tri)
     )
 
 Triangulation == Triangulation := Boolean => (S, T) -> S === T
 
-naiveIsTriangulation Triangulation := Boolean => T -> (
-    naiveIsTriangulation(matrix T, max T) -- BUG: needs to take Homogenize, I think.
-    )
+naiveIsTriangulation Triangulation := Boolean => T -> isWellDefined T
 
--- The following is currently only for point sets
--- and is probably slow for larger triangulations too.
+-- isTriangulation is kept (unexported) as an alias for the wall-local test
+-- in isWellDefined.  Its former check -- a convex-hull volume test plus
+-- pairwise Polyhedra intersections -- was point-set only and errored on
+-- wrongly sized simplices.
 isTriangulation = method()
-isTriangulation(Matrix, List) := (M, tri) -> (
-    -- for the moment, we assume that M is a point set.
-    d := #(tri#0) - 1;
-    P := convexHull M;
-    M' := M || matrix{{numcols M: 1}};
-    volP := d! * volume P;
-    volP2 := sum for t in tri list abs det M'_t;
-    if volP != volP2 then (
-        << "volume is not correct: " << volP << " != " << volP2 << endl;
-        return false;
-        );
-    simplices := hashTable for t in tri list t => convexHull M_t;
-    for x in subsets(keys simplices, 2) do 
-        if dim(intersection(simplices#(x#0), simplices#(x#1))) == d then (
-            << "simplices " << x << " intersect in full dimensional region" << endl;
-            return false;
-            );
-    true
-    )
+isTriangulation(Matrix, List) := (M, tri) -> isWellDefined(M, tri)
 
 -- isRegularTriangulation tests whether the secondary cone of (A, tri) has
 -- nonempty interior, via the engine LP rawConeInteriorPoint.  This avoids
@@ -1853,54 +1913,9 @@ doc ///
     "Topcom::topcomRegularTriangulationWeights"
 ///
 
-"doc" -- currently unexported.
-///
-  Key
-    naiveIsTriangulation
-    (naiveIsTriangulation, Triangulation)
-    (naiveIsTriangulation, Matrix, List)
-    (naiveIsTriangulation, Matrix, List, List)
-  Headline
-    test whether a list of simplices is a triangulation, in pure Macaulay2
-  Usage
-    naiveIsTriangulation T
-    naiveIsTriangulation(A, tri)
-    naiveIsTriangulation(A, circuits, tri)
-  Inputs
-    T:Triangulation
-    A:Matrix
-      whose columns are the points of the configuration
-    tri:List
-      a putative triangulation of the columns of $A$
-    circuits:List
-      the oriented circuits of $A$; if omitted, computed via
-      @TO "Topcom::orientedCircuits"@
-  Outputs
-    :Boolean
-      whether {\tt tri} forms a valid triangulation of the convex hull of
-      the columns of $A$
-  Description
-    Text
-      A self-contained Macaulay2 implementation of triangulation
-      validity, complementary to @TO (isWellDefined, Triangulation)@
-      which defers to topcom.  Two checks are performed: each codim-1
-      wall must either lie on the boundary of $\mathrm{conv}(A)$ and
-      occur in exactly one simplex, or lie in the interior and occur in
-      exactly two; and for each oriented circuit, at most one of the two
-      sides may be fully present in the triangulation.
-    Example
-      A = transpose matrix {{0,3},{0,1},{-1,-1},{1,-1},{-4,-2},{4,-2}}
-      T = regularFineTriangulation A
-      naiveIsTriangulation T
-      isWellDefined T
-  Caveat
-    This function carries internal {\tt TODO} comments expressing
-    uncertainty about correctness in edge cases; for an authoritative
-    answer, prefer @TO (isWellDefined, Triangulation)@.
-  SeeAlso
-    (isWellDefined, Triangulation)
-    "Topcom::orientedCircuits"
-///
+-- naiveIsTriangulation and isTriangulation are unexported aliases for the
+-- wall-local test documented at (isWellDefined, Triangulation); they carry
+-- no separate documentation node.
 
 doc ///
   Key
@@ -3963,6 +3978,66 @@ TEST /// -- methods to find one FRST of a reflexive polytope.
   -- tris/isFine//tally
   -- tris/isRegularTriangulation//tally -- this is using Topcom by default.
   ///
+
+TEST /// -- isWellDefined: topcom-free, uniform over all configuration types.
+  -- Totally cyclic (complete fan) -- the case topcom mishandles.
+  -- Fan of P^2: rays e1, e2, -e1-e2; the three 2-cones.
+  P2 = transpose matrix {{1,0},{0,1},{-1,-1}}
+  assert(not isPointed posHull P2)
+  assert isWellDefined triangulation(P2, {{0,1},{1,2},{0,2}})
+  assert(not isWellDefined(P2, {{0,1},{1,2}}))              -- drop a cone: gap
+  assert(not isWellDefined(P2, {{0,1},{1,2},{0,2},{0,1}}))  -- repeated cone
+
+  -- Complete fan in R^3: faces of the octahedron (rays +-e_i).
+  Oct = transpose matrix {{1,0,0},{-1,0,0},{0,1,0},{0,-1,0},{0,0,1},{0,0,-1}}
+  octTri = {{0,2,4},{0,2,5},{0,3,4},{0,3,5},{1,2,4},{1,2,5},{1,3,4},{1,3,5}}
+  assert(not isPointed posHull Oct)
+  assert isWellDefined triangulation(Oct, octTri)
+  assert(not isWellDefined(Oct, drop(octTri, 1)))          -- missing a cone: gap
+
+  -- Acyclic (pointed) vector configuration: cone over a square cross-section.
+  Pt = transpose matrix {{1,0,0},{1,1,0},{1,0,1},{1,1,1}}
+  assert isPointed posHull Pt
+  assert isWellDefined triangulation(Pt, {{0,1,2},{1,2,3}})
+  assert(not isWellDefined(Pt, {{0,1,2}}))                 -- gap
+
+  -- Point configuration (homogenized): the unit square.
+  V = transpose matrix {{0,0},{1,0},{0,1},{1,1}}
+  assert isWellDefined triangulation(V, {{0,1,2},{1,2,3}})
+  assert(not isWellDefined(V, {{0,1,2}}))                  -- half the square: gap
+  assert(not isWellDefined(V, {{0,1,2},{0,1,3}}))          -- overlap
+  assert(not isWellDefined(V, {{0,1,2,3}}))                -- wrong simplex size
+
+  -- Cross-check topcom where topcom is reliable (point set).
+  assert(isWellDefined(V, {{0,1,2},{1,2,3}}) == topcomIsTriangulation(V, {{0,1,2},{1,2,3}}))
+  assert(isWellDefined(V, {{0,1,2}}) == topcomIsTriangulation(V, {{0,1,2}}))
+
+  -- Balanced multi-cover: two complete fans of R^2 on six distinct rays
+  -- (three each) share no ray, hence no wall, so every wall is locally
+  -- balanced.  Each fan is well defined; their union double-covers R^2 and
+  -- must be rejected by the cover anchor (step 3).
+  M6 = transpose matrix {{1,0},{-1,2},{-1,-2},{0,1},{-2,-1},{2,-1}}
+  assert(not isPointed posHull M6)
+  assert isWellDefined triangulation(M6, {{0,1},{1,2},{0,2}})
+  assert isWellDefined triangulation(M6, {{3,4},{4,5},{3,5}})
+  assert(not isWellDefined(M6, {{0,1},{1,2},{0,2},{3,4},{4,5},{3,5}}))
+///
+
+TEST /// -- bad triangulations of the square, via all three predicates.
+  -- isTriangulation and naiveIsTriangulation are unexported aliases for the
+  -- wall-local test; T3 (a 4-vertex "simplex") used to error, now is false.
+  debug needsPackage "Triangulations"
+  V = transpose matrix {{0,0},{1,0},{0,1},{1,1}}
+  T1 = {{0,1,2}}          -- half the square: gap
+  T2 = {{0,1,2},{0,1,3}}  -- overlap
+  T3 = {{0,1,2,3}}        -- wrong simplex size
+  for T in {T1, T2, T3} do (
+      assert(not topcomIsTriangulation(V, T));
+      assert(not isWellDefined(V, T));
+      assert(not isTriangulation(V, T));
+      assert(not naiveIsTriangulation(V, T));
+      )
+///
 end----------------------------------------------------
 
 restart
@@ -4009,22 +4084,6 @@ check "Triangulations"
       # select(tri, t -> isSubset(z_0, t)),
       # select(tri, t -> isSubset(z_1, t))
       )
-///
-
-TEST ///
--- Bad triangulations of the square
-  V = transpose matrix {{0,0},{1,0},{0,1},{1,1}}
-  T1 = {{0,1,2}}
-  T2 = {{0,1,2},{0,1,3}}
-  T3 = {{0,1,2,3}}
-  assert(not topcomIsTriangulation(V, T1))
-  assert(not topcomIsTriangulation(V, T2))
-  assert(not topcomIsTriangulation(V, T3))
-
-  debug needsPackage "Triangulations" -- TODO: isTriangulation should be exported, or called naiveIsTriangulation.
-  assert(not isTriangulation(V, T1))
-  assert(not isTriangulation(V, T2))
-  assert(not isTriangulation(V, T3)) -- gives error, should give false!
 ///
 
 

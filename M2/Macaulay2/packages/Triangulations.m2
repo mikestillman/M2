@@ -741,9 +741,11 @@ flipCandidates Triangulation := T -> flipCandidates(matrix T, max T)
 wallCircuits = method()
 wallCircuits(Matrix, List) := (Amat, tri) -> (
     d := #(tri#0);
-    assert all(tri, t -> #t == d);
+    n := numcols Amat;
+    if not all(tri, t -> #t == d) then
+        error "expected a list of list of indices of the same size";
     if numrows Amat == d-1 then
-      Amat = Amat || matrix{ toList(numcols Amat : 1) };
+        Amat = Amat || matrix{ toList(numcols Amat : 1) };
     triset := set (tri/sort);
     -- True iff some c\{v} for v in S is in `tri`.
     sideInTri := (S, c) -> any(S, v -> member(sort toList(set c - set {v}), triset));
@@ -782,14 +784,25 @@ wallCircuits(Matrix, List) := (Amat, tri) -> (
         key := {inTri, notInTri};
         if seen#?key then continue;
         seen#key = true;
-        {inTri, notInTri, zSigned}
+        -- now we take zSigned, and put it into a list of length n
+        indicesInCircuit := sort flatten {inTri, notInTri};
+        cz := hashTable apply(#indicesInCircuit, k -> indicesInCircuit#k => zSigned#k);
+        -- the following can be removed once this is working again.
+        -- w := {inTri, notInTri, zSigned};
+        -- c1 := sort flatten {w#0, w#1};
+        -- z = w#2; -- actually, this might be the same z as above?
+        -- cz := hashTable apply(#c1, k -> c1#k => z#k);
+        {inTri, notInTri, for i from 0 to n-1 list (if cz#?i then cz#i else 0)}
         )
     )
 
 wallCircuits Triangulation := T -> (
-    if T.cache#?(symbol wallCircuits) then T.cache#(symbol wallCircuits)
-    else T.cache#(symbol wallCircuits) = wallCircuits(matrix T, max T)
+    T.cache.wallCircuits ??= wallCircuits(matrix T, max T)
     )
+-- remove this older, less idiomatic code:
+    -- if T.cache#?(symbol wallCircuits) then T.cache#(symbol wallCircuits)
+    -- else T.cache#(symbol wallCircuits) = wallCircuits(matrix T, max T)
+    -- )
 
 -- Charge matrix Q of a configuration A: an integer matrix whose rows form
 -- a basis of ker A over ZZ.  Rows generate the lattice of linear relations
@@ -822,14 +835,9 @@ secondaryCone(Matrix, List) := Matrix => opts -> (A, tri) -> (
     n := numcols A1;
     wcs := wallCircuits(A1, tri);
     if #wcs == 0 then return map(ZZ^0, ZZ^nQ, 0);
+    M := wcs/last//matrix;
     -- Build the length-N inequalities row-by-row, then project to the
     -- charge lattice via z = z' * Q  <=>  z^T = Q^T * (z')^T.
-    M := matrix for w in wcs list (
-        c := sort flatten {w#0, w#1};
-        z := w#2;
-        cz := hashTable apply(#c, k -> c#k => z#k);
-        for i from 0 to n-1 list (if cz#?i then cz#i else 0)
-        );
     transpose ((transpose M) // (transpose Q))
     )
 
@@ -2217,10 +2225,12 @@ doc ///
       supported on a codim-2 wall of the triangulation
   Description
     Text
-      A codim-2 wall of $T$ is the union of two adjacent maximal simplices,
+      A codim-2 wall of $T$ is given by two adjacent maximal simplices whose intersection
+      has dimension one less.  Taking the union of the index sets, this is
+      determined by
       a $(d{+}1)$-element subset $c$ of column indices.  The circuit
-      supported on $c$ is the integer kernel relation $\sum_{i \in c} z_i A_i = 0$,
-      restricted to its support (the indices $i$ with $z_i \ne 0$).  When the
+      supported on $c$ is the integer kernel relation $\sum_{i \in c} z_i A_i = 0$.
+      When the
       circuit support is strictly smaller than $d{+}1$ -- which happens when
       one of the wall vertices has $z = 0$ -- the same circuit can appear in
       several different walls; these duplicates are removed so each entry of
@@ -2232,11 +2242,11 @@ doc ///
     Text
       $\bullet$ {\tt notInTri}: the support indices with $z_i < 0$.
     Text
-      $\bullet$ {\tt z}: an integer kernel of length $\#({\tt inTri} \cup {\tt notInTri})$,
-      indexed by position in {\tt sort(inTri | notInTri)}, signed so the
+      $\bullet$ {\tt z}: an integer vector of length the number of columns of $A$.
+      signed so the
       facet inequality
         $$\sum_{i \in {\tt inTri} \cup {\tt notInTri}} z_i \, w_i \;\ge\; 0$$
-      holds for every $w$ that induces $T$.
+      holds for every $w$ that induces the same triangulation $T$.
     Text
       For a {\bf balanced} circuit (both signs present), {\tt inTri} is exactly
       the half whose simplices $c \setminus \{v\}$ appear in $T$.  For a
@@ -3761,6 +3771,10 @@ needsPackage "Triangulations"
   -- regularTriangulationWeights t0 
 ///
 
+-*
+restart
+needsPackage "Triangulations"
+*-
 TEST /// -- wallCircuits with degenerate codim-2 walls (circuit < d+1).
   -- 8 corners of a unit 3-cube as a vector configuration (homogenized to 4
   -- rows by appending 1's).  Each codim-2 face of the triangulation has a
@@ -3776,7 +3790,7 @@ TEST /// -- wallCircuits with degenerate codim-2 walls (circuit < d+1).
   assert(#flipCandidates tri == 4)
   assert(#wallCircuits tri == 4)
   -- Each circuit has support of size 4 (one face of the cube).
-  assert all(wallCircuits tri, w -> #(w#0) + #(w#1) == 4 and #(w#2) == 4)
+  assert all(wallCircuits tri, w -> #(w#0) + #(w#1) == 4 and #(w#2) == 8)
   -- secondaryCone returns the reduced inequality matrix in Q-coordinates:
   -- one row per distinct circuit, one column per charge basis vector.
   -- Here d=4, N=8, so the cone lives in R^(8-4) = R^4.
@@ -3979,6 +3993,10 @@ TEST /// -- methods to find one FRST of a reflexive polytope.
   -- tris/isRegularTriangulation//tally -- this is using Topcom by default.
   ///
 
+-*
+restart
+needsPackage "Triangulations"
+*-
 TEST /// -- isWellDefined: topcom-free, uniform over all configuration types.
   -- Totally cyclic (complete fan) -- the case topcom mishandles.
   -- Fan of P^2: rays e1, e2, -e1-e2; the three 2-cones.
@@ -4023,6 +4041,10 @@ TEST /// -- isWellDefined: topcom-free, uniform over all configuration types.
   assert(not isWellDefined(M6, {{0,1},{1,2},{0,2},{3,4},{4,5},{3,5}}))
 ///
 
+-*
+restart
+needsPackage "Triangulations"
+*-
 TEST /// -- bad triangulations of the square, via all three predicates.
   -- isTriangulation and naiveIsTriangulation are unexported aliases for the
   -- wall-local test; T3 (a 4-vertex "simplex") used to error, now is false.
@@ -4037,6 +4059,30 @@ TEST /// -- bad triangulations of the square, via all three predicates.
       assert(not isTriangulation(V, T));
       assert(not naiveIsTriangulation(V, T));
       )
+///
+
+-*
+restart
+needsPackage "Triangulations"
+*-
+TEST ///
+  myrays = {{-1, 0, -1, 1}, {-1, 0, -1, 2}, {-1, 1, -1, 1}, {-1, 1, 1, 0}, {2, -1, -1, -1}, {2, -1, 3, -3}, {2, -1, 1, -2}}
+  tri = {{0, 1, 2, 3}, {0, 1, 2, 4}, {0, 1, 3, 5}, {0, 1, 4, 6}, {0, 1, 5, 6}, {0, 2, 3, 4}, {0, 3, 4, 6}, {0, 3, 5, 6}, {1, 2, 3, 4}, {1, 3, 4, 6}, {1, 3, 5, 6}}
+  t = triangulation(myrays, tri)
+  assert isWellDefined t
+  assert isFine t
+  assert isRegularTriangulation t
+  wallAns = set {
+    {{0, 1, 3, 4}, {2}, {1, 1, -1, 3, 2, 0, 0}},
+    {{0, 1, 2, 5}, {3}, {1, 1, 3, -1, 0, 2, 0}},
+    {{0, 1, 2, 6}, {4}, {1, 1, 2, 0, -1, 0, 3}},
+    {{0, 1, 3, 6}, {5}, {1, 1, 0, 2, 0, -1, 3}},
+    {{4, 5}, {6}, {0, 0, 0, 0, 1, 1, -2}},
+    {{0, 1, 3, 4, 6}, {}, {1, 1, 0, 2, 1, 0, 1}},
+    {{2, 6}, {3, 4}, {0, 0, 1, -1, -1, 0, 1}}
+    }
+  assert(set wallCircuits t === wallAns)
+  (wallCircuits t)/last//matrix -- rows are the secondary cone hyperplanes (in QQ^n), n = 7.
 ///
 end----------------------------------------------------
 

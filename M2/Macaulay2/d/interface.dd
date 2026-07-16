@@ -4105,8 +4105,25 @@ export rawMatrixRatConversion(e:Expr):Expr := (
 
 setupfun("rawMatrixRatConversion", rawMatrixRatConversion);
 
+export rawRingElementRatFunctionReconstruction(u:RawRingElement,m:RawRingElement,R:RawRing) : RawRingElementPairOrNull :=
+  Ccode(RawRingElementPairOrNull,"rawRingElementRatFunctionReconstruction(u,m,R)");
 
-       
+export rawRingElementRatFunctionReconstruction(e:Expr):Expr := (
+     when e is s:Sequence do if length(s) != 3 then WrongNumArgs(3) else
+       when s.0 is u:RawRingElementCell do
+       when s.1 is m:RawRingElementCell do
+       when s.2 is R:RawRingCell do
+         toExpr(rawRingElementRatFunctionReconstruction(u.p,m.p,R.p))
+       else WrongArg(3, "a raw ring")
+       else WrongArg(2, "a raw ring element")
+       else WrongArg(1, "a raw ring element")
+       else WrongNumArgs(3)
+     );
+
+setupfun("rawRingElementRatFunctionReconstruction", rawRingElementRatFunctionReconstruction);
+
+
+
 
 
 

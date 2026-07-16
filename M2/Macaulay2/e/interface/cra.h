@@ -44,6 +44,18 @@ const Matrix *rawMatrixRatConversion(const Matrix *f,
                                      mpz_srcptr m,
                                      const Ring *RQ);
 
+// Rational function reconstruction over a field (typically ZZ/p).
+// u, m and R must all be the same univariate polynomial ring over a field.
+// Returns the pair (numerator, denominator), with denominator monic, such that
+// numerator/denominator == u (mod m).  When no such reconstruction exists, the
+// returned denominator is zero (the "null" case).  Returns null (with an engine
+// error set) only on genuine misuse (mismatched rings, or a ring that is not
+// univariate over a field).
+engine_RawRingElementPairOrNull rawRingElementRatFunctionReconstruction(
+    const RingElement *u,
+    const RingElement *m,
+    const Ring *R);
+
 #  if defined(__cplusplus)
 }
 #  endif

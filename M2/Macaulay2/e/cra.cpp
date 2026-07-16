@@ -404,6 +404,64 @@ vec ChineseRemainder::ratConversion(vec f, mpz_srcptr m, const PolyRing *RQ)
   return head.next;
 }
 
+// floor division a/b for b > 0, matching Macaulay2's // on integers.
+static int floorDiv(int a, int b) { return (a >= 0) ? a / b : -((b - 1 - a) / b); }
+
+bool ChineseRemainder::ratFunctionReconstruction(const ring_elem u,
+                                                 const ring_elem m,
+                                                 const PolyRing *R,
+                                                 ring_elem &result_num,
+                                                 ring_elem &result_den)
+{
+  const Ring *K = R->getCoefficientRing();
+
+  // Degree in the single variable, with the convention deg(0) = -1 so that the
+  // loop guard and the size checks behave for the zero polynomial (M2's
+  // 'first degree' errors on 0, so we must not call degree_of_var on it).
+  auto degree0 = [&](const ring_elem f) -> int {
+    if (R->is_zero(f)) return -1;
+    int lo, hi;
+    R->degree_of_var(0, f, lo, hi);
+    return hi;
+  };
+
+  int M = degree0(m);
+  // Bounds chosen (deliberately) smaller than M//2 so reconstruction is more
+  // likely to succeed; see Monagan-vanHoeij 2004.
+  int N = floorDiv(M - 1, 2);  // = (M-1)//2
+  int D = M - N - 2;           // = M-N-2
+
+  ring_elem r0 = m;
+  ring_elem s0 = R->from_long(0);
+  ring_elem r1 = u;
+  ring_elem s1 = R->from_long(1);
+
+  while (degree0(r1) > N)
+    {
+      ring_elem q;
+      ring_elem r_next = R->remainderAndQuotient(r0, r1, q);  // r0 - q*r1
+      ring_elem s_next = R->subtract(s0, R->mult(q, s1));      // s0 - q*s1
+      r0 = r1;
+      r1 = r_next;
+      s0 = s1;
+      s1 = s_next;
+    }
+
+  ring_elem a = r1;
+  ring_elem b = s1;
+
+  // Reject: deg(b) too large, or gcd(b,m) != 1.
+  if (degree0(b) > D || !R->is_unit(R->gcd(b, m))) return false;
+
+  // Normalize so that b is monic: multiply both a and b by 1/lc(b).
+  ring_elem c = K->invert(R->lead_flat_coeff(b));
+  result_num = R->copy(a);
+  result_den = R->copy(b);
+  R->mult_coeff_to(c, result_num);
+  R->mult_coeff_to(c, result_den);
+  return true;
+}
+
 // Local Variables:
 // indent-tabs-mode: nil
 // End:

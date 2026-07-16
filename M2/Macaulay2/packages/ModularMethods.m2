@@ -77,7 +77,7 @@ ratReconstruct(ZZ, ZZ) := QQ => (a, m) -> (
     63809, 63803, 63799, 63793, 63781, 63773, 63761, 63743, 63737, 63727, 63719, 63709, 63703, 
     63697, 63691, 63689, 63671, 63667, 63659, 63649, 63647, 63629, 63617, 63611, 63607, 63601}
 
-importFrom_Core { "raw", "rawMatrixRatConversion", "rawMatrixCRA" }
+importFrom_Core { "raw", "rawMatrixRatConversion", "rawMatrixCRA", "rawRingElementRatFunctionReconstruction" }
 
 ringOverQQ = method()
 ringOverQQ Ring := Ring => R -> (
@@ -459,6 +459,19 @@ rationalFunctionReconstruction0(RingElement, RingElement) := (u,m) -> (
 	  )
      )
 
+-- Engine-backed version of rationalFunctionReconstruction0, calling the C++
+-- routine ChineseRemainder::ratFunctionReconstruction.  Kept alongside the
+-- pure-M2 version above so the two can be compared for validation.
+rationalFunctionReconstruction0E = method()
+rationalFunctionReconstruction0E(RingElement, RingElement) := (u,m) -> (
+     R := ring m;
+     ans := rawRingElementRatFunctionReconstruction(raw u, raw m, raw R);
+     -- the engine signals the "null" case with a zero denominator
+     num := new R from ans#0;
+     den := new R from ans#1;
+     if den == 0 then null else (num, den)
+     )
+
 checkRatRecon = (F, u, ans) -> (
      if ans === null then return null;
      (numer,denom) := ans;
@@ -493,7 +506,7 @@ rationalFunctionReconstruction1(RingElement, RingElement, RingElement) := (F, mt
      cfs = flatten entries toRt cfs;
      mtInRt := toRt mt;
      newpairs := for i from 0 to #cfs - 1 list (
-	  ans := rationalFunctionReconstruction0(cfs#i, mtInRt);
+	  ans := rationalFunctionReconstruction0E(cfs#i, mtInRt);
           -- the next line is for debugging only
           -- checkRatRecon(cfs#i, mtInRt, ans);
 	  if ans === null then return null;

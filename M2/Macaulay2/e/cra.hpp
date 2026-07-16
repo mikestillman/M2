@@ -81,6 +81,24 @@ class ChineseRemainder
   // computes a polynomial with rational coefficients that reduces
   // to f mod m; f should be in a polynomial ring ZZ[M] and RQ=QQ[M]
 
+  static bool ratFunctionReconstruction(const ring_elem u,
+                                        const ring_elem m,
+                                        const PolyRing *R,
+                                        ring_elem &result_num,
+                                        ring_elem &result_den);
+  // Rational function reconstruction over a field (typically ZZ/p).
+  // u and m are elements of the univariate polynomial ring R (one variable,
+  // coefficients in a field).  On success, sets result_num and result_den
+  // (elements of R, with result_den monic) so that
+  //   (1) deg(result_num) + deg(result_den) < deg(m)
+  //   (2) result_den is monic
+  //   (3) gcd(result_num, result_den) == 1
+  //   (4) gcd(result_den, m) == 1
+  //   (5) result_num / result_den == u  (mod m)
+  // and returns true.  Returns false (the "null" case) when no such pair
+  // exists.  This is a direct port of the Macaulay2 routine
+  // rationalFunctionReconstruction0 (Monagan-vanHoeij 2004).
+
   static ring_elem CRA(const PolyRing *R,
                        ring_elem f,
                        ring_elem g,

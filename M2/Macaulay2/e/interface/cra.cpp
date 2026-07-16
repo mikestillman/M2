@@ -162,6 +162,51 @@ const Matrix *rawMatrixRatConversion(const Matrix *f, mpz_srcptr m, const Ring *
   return mat.to_matrix();
 }
 
+engine_RawRingElementPairOrNull rawRingElementRatFunctionReconstruction(
+    const RingElement *u,
+    const RingElement *m,
+    const Ring *R)
+{
+  if (u->get_ring() != R || m->get_ring() != R)
+    {
+      ERROR("expected u, m and the ring to be the same univariate polynomial ring");
+      return nullptr;
+    }
+  const PolyRing *P = R->cast_to_PolyRing();
+  if (P == nullptr)
+    {
+      ERROR("expected a univariate polynomial ring over a field");
+      return nullptr;
+    }
+  if (P->n_vars() != 1)
+    {
+      ERROR("expected a polynomial ring in exactly one variable");
+      return nullptr;
+    }
+  const Ring *K = P->getCoefficientRing();
+  if (!K->is_field())
+    {
+      ERROR("expected coefficient ring to be a field");
+      return nullptr;
+    }
+
+  ring_elem num, den;
+  bool ok = ChineseRemainder::ratFunctionReconstruction(
+      u->get_value(), m->get_value(), P, num, den);
+  if (!ok)
+    {
+      // No reconstruction exists: signal the "null" case with a zero
+      // denominator (a genuine denominator is always monic, hence nonzero).
+      num = P->from_long(0);
+      den = P->from_long(0);
+    }
+
+  engine_RawRingElementPair result = new engine_RawRingElementPair_struct;
+  result->a = RingElement::make_raw(R, num);
+  result->b = RingElement::make_raw(R, den);
+  return result;
+}
+
 // Local Variables:
 // indent-tabs-mode: nil
 // End:

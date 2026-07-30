@@ -70,10 +70,10 @@ TEST /// -- isFieldInNormalForm
 
   K4 = field (QQ[x,y])
   fieldInfo K4 --
-  ---- TODO: WANT THIS TO WORK, I think -- K4 = field (ZZ[x,y]) -- fails
-  ---- A = ZZ[x,y]
-  ---- B = A/ideal(3_A)
-  ---- C = field B -- fails: TODO: fix this?
+  A = ZZ[x,y]
+  B = A/ideal(3_A)
+  C = field B
+  assert (baseField C === (ZZ/3))
 
   -- what is the point of the following code?
   getCoefficientField K4
@@ -1398,6 +1398,7 @@ TEST /// -- myfactor
   
   -- TODO: make the test values monic
   factors f
+  factorData f
   pretFac = prettyFactor f
 
   assert(value pretFac == f)
@@ -2763,6 +2764,24 @@ assert(source kk.cache.LiftBack === kk)
 assert(target kk.cache.LiftBack === S)
 ///
 
+
+-*
+restart
+needsPackage "Fields"
+*-
+
+TEST ///
+-- Example of factoriing over finite field
+A = ZZ/32771[a..d]
+B = A/monomialCurveIdeal(A, {1,2,3})
+L = field B
+useTower L
+R = L[x,y]
+f = b*((y+1)*x + a*y)*(x*y + c*y + b)*(x+y+a)*(y+a)*(x+c)
+elapsedTime facData = factorData f
+--elapsedTime profile (facData = factorData f)
+///
+
 -*
 restart
 needsPackage "Fields"
@@ -2777,6 +2796,8 @@ useTower L
 R = L[x,y]
 f = b*((y+1)*x + a*y)*(x*y + c*y + b)*(x+y+a)*(y+a)*(x+c)
 elapsedTime facData = factorData f
+--elapsedTime profile (facData = factorData f)
+--profileSummary()
 assert(facData.Coefficient * product apply(facData.Factors, p -> (p#1)^(p#0)) == f)
 
 -- factoring three variable case

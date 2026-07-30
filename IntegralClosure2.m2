@@ -50,7 +50,7 @@ export{
      "icFracP", 
      "icPIdeal",
      --mes--"extendIdeal",
-     -- "testHunekeQuestion", -- MES remove or make hidden?
+     "testHunekeQuestion", -- MES remove or make hidden?
      -- optional argument names
      "Keep",
      "Index",
@@ -2000,9 +2000,6 @@ doc ///
   Outputs
     F:RingMap
       The inclusion map from $R$ into $S = Hom_R(I,I)$
-    G:RingMap
-      $frac S \rightarrow frac R$, giving the fractions
-      corresponding to each generator of $S$.
   Description
    Text
      The idealizer of $I$, computed as target F, 
@@ -2015,9 +2012,8 @@ doc ///
    Example
      R = QQ[x,y]/(y^3-x^7)
      I = ideal(x^2,y^2)
-     (F,G) = idealizer(I,x^2);
+     F = idealizer(I,x^2);
      target F
-     first entries G.matrix
   SeeAlso
     ringFromFractions
     integralClosure

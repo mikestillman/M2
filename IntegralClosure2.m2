@@ -1,7 +1,7 @@
 newPackage(
     "IntegralClosure2",
-    Version => "1.10", 
-    Date => "31 Dec 2020",
+    Version => "1.12", 
+    Date => "5 Aug 2026",
     Authors => {
         {Name => "David Eisenbud", Email => "de@msri.org", HomePage => "http://www.msri.org/~de/"},
         {Name => "Mike Stillman", Email => "mike@math.cornell.edu", HomePage => "https://mikestillman.github.io"},
@@ -10,12 +10,13 @@ newPackage(
     Headline => "integral closure",
     Keywords => {"Commutative Algebra"},
     PackageImports => {
-        "PrimaryDecomposition",  -- only used for an obscure "rad" function
+        "Elimination",
+        --"PrimaryDecomposition",  -- only used for an obscure "rad" function
         "ReesAlgebra" -- used for integral closure of an ideal
         },
     PackageExports => {
-        "Fields",
-        "MinimalPrimes", -- really helps speed up most computations here. Use minprimes.
+--        "Fields",
+        "MinimalPrimes",
         "PushForward"
         },
     DebuggingMode => false,
@@ -23,7 +24,7 @@ newPackage(
     )
 
 importFrom_Core { "generatorSymbols" } -- use as R#generatorSymbols.
-importFrom_MinimalPrimes { "rad" } -- a function we seem to be using in integralClosure.
+--importFrom_MinimalPrimes { "rad" } -- a function we seem to be using in integralClosure.
 
 export{
     -- code over ZZ
@@ -142,10 +143,10 @@ addHook((radical, Ideal), radicalOverZZ, Strategy => OverZZ);
   I = ideal(x^6-z^6-y^2*z^4)
   singI = I + ideal jacobian I
   badPrimes singI
-decompose singI
-R = S/I
-integralClosure R -- fails on codim
-use S
+  decompose singI
+  R = S/I
+  integralClosure R -- fails on codim
+  use S
   assert(radical singI == ideal(6*z,6*x,2*y*z,2*x*y,2*x^2-2*z^2,x^3+2*x*z^2+y*z^2+3*z^3))
   -- this next test is not good: the ideals could come in any order, with different generators.
   assert(minimalPrimes singI === {ideal(z,x), ideal(2,x^3+y*z^2+z^3), ideal(3,y,x-z), ideal(3,y,x+z)})
@@ -391,6 +392,11 @@ integralClosure Ring := Ring => opts -> (R) -> (
 	  nsteps < opts.Limit and target F0 =!= source F0
 	  ) do (
 	  ));
+
+    if opts.Keep =!= {} then (
+        -- Here we want to fix icMap, icFractions.
+        -- XXX working on this.
+        );
      R.icMap = F;
      target R.icMap
      )
@@ -1096,6 +1102,7 @@ makeS2 Ring := RingMap => opts -> R -> (
 	  )
      )
 
+-* Code commented out: this uses Fields.m2, and/or is not used anywhere...
 findConductorInSubring = method()
 findConductorInSubring RingMap := (phi) -> (
     R := source phi;
@@ -1145,12 +1152,13 @@ fractionsSpecificDenominator(RingMap, RingElement) := List => (phi, f) -> (
     flatten entries(1/f * numersR) -- TODO: this is NOT what we want!  Want denominator factored.
     )
 
-showFraction = method()
-showFraction RingElement  := (x) -> (
-    -- x is in a KR = field R.
-    den := mydenominator x;
-    (hold (den*x)) / factor den
-    )
+-- showFraction = method()
+-- showFraction RingElement  := (x) -> (
+--     -- x is in a KR = field R.
+--     den := mydenominator x;
+--     (hold (den*x)) / factor den
+--     )
+*-
 
 showFractions = method()
 showFractions(List, RingElement) := (x, den) -> (
@@ -1247,7 +1255,7 @@ icFractions RingMap := List => opts -> F -> (
     -- and if so, lift it back.
     nbase := numgens R;
     nfiber := numgens R' - nbase;
-    for i from 0 to nbase-1 do if index F (R_i) != nfiber+i then error "rings not in correct form";
+    --for i from 0 to nbase-1 do if index F (R_i) != nfiber+i then error "rings not in correct form";
     nblocksForSubring := 0;
     while numcols selectInSubring(nblocksForSubring, vars R') > nbase do nblocksForSubring = nblocksForSubring + 1;
     liftBack := map(R, R', matrix{{nfiber: 0}} | vars R); -- only use once you know argument is in the subring...!
@@ -1283,6 +1291,7 @@ C = conductor R
 simplestElement C
 simplestElement radical C
 size oo
+icFractions(R.icMap, Module => true) -- sort in ascending denominator degree?
 
 ///
     
@@ -1317,20 +1326,23 @@ needsPackage "IntegralClosure2"
   F = 5*v^6+7*v^2*u^4+6*u^6+21*v^2*u^3+12*u^5+21*v^2*u^2+6*u^4+7*v^2*u
   ideal F
   R = S/F
---  KR = field(R, Independents => {v})
+  --  KR = field(R, Independents => {v})
   R' = integralClosure R
-icm = icMap R
-icFractions icm
+  icm = icMap R
+  icFractions icm
 
-C = conductor R
+  C = conductor R
   rC = radical C
- den = rC_0  
+   den = rC_0  
 
   pushFwd icMap R
-  icFractions(icMap R,den)
-pushFwd icMap R
-gens R'
+  icFractions(icMap R, Denominator => den)
+  use R
+  icFractions(icMap R, Denominator => u^2+u)
+  pushFwd icMap R
+  gens R'
 ///
+
 ///
 restart
 needsPackage "IntegralClosure2"
@@ -1351,6 +1363,7 @@ factor den
   oo//last//factor
 pf = pushFwd icMap R
 
+  
 ///
 
 -*
@@ -2864,7 +2877,9 @@ TEST ///
   time J = integralClosure (R,Variable => symbol a) 
   use ring ideal J
   assert(ideal J == ideal(u+2))
-  assert(set icFractions R === set{-2_(frac R), v_(frac R)})
+  assert(icFractions R === {}) 
+  -- previous behavior: assert(set icFractions R === set{-2_(frac R), v_(frac R)})
+  -- now we do not include elements of R as fractions.
   ///
 
 -- degrees greater than 1 test
@@ -2974,6 +2989,7 @@ TEST ///
   -- BUG: Keep => {} is not compatible with our impl of icFractions!
   (icFractions Q)/value
   minimalPresentation Q'
+  Q'.minimalPresentationMapInv
   ideal Q'
   icFractions Q'
   use ring ideal Q'
@@ -2981,6 +2997,7 @@ TEST ///
   use Q
   assert(matrix{(icFractions Q)/value} == matrix{{d/a^2}}) 
   assert(matrix{(icFractions Q)/value} - matrix{{d/a^2}} == 0)
+
   ///
 
 -- rational quartic, to make sure S2 is not being forgotten!
@@ -3880,7 +3897,7 @@ TEST ///
   elapsedTime A2' = integralClosure A2; -- .4 sec
   --pushFwd icMap A2
   --conductor A2 -- takes awhile!!  Why!?
-  netList icfp
+  --netList icfp
   use A2
   elapsedTime icf2=icFractions(A2, Denominator => z19)
   
@@ -3991,12 +4008,15 @@ viewHelp IntegralClosure2
 restart
 uninstallPackage "IntegralClosure2"
 restart
+needsPackage "IntegralClosure2"
+
 installPackage "IntegralClosure2"
 check "IntegralClosure2" -- 3/19/2026: test 35 takes 42 sec, test 36 takes 36 sec (yes both same number!), test 40 takes 45 sec.
 
 viewHelp IntegralClosure2
 viewHelp integralClosure
 
+restart
 needsPackage "IntegralClosure2"
 
 loadPackage("IntegralClosure2", Reload=>true)

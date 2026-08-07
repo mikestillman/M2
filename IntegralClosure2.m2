@@ -1024,9 +1024,10 @@ parametersInIdeal Ideal := I -> (
      	  G1 := G_{s..t};
 	  coeffs := random(source G1, R^{-last flatten degrees G1});
 	  lastcoef := lift(last last entries coeffs,ultimate(coefficientRing, R));
-	  --coeffs = (1/lastcoef)*coeffs;
+          --<<lastcoef<<endl;
+          coeffs = (1/lastcoef)*coeffs;
      	  newg := G1*coeffs;
-     	  if s<c-1 then G = G_{0..s-1}|newg|G_{t..rank source G-1}
+     	  if s<c-1 then G = G_{0..s-1}|newg|G_{t+1..rank source G-1}
 	       else G = G_{0..s-1}|newg;
 	  if codim ideal G <s+1 then (
 	       return null;
@@ -1034,6 +1035,82 @@ parametersInIdeal Ideal := I -> (
 	       );
 	  s = s+1);
       ideal G)
+
+parametersInIdeal1 = method()
+parametersInIdeal1 Ideal := List => I -> (
+    R := ring I;
+    c := codim I;
+    if c == 0 then return {};
+    
+    H := partition(f-> degree f, unique I_*);
+    K := sort keys H; -- use heft in multigraded case
+    G := for k in K list H#k;
+    GI := apply(#G, i -> ideal G_i);
+
+    result := {};
+    s := #result;
+    i = 0;
+    p := position(#G, i -> codim GI_i > 0);
+    if p === null then ();
+
+    
+
+    )
+-*
+findFirstNZD  = method()
+    --given a list of polynomials of the the same degree, find the smallest linear combination that
+    --is a nonzerodivisor
+findFirstNZD List := RingElement => L -> select(1, L, x -> codim ideal x > 0);
+    for
+*-    
+///
+
+///
+TEST///
+restart
+debug needsPackage "IntegralClosure2"
+
+needsPackage "SpaceCurves"
+errorDepth = 0
+
+S = ZZ/32003[a,b,c,d]
+I = ideal" a4, b2,c3"
+J = parametersInIdeal1 I
+assert(J_* == {b^2, c^3, a^4})
+
+
+
+I = ideal" a4, b2,b2"
+
+methods parametersInIdeal
+code 0
+M = matrix"a,b,c;
+b,c,d"
+I = minors(2,M)
+J = I+ideal(a^2, (b+c+d)^2)
+codim J
+I = ideal minimalCurve (r = S^1/J);
+betti res I
+betti res r
+R = S/I
+makeS2 (R)
+
+w = canonicalIdeal R
+ideal(0_R):w_1
+primaryDecomposition ideal(0_R)
+decompose ideal(0_R)
+----
+
+
+code methods canonicalIdeal
+code methods canonicalIdeal1
+code methods parametersInIdeal
+
+findNonzerodivisor = method()
+findNonzerodivisor Ideal := RingElement => I -> ()
+isGenericallyGorenstein = method()
+isGenericallyGorenstein Ring := Boolean => R -> ()
+///
 
 canonicalIdeal1 = method()
 canonicalIdeal1 Ring := R -> (

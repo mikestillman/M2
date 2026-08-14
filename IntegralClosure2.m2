@@ -1041,6 +1041,32 @@ parametersInIdeal1 Ideal := List => I -> (
     R := ring I;
     c := codim I;
     if c == 0 then return {};
+    minI := (trim I)_*;
+    P := {}; -- already found
+--    Q :=  --list of relevant associated primes of ideal P (minimal or maximal)        
+
+    while #P <c do(
+        Q := minimalPrimes ideal P;--list of relevant associated primes of ideal P (minimal or maximal)        
+        L := for q in Q list (q,elementsOutsideIdeal (I,q));
+        luck := intersect (L/last);
+        if #luck !=0 then P = append(P, goodElement luck) else (
+            
+            Q' = apply (#Q, i -> intersect drop(Q,{i,i}));
+            x = sum Q, g in L_q * (h of the right degree in M_q but not in L_q) -- this is in no q
+    P = append (P, x)
+    );
+    P)
+
+goodElement = method()
+goodElement Set := ell -> first sort toList ell
+
+
+elementsOutsideIdeal = method()
+elementsOutsideIdeal(Ideal,Ideal) := Set => (I,q) -> (
+    --assume I not subset q.
+    ell = for g in minI_* list if g \notin q then g else continue;
+    set ell)
+    
     
     H := partition(f-> degree f, unique I_*);
     K := sort keys H; -- use heft in multigraded case

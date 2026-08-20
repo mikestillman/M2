@@ -1052,13 +1052,7 @@ parametersInIdeal1 Ideal := List => I -> (
         if #luck !=0 then P = append(P, goodElement luck) else (
             
             Q' = apply (#Q, i -> intersect drop(Q,{i,i}));
-            x = sum Q, g in L_q * (h of the right degree in M_q but not in L_q) -- this is in no q
-    P = append (P, x)
-    );
-    P)
-
-goodElement = method()
-goodElement Set := ell -> first sort toList ell
+            x = sum goodElement Set := ell -> first sort toList ell
 
 
 elementsOutsideIdeal = method()

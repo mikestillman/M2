@@ -1036,46 +1036,56 @@ parametersInIdeal Ideal := I -> (
 	  s = s+1);
       ideal G)
 
+elementsOutsideIdeal = method()
+elementsOutsideIdeal(Ideal,Ideal) := Set => (I,q) -> (
+    --assume I not subset q (TODO: this note not really needed here).
+    if ring I =!= ring q then error "expected ideals in the same ring";
+    minI := trim I;
+    ell := for g in minI_* list if g % q != 0 then g else continue;
+    set ell)
+    
+    -- H := partition(f-> degree f, unique I_*);
+    -- K := sort keys H; -- use heft in multigraded case
+    -- G := for k in K list H#k;
+    -- GI := apply(#G, i -> ideal G_i);
+
+    -- result := {};
+    -- s := #result;
+    -- i = 0;
+    -- p := position(#G, i -> codim GI_i > 0);
+    -- if p === null then ();
+
+    -- )
+
+goodElement = method()
+goodElement List := L -> first sort L -- to be written
+goodElement Set := ell -> first sort toList ell -- to be written
+
 parametersInIdeal1 = method()
 parametersInIdeal1 Ideal := List => I -> (
+    -- questions for us: make a splittingPolynomial function?
+    -- is R a polynomial ring, or is this more general?
+    -- how about over ZZ?
+    -- how about inhomogeneous?
     R := ring I;
     c := codim I;
     if c == 0 then return {};
     minI := (trim I)_*;
-    P := {}; -- already found
---    Q :=  --list of relevant associated primes of ideal P (minimal or maximal)        
-
-    while #P <c do(
-        Q := minimalPrimes ideal P;--list of relevant associated primes of ideal P (minimal or maximal)        
+    P := {goodElement minI}; -- already found
+    while #P < c do (
+        Q := minimalPrimes ideal P;  --list of relevant associated primes of ideal P (minimal or maximal)
         L := for q in Q list (q,elementsOutsideIdeal (I,q));
         luck := intersect (L/last);
-        if #luck !=0 then P = append(P, goodElement luck) else (
-            
-            Q' = apply (#Q, i -> intersect drop(Q,{i,i}));
-            x = sum goodElement Set := ell -> first sort toList ell
-
-
-elementsOutsideIdeal = method()
-elementsOutsideIdeal(Ideal,Ideal) := Set => (I,q) -> (
-    --assume I not subset q.
-    ell = for g in minI_* list if g \notin q then g else continue;
-    set ell)
-    
-    
-    H := partition(f-> degree f, unique I_*);
-    K := sort keys H; -- use heft in multigraded case
-    G := for k in K list H#k;
-    GI := apply(#G, i -> ideal G_i);
-
-    result := {};
-    s := #result;
-    i = 0;
-    p := position(#G, i -> codim GI_i > 0);
-    if p === null then ();
-
-    
-
+        if #luck != 0 then
+            P = append(P, goodElement luck)
+        else (
+            Q' := apply (#Q, i -> intersect drop(Q,{i,i}));
+            x := sum apply(Q', goodElement)
+            )
+        );
+    P
     )
+
 -*
 findFirstNZD  = method()
     --given a list of polynomials of the the same degree, find the smallest linear combination that
@@ -1087,6 +1097,7 @@ findFirstNZD List := RingElement => L -> select(1, L, x -> codim ideal x > 0);
 
 ///
 TEST///
+-- XXX
 restart
 debug needsPackage "IntegralClosure2"
 
@@ -1096,11 +1107,10 @@ errorDepth = 0
 S = ZZ/32003[a,b,c,d]
 I = ideal" a4, b2,c3"
 J = parametersInIdeal1 I
-assert(J_* == {b^2, c^3, a^4})
-
-
+assert(J == {b^2, c^3, a^4})
 
 I = ideal" a4, b2,b2"
+parametersInIdeal1 I == {b^2, a^4}
 
 methods parametersInIdeal
 code 0

@@ -1079,8 +1079,12 @@ parametersInIdeal1 Ideal := List => I -> (
         if #luck != 0 then
             P = append(P, goodElement luck)
         else (
-            Q' := apply (#Q, i -> intersect drop(Q,{i,i}));
-            x := sum apply(Q', goodElement)
+            print"inside the hard part";
+            q' := apply (#Q, i -> (
+                    i' := intersect drop(Q,{i,i});
+                    ei := elementsOutsideIdeal(i', Q_i);
+                    goodElement ei));
+            P = append(P,sum q');
             )
         );
     P

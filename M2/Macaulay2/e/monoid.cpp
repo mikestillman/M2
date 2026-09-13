@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <string.h>
+#include <iterator>
 
 #include "monomials/ExponentList.hpp"
 #include "monomials/ExponentVector.hpp"

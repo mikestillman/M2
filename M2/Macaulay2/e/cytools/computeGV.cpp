@@ -25,6 +25,7 @@ along with CYTools.  If not, see <https://www.gnu.org/licenses/>.
 #include <numeric>
 #include <iostream>
 #include <algorithm>
+#include <functional>
 #include <unordered_map>
 #include <unordered_set>
 

@@ -19,6 +19,19 @@ cmake-appleclang:
 		-DCMAKE_EXPORT_COMPILE_COMMANDS=true \
 		../../../..
 
+cmake-latestclang:
+	mkdir -p builds.tmp/cmake-latestclang
+	cd builds.tmp/cmake-latestclang; LIBRARY_PATH=`/opt/homebrew/opt/llvm/bin/llvm-config --libdir` cmake \
+		-GNinja \
+	    -DCMAKE_C_COMPILER:FILEPATH=`brew --prefix llvm`/bin/clang \
+		-DCMAKE_CXX_COMPILER:FILEPATH=`brew --prefix llvm`/bin/clang++ \
+		-DCMAKE_PREFIX_PATH="/opt/homebrew/opt/mpi;/opt/homebrew/opt/bdw-gc;/opt/homebrew/opt/boost;/opt/homebrew/opt/cohomcalg;/opt/homebrew/opt/csdp;/opt/homebrew/opt/eigen;/opt/homebrew/opt/factory;/opt/homebrew/opt/fflas-ffpack;/opt/homebrew/opt/flint;/opt/homebrew/opt/fourtitwo;/opt/homebrew/opt/frobby;/opt/homebrew/opt/gdbm;/opt/homebrew/opt/gfan;/opt/homebrew/opt/givaro;/opt/homebrew/opt/gmp;/opt/homebrew/opt/libffi;/opt/homebrew/opt/libomp;/opt/homebrew/opt/lrs;/opt/homebrew/opt/mpfi;/opt/homebrew/opt/mpfr;/opt/homebrew/opt/mpsolve;/opt/homebrew/opt/msolve;/opt/homebrew/opt/nauty;/opt/homebrew/opt/node;/opt/homebrew/opt/normaliz;/opt/homebrew/opt/ntl;/opt/homebrew/opt/python;/opt/homebrew/opt/readline;/opt/homebrew/opt/tbb;/opt/homebrew/opt/topcom;/opt/homebrew/opt/" \
+		-DCMAKE_BUILD_TYPE=RelWithDebInfo \
+		-DBUILD_TESTING=on \
+		-DBUILD_DOCS=on \
+		-DCMAKE_EXPORT_COMPILE_COMMANDS=true \
+		../../../..
+
 cmake-debug-appleclang:
 	echo "git branch is " $(BRANCH)
 	mkdir -p builds.tmp/cmake-debug-appleclang
@@ -51,6 +64,41 @@ arm64-appleclang : always
 		-I`brew --prefix libomp`/include    \
 		-I`brew --prefix readline`/include" \
 	F77="gfortran-15" \
+	PKG_CONFIG_PATH="`brew --prefix factory`/lib/pkgconfig"
+
+cmake-gcov-appleclang:
+	echo "git branch is " $(BRANCH)
+	mkdir -p builds.tmp/cmake-gcov-appleclang
+	cd builds.tmp/cmake-gcov-appleclang; cmake \
+		-GNinja \
+		-DGCOV=on \
+		-DCMAKE_BUILD_TYPE=Debug \
+		-DCMAKE_PREFIX_PATH="/opt/homebrew/opt/mpi;/opt/homebrew/opt/bdw-gc;/opt/homebrew/opt/boost;/opt/homebrew/opt/cohomcalg;/opt/homebrew/opt/csdp;/opt/homebrew/opt/eigen;/opt/homebrew/opt/factory;/opt/homebrew/opt/fflas-ffpack;/opt/homebrew/opt/flint;/opt/homebrew/opt/fourtitwo;/opt/homebrew/opt/frobby;/opt/homebrew/opt/gdbm;/opt/homebrew/opt/gfan;/opt/homebrew/opt/givaro;/opt/homebrew/opt/gmp;/opt/homebrew/opt/libffi;/opt/homebrew/opt/libomp;/opt/homebrew/opt/lrs;/opt/homebrew/opt/mpfi;/opt/homebrew/opt/mpfr;/opt/homebrew/opt/mpsolve;/opt/homebrew/opt/msolve;/opt/homebrew/opt/nauty;/opt/homebrew/opt/node;/opt/homebrew/opt/normaliz;/opt/homebrew/opt/ntl;/opt/homebrew/opt/python;/opt/homebrew/opt/readline;/opt/homebrew/opt/tbb;/opt/homebrew/opt/topcom;/opt/homebrew/opt/" \
+		-DBUILD_NATIVE=off \
+		-DCMAKE_INSTALL_PREFIX=`pwd`/installed \
+		-DBUILD_TESTING=on \
+		-DBUILD_DOCS=on \
+		-DCMAKE_EXPORT_COMPILE_COMMANDS=true \
+		../../../..
+
+arm64-gcov-appleclang : always
+	mkdir -p builds.tmp/arm64-gcov-appleclang
+	cd builds.tmp/arm64-gcov-appleclang; ../../../../configure \
+	--enable-download --with-system-gc \
+	--with-system-memtailor --with-system-mathic \
+	--with-system-mathicgb \
+	--enable-gcov \
+	LDFLAGS="-L`brew --prefix`/lib  \
+		-L`brew --prefix factory`/lib \
+		-L`brew --prefix libomp`/lib  \
+		-L`brew --prefix readline`/lib \
+		-L`brew --prefix python`/Frameworks/Python.framework/Versions/3.14/lib" \
+	CPPFLAGS="-I`brew --prefix`/include   \
+	    -I`brew --prefix`/include/cddlib    \
+		-I`brew --prefix factory`/include   \
+		-I`brew --prefix libomp`/include    \
+		-I`brew --prefix readline`/include" \
+	F77="gfortran-16" \
 	PKG_CONFIG_PATH="`brew --prefix factory`/lib/pkgconfig"
 
 

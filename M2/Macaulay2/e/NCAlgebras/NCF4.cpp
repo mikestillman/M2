@@ -15,6 +15,7 @@
 #include <cstdlib>                          // for exit, size_t
 #include <algorithm>                        // for copy
 #include <iostream>                         // for operator<<, basic_ostream
+#include <iterator>                         // for back_inserter
 
 NCF4::NCF4(const FreeAlgebra& A,
            const ConstPolyList& input,

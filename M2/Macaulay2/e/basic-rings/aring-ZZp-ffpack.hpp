@@ -10,6 +10,7 @@
 #include <type_traits> // define bool_constant to fix issue #2347
 #include <utility>
 #include <ratio> //fix compilation errors on some macs
+#include <exception> // fflas-ffpack uses std::terminate without including it
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"

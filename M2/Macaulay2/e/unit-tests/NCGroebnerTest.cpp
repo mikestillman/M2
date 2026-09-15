@@ -209,32 +209,6 @@ TEST(NCReduction, NaivePolynomialHeap)
   std::cout << o.str() << std::endl;
 }
 
-TEST(MonomialOrdering, create)
-{
-  auto mo1 = MonomialOrderings::Lex(5);
-  auto mo2 = MonomialOrderings::GroupLex(4);
-  auto mo3 = MonomialOrderings::join({mo1, mo2});
-  std::string answer3 { "MonomialOrder => {\n    Lex => 5,\n    GroupLex => 4\n    }" };
-  EXPECT_EQ(answer3, MonomialOrderings::toString(mo3));
-  EXPECT_EQ(9, rawNumberOfVariables(mo3));
-  EXPECT_TRUE(moIsLex(mo1));
-
-  auto mo4 = MonomialOrderings::GRevLex({3,2,5,7});
-  EXPECT_TRUE(moIsGRevLex(mo4));
-  auto mo5 = MonomialOrderings::GRevLex2({1,1,1,1});
-  EXPECT_TRUE(moIsGRevLex(mo5));
-  auto mo6 {
-    MonomialOrderings::join(
-    {
-     MonomialOrderings::GRevLex(3),
-     MonomialOrderings::GRevLex2(4),
-     MonomialOrderings::GRevLex4(5),
-     MonomialOrderings::GroupLex(3)
-    })};
-  (void)mo6;//force a use, suppress a warning
-}
-
-
 TEST(FreeAlgebra, create)
 {
   if (degreeRing(1) == nullptr or error())

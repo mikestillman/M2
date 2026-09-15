@@ -67,13 +67,8 @@ const Monoid* simpleMonoid(const std::vector<std::string>& names,
   // #heft == #gens degreesRing.
   // heft of each degree vector for each vector should be > 0, if heft is non-empty.
 
-  const Monoid* M = Monoid::create(
-                             monorder,
-                             degRing,
-                             names,
-                             degs,
-                             heft
-                             );
+  const Monoid* M = Monoid::create(monorder, degRing, names, degs, heft);
+  return M;
 }
 
                            

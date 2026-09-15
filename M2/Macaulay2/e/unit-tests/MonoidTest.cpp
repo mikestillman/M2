@@ -52,3 +52,42 @@ TEST(ExponentVector, All)
   EXPECT_TRUE(c0[0] == 6 && c0[1] == 3 && c0[2] == 0);
   EXPECT_TRUE(d0[0] == 0 && d0[1] == 0 && d0[2] == 0);
 }
+
+TEST(MonomialOrderings, create0)
+{
+  MonomialOrdering *mo1 = MonomialOrderings::Weights({1, 1, 1, 1});
+  MonomialOrdering *mo2 = MonomialOrderings::PositionUp();
+  MonomialOrdering *mo3 =
+    MonomialOrderings::GRevLex(4);  // 4 variables, all weights 1.
+
+  MonomialOrdering *mo4 = MonomialOrderings::GRevLex(
+                                                     {1, 2, 3, 4});  // 4 variables, positive weights
+  MonomialOrdering *mo5 = MonomialOrderings::Lex(3);
+  MonomialOrdering *mo = MonomialOrderings::join({mo1, mo2, mo3, mo4, mo5});
+  EXPECT_TRUE(mo != nullptr);
+}
+
+TEST(MonomialOrdering, create)
+{
+  auto mo1 = MonomialOrderings::Lex(5);
+  auto mo2 = MonomialOrderings::GroupLex(4);
+  auto mo3 = MonomialOrderings::join({mo1, mo2});
+  std::string answer3 { "MonomialOrder => {\n    Lex => 5,\n    GroupLex => 4\n    }" };
+  EXPECT_EQ(answer3, MonomialOrderings::toString(mo3));
+  EXPECT_EQ(9, rawNumberOfVariables(mo3));
+  EXPECT_TRUE(moIsLex(mo1));
+
+  auto mo4 = MonomialOrderings::GRevLex({3,2,5,7});
+  EXPECT_TRUE(moIsGRevLex(mo4));
+  auto mo5 = MonomialOrderings::GRevLex2({1,1,1,1});
+  EXPECT_TRUE(moIsGRevLex(mo5));
+  auto mo6 {
+    MonomialOrderings::join(
+    {
+     MonomialOrderings::GRevLex(3),
+     MonomialOrderings::GRevLex2(4),
+     MonomialOrderings::GRevLex4(5),
+     MonomialOrderings::GroupLex(3)
+    })};
+  (void)mo6;//force a use, suppress a warning
+}

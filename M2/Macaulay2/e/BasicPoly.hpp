@@ -9,7 +9,11 @@
 #include <iosfwd>
 #include <string>
 #include <unordered_map>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-literal-operator"
 #include <gmpxx.h>
+#pragma GCC diagnostic pop
 
 class BasicPoly
 {

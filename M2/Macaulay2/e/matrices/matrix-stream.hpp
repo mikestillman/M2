@@ -6,7 +6,11 @@
 #include "rings/poly.hpp"
 #include "matrices/matrix.hpp"
 #include "matrices/matrix-con.hpp"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-literal-operator"
 #include <gmpxx.h>
+#pragma GCC diagnostic pop
 
 #if 0
 // Example of the calls used to create an ideal (one rowed matrix), over a poly ring

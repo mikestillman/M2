@@ -1,7 +1,10 @@
 #include "basic-rings/reader.hpp"
 
 // The following includes a definition for: i >> mpz_t
-#include "gmpxx.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-literal-operator"
+#include <gmpxx.h>
+#pragma GCC diagnostic pop
 
 namespace M2 {
 

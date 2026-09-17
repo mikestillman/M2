@@ -402,10 +402,11 @@ bool Monoid::in_subring(int nslots, const_monomial m) const
 int Monoid::partial_compare(int num, const_exponents m, const_monomial n0) const
 {
   if (num == 0) return EQ;
-  int n[this->mVariableCount];
+  int* n = new int[this->mVariableCount];
   to_expvector(n0, n);
   for (int i = 0; i < num; i++)
     if (m[i] != n[i]) return m[i] < n[i] ? LT : GT;
+  delete [] n;
   return EQ;
 }
 

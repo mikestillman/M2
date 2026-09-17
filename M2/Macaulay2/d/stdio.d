@@ -113,7 +113,6 @@ newbuffer():string := (
     Ccode(void, "
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored \"-Warray-bounds\"
-#pragma GCC diagnostic ignored \"-Wstringop-overflow\"
 (void)0");
     result := new string len bufsize do provide ' ';
     Ccode(void, "

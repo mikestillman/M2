@@ -1,7 +1,11 @@
 #ifndef _cytools_lattice_points_normaliz_hpp_
 #define _cytools_lattice_points_normaliz_hpp_
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-literal-operator"
 #include <gmpxx.h>
+#pragma GCC diagnostic pop
+
 #include <vector>
 
 namespace M2::cytools {

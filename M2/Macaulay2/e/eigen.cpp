@@ -16,9 +16,13 @@ Uncommenting the above has two consequences:
 #include <unsupported/Eigen/MPRealSupport>
 #undef mpfr
 
+// This removes the warning that we are using a pre 5.0.0 SVD calling sequence!
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <Eigen/SVD>
 #include <Eigen/Eigenvalues>
 #include "eigen.hpp"
+
 
 using Real = eigen_mpfr::mpreal;
 using Complex = std::complex<Real>;

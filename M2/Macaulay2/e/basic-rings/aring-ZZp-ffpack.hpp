@@ -8,12 +8,14 @@
 #include "rings/ringelem.hpp"
 
 #include <type_traits> // define bool_constant to fix issue #2347
-#include <utility>
-#include <ratio> //fix compilation errors on some macs
+// #include <utility>
+// #include <ratio> //fix compilation errors on some macs
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#pragma GCC diagnostic ignored "-Wdeprecated-literal-operator"
+#pragma GCC diagnostic ignored "-Wdeprecated-copy-with-user-provided-copy"
 #ifdef _OPENMP
 #define __FFLASFFPACK_USE_OPENMP
 #endif

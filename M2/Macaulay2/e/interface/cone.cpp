@@ -20,7 +20,12 @@
 #include "cytools/lattice-points-normaliz.hpp"
 #include "cytools/cone-interior-point.hpp"
 #include "interface/ring.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #include <libnormaliz/cone.h>
+#pragma GCC diagnostic pop
+
 #include <stdexcept>
 #include <vector>
 typedef mpz_class Integer;

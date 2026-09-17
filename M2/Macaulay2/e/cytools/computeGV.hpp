@@ -16,7 +16,11 @@ along with CYTools.  If not, see <https://www.gnu.org/licenses/>.
 ******************************************************************************/
 
 #include "mpreal.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-literal-operator"
 #include <gmpxx.h>
+#pragma GCC diagnostic pop
 
 #include <math.h>
 #include <ctype.h>

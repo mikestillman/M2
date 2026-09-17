@@ -151,7 +151,6 @@ export format(
 			Ccode(void, "
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored \"-Warray-bounds\"
-#pragma GCC diagnostic ignored \"-Wstringop-overflow\"
 (void)0");
 			r := new string len l do provide '0';
 			Ccode(void, "

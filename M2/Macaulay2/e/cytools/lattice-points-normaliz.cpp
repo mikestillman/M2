@@ -1,6 +1,10 @@
 #include "cytools/lattice-points-normaliz.hpp"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #include <libnormaliz/cone.h>
+#pragma GCC diagnostic pop
+
 #include <libnormaliz/cone_property.h>
 #include <libnormaliz/matrix.h>
 #include <libnormaliz/normaliz_exception.h>
